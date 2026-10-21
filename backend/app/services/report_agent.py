@@ -1,12 +1,12 @@
 """
-Report Agent服务
-使用LangChain + Zep实现ReACT模式的模拟报告生成
+Report Agent Service
+Implements simulation report generation using the ReACT pattern with Zep graph memory.
 
-功能：
-1. 根据模拟需求和Zep图谱信息生成报告
-2. 先规划目录结构，然后分段生成
-3. 每段采用ReACT多轮思考与反思模式
-4. 支持与用户对话，在对话中自主调用检索工具
+Features:
+1. Generates reports based on simulation requirements and Zep knowledge graph
+2. Plans report outline first, then generates section by section
+3. Employs multi-turn ReACT thought and action loop per section
+4. Supports conversational chat with autonomous retrieval tool invocation
 """
 
 import os
@@ -35,18 +35,18 @@ logger = get_logger('mirofish.report_agent')
 
 class ReportLogger:
     """
-    Report Agent 详细日志记录器
+    Report Agent Detailed Action Logger
     
-    在报告文件夹中生成 agent_log.jsonl 文件，记录每一步详细动作。
-    每行是一个完整的 JSON 对象，包含时间戳、动作类型、详细内容等。
+    Generates an agent_log.jsonl file inside the report directory, logging every action in detail.
+    Each line is a complete JSON object containing timestamp, action type, detailed payload, etc.
     """
     
     def __init__(self, report_id: str):
         """
-        初始化日志记录器
+        Initialize logger.
         
         Args:
-            report_id: 报告ID，用于确定日志文件路径
+            report_id: Report ID used to locate the log file path
         """
         self.report_id = report_id
         self.log_file_path = os.path.join(
@@ -56,12 +56,12 @@ class ReportLogger:
         self._ensure_log_file()
     
     def _ensure_log_file(self):
-        """确保日志文件所在目录存在"""
+        """Ensure directory for log file exists"""
         log_dir = os.path.dirname(self.log_file_path)
         os.makedirs(log_dir, exist_ok=True)
     
     def _get_elapsed_time(self) -> float:
-        """获取从开始到现在的耗时（秒）"""
+        """Get elapsed time from start in seconds"""
         return (datetime.now() - self.start_time).total_seconds()
     
     def log(
@@ -73,14 +73,14 @@ class ReportLogger:
         section_index: int = None
     ):
         """
-        记录一条日志
+        Log an action record.
         
         Args:
-            action: 动作类型，如 'start', 'tool_call', 'llm_response', 'section_complete' 等
-            stage: 当前阶段，如 'planning', 'generating', 'completed'
-            details: 详细内容字典，不截断
-            section_title: 当前章节标题（可选）
-            section_index: 当前章节索引（可选）
+            action: Action type, e.g. 'start', 'tool_call', 'llm_response', 'section_complete', etc.
+            stage: Current stage, e.g. 'planning', 'generating', 'completed'
+            details: Detailed dictionary payload (untruncated)
+            section_title: Current section title (optional)
+            section_index: Current section index (optional)
         """
         log_entry = {
             "timestamp": datetime.now().isoformat(),
@@ -93,12 +93,12 @@ class ReportLogger:
             "details": details
         }
         
-        # 追加写入 JSONL 文件
+        # Append to JSONL file
         with open(self.log_file_path, 'a', encoding='utf-8') as f:
             f.write(json.dumps(log_entry, ensure_ascii=False) + '\n')
     
     def log_start(self, simulation_id: str, graph_id: str, simulation_requirement: str):
-        """记录报告生成开始"""
+        """Log report generation start"""
         self.log(
             action="report_start",
             stage="pending",
@@ -111,7 +111,7 @@ class ReportLogger:
         )
     
     def log_planning_start(self):
-        """记录大纲规划开始"""
+        """Log outline planning start"""
         self.log(
             action="planning_start",
             stage="planning",
@@ -119,7 +119,7 @@ class ReportLogger:
         )
     
     def log_planning_context(self, context: Dict[str, Any]):
-        """记录规划时获取的上下文信息"""
+        """Log context information retrieved during planning"""
         self.log(
             action="planning_context",
             stage="planning",
@@ -130,7 +130,7 @@ class ReportLogger:
         )
     
     def log_planning_complete(self, outline_dict: Dict[str, Any]):
-        """记录大纲规划完成"""
+        """Log outline planning completion"""
         self.log(
             action="planning_complete",
             stage="planning",
@@ -141,7 +141,7 @@ class ReportLogger:
         )
     
     def log_section_start(self, section_title: str, section_index: int):
-        """记录章节生成开始"""
+        """Log section generation start"""
         self.log(
             action="section_start",
             stage="generating",
@@ -151,7 +151,7 @@ class ReportLogger:
         )
     
     def log_react_thought(self, section_title: str, section_index: int, iteration: int, thought: str):
-        """记录 ReACT 思考过程"""
+        """Log ReACT thought process"""
         self.log(
             action="react_thought",
             stage="generating",
@@ -172,7 +172,7 @@ class ReportLogger:
         parameters: Dict[str, Any],
         iteration: int
     ):
-        """记录工具调用"""
+        """Log tool call"""
         self.log(
             action="tool_call",
             stage="generating",
@@ -194,7 +194,7 @@ class ReportLogger:
         result: str,
         iteration: int
     ):
-        """记录工具调用结果（完整内容，不截断）"""
+        """Log tool call result (complete content, untruncated)"""
         self.log(
             action="tool_result",
             stage="generating",
@@ -203,7 +203,7 @@ class ReportLogger:
             details={
                 "iteration": iteration,
                 "tool_name": tool_name,
-                "result": result,  # 完整结果，不截断
+                "result": result,  # Full result, untruncated
                 "result_length": len(result),
                 "message": t('report.toolResult', toolName=tool_name)
             }
@@ -218,7 +218,7 @@ class ReportLogger:
         has_tool_calls: bool,
         has_final_answer: bool
     ):
-        """记录 LLM 响应（完整内容，不截断）"""
+        """Log LLM response (complete content, untruncated)"""
         self.log(
             action="llm_response",
             stage="generating",
@@ -226,7 +226,7 @@ class ReportLogger:
             section_index=section_index,
             details={
                 "iteration": iteration,
-                "response": response,  # 完整响应，不截断
+                "response": response,  # Full response, untruncated
                 "response_length": len(response),
                 "has_tool_calls": has_tool_calls,
                 "has_final_answer": has_final_answer,
@@ -241,14 +241,14 @@ class ReportLogger:
         content: str,
         tool_calls_count: int
     ):
-        """记录章节内容生成完成（仅记录内容，不代表整个章节完成）"""
+        """Log section content generation complete (content only, not entire section finished)"""
         self.log(
             action="section_content",
             stage="generating",
             section_title=section_title,
             section_index=section_index,
             details={
-                "content": content,  # 完整内容，不截断
+                "content": content,  # Full content, untruncated
                 "content_length": len(content),
                 "tool_calls_count": tool_calls_count,
                 "message": t('report.sectionContentDone', title=section_title)
@@ -262,9 +262,9 @@ class ReportLogger:
         full_content: str
     ):
         """
-        记录章节生成完成
+        Log section generation complete
 
-        前端应监听此日志来判断一个章节是否真正完成，并获取完整内容
+        The frontend monitors this event to determine when a section is finished and retrieve full content.
         """
         self.log(
             action="section_complete",
@@ -279,7 +279,7 @@ class ReportLogger:
         )
     
     def log_report_complete(self, total_sections: int, total_time_seconds: float):
-        """记录报告生成完成"""
+        """Log report generation complete"""
         self.log(
             action="report_complete",
             stage="completed",
@@ -291,7 +291,7 @@ class ReportLogger:
         )
     
     def log_error(self, error_message: str, stage: str, section_title: str = None):
-        """记录错误"""
+        """Log error"""
         self.log(
             action="error",
             stage=stage,
@@ -306,18 +306,18 @@ class ReportLogger:
 
 class ReportConsoleLogger:
     """
-    Report Agent 控制台日志记录器
+    Report Agent Console Logger
     
-    将控制台风格的日志（INFO、WARNING等）写入报告文件夹中的 console_log.txt 文件。
-    这些日志与 agent_log.jsonl 不同，是纯文本格式的控制台输出。
+    Writes console-style logs (INFO, WARNING, etc.) into console_log.txt inside the report folder.
+    These logs represent plaintext console output distinct from structured agent_log.jsonl records.
     """
     
     def __init__(self, report_id: str):
         """
-        初始化控制台日志记录器
+        Initialize console logger.
         
         Args:
-            report_id: 报告ID，用于确定日志文件路径
+            report_id: Report ID used to locate the log file path
         """
         self.report_id = report_id
         self.log_file_path = os.path.join(
@@ -328,15 +328,15 @@ class ReportConsoleLogger:
         self._setup_file_handler()
     
     def _ensure_log_file(self):
-        """确保日志文件所在目录存在"""
+        """Ensure directory for log file exists"""
         log_dir = os.path.dirname(self.log_file_path)
         os.makedirs(log_dir, exist_ok=True)
     
     def _setup_file_handler(self):
-        """设置文件处理器，将日志同时写入文件"""
+        """Setup file handler to duplicate logs to file"""
         import logging
         
-        # 创建文件处理器
+        # Create file handler
         self._file_handler = logging.FileHandler(
             self.log_file_path,
             mode='a',
@@ -344,14 +344,14 @@ class ReportConsoleLogger:
         )
         self._file_handler.setLevel(logging.INFO)
         
-        # 使用与控制台相同的简洁格式
+        # Use clean console formatting
         formatter = logging.Formatter(
             '[%(asctime)s] %(levelname)s: %(message)s',
             datefmt='%H:%M:%S'
         )
         self._file_handler.setFormatter(formatter)
         
-        # 添加到 report_agent 相关的 logger
+        # Add to report_agent loggers
         loggers_to_attach = [
             'mirofish.report_agent',
             'mirofish.zep_tools',
@@ -359,12 +359,12 @@ class ReportConsoleLogger:
         
         for logger_name in loggers_to_attach:
             target_logger = logging.getLogger(logger_name)
-            # 避免重复添加
+            # Avoid duplicate handlers
             if self._file_handler not in target_logger.handlers:
                 target_logger.addHandler(self._file_handler)
     
     def close(self):
-        """关闭文件处理器并从 logger 中移除"""
+        """Close file handler and remove from loggers"""
         import logging
         
         if self._file_handler:
@@ -382,12 +382,12 @@ class ReportConsoleLogger:
             self._file_handler = None
     
     def __del__(self):
-        """析构时确保关闭文件处理器"""
+        """Ensure file handler is closed on destruction"""
         self.close()
 
 
 class ReportStatus(str, Enum):
-    """报告状态"""
+    """Report status"""
     PENDING = "pending"
     PLANNING = "planning"
     GENERATING = "generating"
@@ -397,7 +397,7 @@ class ReportStatus(str, Enum):
 
 @dataclass
 class ReportSection:
-    """报告章节"""
+    """Report section"""
     title: str
     content: str = ""
 
@@ -408,7 +408,7 @@ class ReportSection:
         }
 
     def to_markdown(self, level: int = 2) -> str:
-        """转换为Markdown格式"""
+        """Convert to Markdown format"""
         md = f"{'#' * level} {self.title}\n\n"
         if self.content:
             md += f"{self.content}\n\n"
@@ -417,7 +417,7 @@ class ReportSection:
 
 @dataclass
 class ReportOutline:
-    """报告大纲"""
+    """Report outline"""
     title: str
     summary: str
     sections: List[ReportSection]
@@ -430,7 +430,7 @@ class ReportOutline:
         }
     
     def to_markdown(self) -> str:
-        """转换为Markdown格式"""
+        """Convert to Markdown format"""
         md = f"# {self.title}\n\n"
         md += f"> {self.summary}\n\n"
         for section in self.sections:
@@ -440,7 +440,7 @@ class ReportOutline:
 
 @dataclass
 class Report:
-    """完整报告"""
+    """Complete report"""
     report_id: str
     simulation_id: str
     graph_id: str
@@ -468,423 +468,378 @@ class Report:
 
 
 # ═══════════════════════════════════════════════════════════════
-# Prompt 模板常量
+# Prompt template constants
 # ═══════════════════════════════════════════════════════════════
 
-# ── 工具描述 ──
+# ── Tool Descriptions ──
 
 TOOL_DESC_INSIGHT_FORGE = """\
-【深度洞察检索 - 强大的检索工具】
-这是我们强大的检索函数，专为深度分析设计。它会：
-1. 自动将你的问题分解为多个子问题
-2. 从多个维度检索模拟图谱中的信息
-3. 整合语义搜索、实体分析、关系链追踪的结果
-4. 返回最全面、最深度的检索内容
+[Deep Insight Retrieval - Powerful Multi-Dimensional Search]
+Our core retrieval function designed for deep analysis:
+1. Automatically decomposes your query into multiple sub-questions
+2. Retrieves information across dimensions from the simulation graph
+3. Integrates semantic search, entity analysis, and relationship chain tracing
+4. Returns comprehensive and in-depth evidence
 
-【使用场景】
-- 需要深入分析某个话题
-- 需要了解事件的多个方面
-- 需要获取支撑报告章节的丰富素材
+[Use Cases]
+- In-depth thematic analysis
+- Multi-faceted event understanding
+- Gathering robust source evidence to support report sections
 
-【返回内容】
-- 相关事实原文（可直接引用）
-- 核心实体洞察
-- 关系链分析"""
+[Returns]
+- Original relevant facts (directly citable)
+- Core entity insights
+- Relationship chain analyses"""
 
 TOOL_DESC_PANORAMA_SEARCH = """\
-【广度搜索 - 获取全貌视图】
-这个工具用于获取模拟结果的完整全貌，特别适合了解事件演变过程。它会：
-1. 获取所有相关节点和关系
-2. 区分当前有效的事实和历史/过期的事实
-3. 帮助你了解舆情是如何演变的
+[Panorama Search - Broad Overview]
+Used to capture the full landscape of simulation results, especially evolutionary dynamics:
+1. Retrieves all relevant nodes and relationships
+2. Distinguishes active facts from historical/expired facts
+3. Helps trace opinion and behavior evolution over time
 
-【使用场景】
-- 需要了解事件的完整发展脉络
-- 需要对比不同阶段的舆情变化
-- 需要获取全面的实体和关系信息
+[Use Cases]
+- Understanding full event development trajectories
+- Comparing opinion shifts across simulation stages
+- Comprehensive entity and relation mapping
 
-【返回内容】
-- 当前有效事实（模拟最新结果）
-- 历史/过期事实（演变记录）
-- 所有涉及的实体"""
+[Returns]
+- Active facts (latest simulation results)
+- Historical / expired facts (evolution records)
+- All involved entities"""
 
 TOOL_DESC_QUICK_SEARCH = """\
-【简单搜索 - 快速检索】
-轻量级的快速检索工具，适合简单、直接的信息查询。
+[Quick Search - Fast Semantic Retrieval]
+Lightweight, fast retrieval tool for direct queries.
 
-【使用场景】
-- 需要快速查找某个具体信息
-- 需要验证某个事实
-- 简单的信息检索
+[Use Cases]
+- Rapid lookup of specific facts
+- Verifying individual data points
+- Simple information checks
 
-【返回内容】
-- 与查询最相关的事实列表"""
+[Returns]
+- List of most relevant facts matching query"""
 
 TOOL_DESC_INTERVIEW_AGENTS = """\
-【深度采访 - 真实Agent采访（双平台）】
-调用OASIS模拟环境的采访API，对正在运行的模拟Agent进行真实采访！
-这不是LLM模拟，而是调用真实的采访接口获取模拟Agent的原始回答。
-默认在Twitter和Reddit两个平台同时采访，获取更全面的观点。
+[In-Depth Interview - Live Agent Interview (Dual Platform)]
+Calls OASIS interview APIs to interview live running simulated agents!
+Obtains authentic first-person responses from simulated agents across Twitter and Reddit simultaneously.
 
-功能流程：
-1. 自动读取人设文件，了解所有模拟Agent
-2. 智能选择与采访主题最相关的Agent（如学生、媒体、官方等）
-3. 自动生成采访问题
-4. 调用 /api/simulation/interview/batch 接口在双平台进行真实采访
-5. 整合所有采访结果，提供多视角分析
+Process:
+1. Inspects agent profile personas
+2. Selects most relevant agent roles (e.g. Students, Media, Officials, etc.)
+3. Generates targeted interview questions
+4. Executes batch interview API calls across both platforms
+5. Synthesizes findings for multi-perspective qualitative insights
 
-【使用场景】
-- 需要从不同角色视角了解事件看法（学生怎么看？媒体怎么看？官方怎么说？）
-- 需要收集多方意见和立场
-- 需要获取模拟Agent的真实回答（来自OASIS模拟环境）
-- 想让报告更生动，包含"采访实录"
+[Use Cases]
+- Investigating varied stakeholder stances
+- Gathering contrasting community sentiments
+- Incorporating direct interviewee transcripts into report sections
 
-【返回内容】
-- 被采访Agent的身份信息
-- 各Agent在Twitter和Reddit两个平台的采访回答
-- 关键引言（可直接引用）
-- 采访摘要和观点对比
+[Returns]
+- Persona metadata of interviewees
+- Responses across platforms
+- Citable direct quotes
+- Interview summary and perspective comparison
 
-【重要】需要OASIS模拟环境正在运行才能使用此功能！"""
+[Important] Requires an active running simulation environment."""
 
-# ── 大纲规划 prompt ──
+# ── Outline Planning Prompt ──
 
 PLAN_SYSTEM_PROMPT = """\
-你是一个「未来预测报告」的撰写专家，拥有对模拟世界的「上帝视角」——你可以洞察模拟中每一位Agent的行为、言论和互动。
+You are an expert author of Future Forecast Reports, possessing an omniscient perspective over the simulated world—observing the behaviors, statements, and interactions of every agent.
 
-【核心理念】
-我们构建了一个模拟世界，并向其中注入了特定的「模拟需求」作为变量。模拟世界的演化结果，就是对未来可能发生情况的预测。你正在观察的不是"实验数据"，而是"未来的预演"。
+[Core Concept]
+We built a simulated world and injected specific simulation requirements as variables. The evolutionary outcome of the simulated world represents a forecast of possible future realities. You are observing a preview of the future.
 
-【你的任务】
-撰写一份「未来预测报告」，回答：
-1. 在我们设定的条件下，未来发生了什么？
-2. 各类Agent（人群）是如何反应和行动？
-3. 这个模拟揭示了哪些值得关注的未来趋势和风险？
+[Your Mission]
+Draft a Future Forecast Report addressing:
+1. Under our configured scenario, what unfolded in the future?
+2. How did varied agent cohorts react and act?
+3. What key future trends, emergent dynamics, and risks did this simulation reveal?
 
-【报告定位】
-- ✅ 这是一份基于模拟的未来预测报告，揭示"如果这样，未来会怎样"
-- ✅ 聚焦于预测结果：事件走向、群体反应、涌现现象、潜在风险
-- ✅ 模拟世界中的Agent言行就是对未来人群行为的预测
-- ❌ 不是对现实世界现状的分析
-- ❌ 不是泛泛而谈的舆情综述
+[Report Orientation]
+- Based on simulation forecast: reveals "what happens if this scenario occurs"
+- Focus on forecast outcomes: event trajectories, collective reactions, emergent phenomena, latent risks
+- Simulated agent actions predict real-world collective human behaviors
+- NOT a retrospective analysis of current real-world status
+- NOT a superficial sentiment summary
 
-【章节数量限制】
-- 最少2个章节，最多5个章节
-- 不需要子章节，每个章节直接撰写完整内容
-- 内容要精炼，聚焦于核心预测发现
-- 章节结构由你根据预测结果自主设计
+[Section Count Constraints]
+- Minimum 2 sections, maximum 5 sections
+- No sub-sections; each section is written as cohesive complete prose
+- Keep concise and focused on core forecast discoveries
+- Design the section outline based on the simulation findings
 
-请输出JSON格式的报告大纲，格式如下：
+Output the report outline in JSON format:
+```json
 {
-    "title": "报告标题",
-    "summary": "报告摘要（一句话概括核心预测发现）",
+    "title": "Report Title",
+    "summary": "Report summary (one-sentence overview of core forecast findings)",
     "sections": [
         {
-            "title": "章节标题",
-            "description": "章节内容描述"
+            "title": "Section Title",
+            "description": "Description of section content and scope"
         }
     ]
 }
-
-注意：sections数组最少2个，最多5个元素！"""
+```
+Note: The sections array MUST contain between 2 and 5 elements!"""
 
 PLAN_USER_PROMPT_TEMPLATE = """\
-【预测场景设定】
-我们向模拟世界注入的变量（模拟需求）：{simulation_requirement}
+[Forecast Scenario Setup]
+Injected simulation condition / requirement: {simulation_requirement}
 
-【模拟世界规模】
-- 参与模拟的实体数量: {total_nodes}
-- 实体间产生的关系数量: {total_edges}
-- 实体类型分布: {entity_types}
-- 活跃Agent数量: {total_entities}
+[Simulation Scale]
+- Participating entities: {total_nodes}
+- Relationships generated: {total_edges}
+- Entity type distribution: {entity_types}
+- Active agents: {total_entities}
 
-【模拟预测到的部分未来事实样本】
-{related_facts_json}
+[Sample Forecast Facts from Simulation]
+{sample_facts}
 
-请以「上帝视角」审视这个未来预演：
-1. 在我们设定的条件下，未来呈现出了什么样的状态？
-2. 各类人群（Agent）是如何反应和行动的？
-3. 这个模拟揭示了哪些值得关注的未来趋势？
+Review this future rehearsal with an omniscient perspective:
+1. Under these conditions, what future state emerged?
+2. How did diverse groups and agents respond and behave?
+3. What critical future trends and risks were uncovered?
 
-根据预测结果，设计最合适的报告章节结构。
+Design the most fitting report structure based on these forecast outcomes.
 
-【再次提醒】报告章节数量：最少2个，最多5个，内容要精炼聚焦于核心预测发现。"""
+[Reminder] Report sections: minimum 2, maximum 5, concise and tightly focused on core discoveries."""
 
-# ── 章节生成 prompt ──
+# ── Section Generation Prompt ──
 
 SECTION_SYSTEM_PROMPT_TEMPLATE = """\
-你是一个「未来预测报告」的撰写专家，正在撰写报告的一个章节。
+You are an expert author of Future Forecast Reports, currently writing a chapter of the report.
 
-报告标题: {report_title}
-报告摘要: {report_summary}
-预测场景（模拟需求）: {simulation_requirement}
+Report Title: {report_title}
+Report Summary: {report_summary}
+Forecast Scenario (Simulation Condition): {simulation_requirement}
 
-当前要撰写的章节: {section_title}
+Current Section: {section_title}
+Section Description: {section_description}
 
-═══════════════════════════════════════════════════════════════
-【核心理念】
-═══════════════════════════════════════════════════════════════
+[Core Philosophy]
+The simulated world is a preview of the future. By injecting specific conditions,
+the actions and interactions of agents predict real-world future collective behavior.
 
-模拟世界是对未来的预演。我们向模拟世界注入了特定条件（模拟需求），
-模拟中Agent的行为和互动，就是对未来人群行为的预测。
+Your objectives:
+- Reveal what unfolds in the future under the configured conditions
+- Forecast how diverse stakeholder cohorts (agents) respond and act
+- Identify emerging trends, latent risks, and strategic opportunities
 
-你的任务是：
-- 揭示在设定条件下，未来发生了什么
-- 预测各类人群（Agent）是如何反应和行动的
-- 发现值得关注的未来趋势、风险和机会
+- Do NOT write a retrospective analysis of the present status
+- Focus exclusively on "what the future will hold"—the simulation results are the predicted future
 
-❌ 不要写成对现实世界现状的分析
-✅ 要聚焦于"未来会怎样"——模拟结果就是预测的未来
+[Crucial Rules - Mandatory]
 
-═══════════════════════════════════════════════════════════════
-【最重要的规则 - 必须遵守】
-═══════════════════════════════════════════════════════════════
+1. [Must Use Retrieval Tools to Inspect the Simulated World]
+- Observe the future preview from an omniscient stance
+- All claims must originate from simulated world events and agent actions
+- Do not rely on ungrounded personal knowledge
+- Call tools at least 3 times (up to 5 times) per section
 
-1. 【必须调用工具观察模拟世界】
-   - 你正在以「上帝视角」观察未来的预演
-   - 所有内容必须来自模拟世界中发生的事件和Agent言行
-   - 禁止使用你自己的知识来编写报告内容
-   - 每个章节至少调用3次工具（最多5次）来观察模拟的世界，它代表了未来
+2. [Must Cite Direct Agent Quotes and Actions]
+- Agent statements and behaviors predict future community behaviors
+- Embed quotes in standard blockquote format, e.g.:
+  > "Cohort perspective: verbatim statement..."
+- Direct quotes serve as core empirical evidence for the forecast
 
-2. 【必须引用Agent的原始言行】
-   - Agent的发言和行为是对未来人群行为的预测
-   - 在报告中使用引用格式展示这些预测，例如：
-     > "某类人群会表示：原文内容..."
-   - 这些引用是模拟预测的核心证据
+3. [Language Consistency]
+- The entire report must be written in English
+- Translate any foreign-language source materials into clear, natural English before citing
+- Preserve original meaning faithfully in both prose and blockquotes (>)
 
-3. 【语言一致性 - 引用内容必须翻译为报告语言】
-   - 工具返回的内容可能包含与报告语言不同的表述
-   - 报告必须全部使用与用户指定语言一致的语言撰写
-   - 当你引用工具返回的其他语言内容时，必须将其翻译为报告语言后再写入
-   - 翻译时保持原意不变，确保表述自然通顺
-   - 这一规则同时适用于正文和引用块（> 格式）中的内容
+4. [Faithful Presentation]
+- Accurately reflect the simulation findings
+- Do not fabricate events absent from the simulation
+- If information on an angle is limited, state that transparently
 
-4. 【忠实呈现预测结果】
-   - 报告内容必须反映模拟世界中的代表未来的模拟结果
-   - 不要添加模拟中不存在的信息
-   - 如果某方面信息不足，如实说明
+5. [Zero Fabrication]
+- Do NOT fabricate usernames, citations, statistics, or interactions
+- Do NOT output <tool_result> blocks—tool results are provided strictly by the environment
+- Cite only entities, quotes, and metrics returned by tool observations
 
-5. 【禁止捏造数据】
-   - ❌ 禁止捏造用户名、引用、统计数字或互动数据
-   - ❌ 禁止在回复中包含 <tool_result> 块 — 只有系统会提供工具结果
-   - ✅ 只能引用真实出现在工具结果中的实体、引用和数据
-   - 如果工具结果中没有相关内容，应如实说明，而非编造
+[Formatting Guidelines - Crucial]
 
-═══════════════════════════════════════════════════════════════
-【⚠️ 格式规范 - 极其重要！】
-═══════════════════════════════════════════════════════════════
+[One Section = Atomic Content Unit]
+- Each section is an atomic building block of the report
+- Do NOT include any Markdown headers (#, ##, ###, ####, etc.) inside the section
+- Do NOT place the section title at the top
+- The system automatically prepends the section header; output only body prose
+- Use **bold text**, paragraph breaks, blockquotes, and lists to structure content
 
-【一个章节 = 最小内容单位】
-- 每个章节是报告的最小分块单位
-- ❌ 禁止在章节内使用任何 Markdown 标题（#、##、###、#### 等）
-- ❌ 禁止在内容开头添加章节主标题
-- ✅ 章节标题由系统自动添加，你只需撰写纯正文内容
-- ✅ 使用**粗体**、段落分隔、引用、列表来组织内容，但不要用标题
+[Correct Example]
+This section examines communication dynamics during the incident. Analyzing simulation traces reveals...
 
-【正确示例】
-```
-本章节分析了事件的舆论传播态势。通过对模拟数据的深入分析，我们发现...
+**Initial Catalyst Phase**
+Early discourse concentrated on primary communication channels:
+> "Primary channels accounted for 68% of initial narrative volume..."
+This demonstrates rapid early information diffusion.
 
-**首发引爆阶段**
+**Emotional Amplification Phase**
+Secondary platforms amplified societal resonance:
+- Heightened visual salience
+- Elevated emotional contagion
 
-微博作为舆情的第一现场，承担了信息首发的核心功能：
+[Incorrect Example]
+## Executive Summary       <-- WRONG! Never add headers
+### 1. Initial Phase       <-- WRONG! Never use ###
+This section analyzes...
 
-> "微博贡献了68%的首发声量..."
-
-**情绪放大阶段**
-
-抖音平台进一步放大了事件影响力：
-
-- 视觉冲击力强
-- 情绪共鸣度高
-```
-
-【错误示例】
-```
-## 执行摘要          ← 错误！不要添加任何标题
-### 一、首发阶段     ← 错误！不要用###分小节
-#### 1.1 详细分析   ← 错误！不要用####细分
-
-本章节分析了...
-```
-
-═══════════════════════════════════════════════════════════════
-【可用检索工具】（每章节调用3-5次）
-═══════════════════════════════════════════════════════════════
-
+[Available Tools] (Invoke 3-5 times per section)
 {tools_description}
 
-【工具使用建议 - 请混合使用不同工具，不要只用一种】
-- insight_forge: 深度洞察分析，自动分解问题并多维度检索事实和关系
-- panorama_search: 广角全景搜索，了解事件全貌、时间线和演变过程
-- quick_search: 快速验证某个具体信息点
-- interview_agents: 采访模拟Agent，获取不同角色的第一人称观点和真实反应
+[Tool Usage Recommendations - Mix Different Tools]
+- insight_forge: Deep multi-dimensional analysis, query decomposition, and relationship chains
+- panorama_search: Wide overview, timeline evolution, active vs historical facts
+- quick_search: Fast verification of specific data points
+- interview_agents: Interviews active simulated agents for authentic first-person perspectives
 
-═══════════════════════════════════════════════════════════════
-【工作流程】
-═══════════════════════════════════════════════════════════════
+[Workflow]
+In each response, perform exactly ONE of the following (never both):
 
-每次回复你只能做以下两件事之一（不可同时做）：
-
-选项A - 调用工具：
-输出你的思考，然后用以下格式调用一个工具：
+Option A - Call a Tool:
+State your Thought, then invoke a tool in this format:
 <tool_call>
-{{"name": "工具名称", "parameters": {{"参数名": "参数值"}}}}
+{{"name": "tool_name", "parameters": {{"param_name": "param_value"}}}}
 </tool_call>
-系统会执行工具并把结果返回给你。你不需要也不能自己编写工具返回结果。
+The system executes the tool and returns observations. Never write mock tool results.
 
-选项B - 输出最终内容：
-当你已通过工具获取了足够信息，以 "Final Answer:" 开头输出章节内容。
+Option B - Output Final Answer:
+Once sufficient evidence is collected, prefix your complete section content with "Final Answer:".
 
-⚠️ 严格禁止：
-- 禁止在一次回复中同时包含工具调用和 Final Answer
-- 禁止自己编造工具返回结果（Observation），所有工具结果由系统注入
-- 每次回复最多调用一个工具
+Strictly Prohibited:
+- Outputting both a tool call and Final Answer in the same response
+- Fabricating tool observations
+- Calling more than one tool per response
 
-═══════════════════════════════════════════════════════════════
-【章节内容要求】
-═══════════════════════════════════════════════════════════════
-
-1. 内容必须基于工具检索到的模拟数据
-2. 大量引用原文来展示模拟效果
-3. 使用Markdown格式（但禁止使用标题）：
-   - 使用 **粗体文字** 标记重点（代替子标题）
-   - 使用列表（-或1.2.3.）组织要点
-   - 使用空行分隔不同段落
-   - ❌ 禁止使用 #、##、###、#### 等任何标题语法
-4. 【引用格式规范 - 必须单独成段】
-   引用必须独立成段，前后各有一个空行，不能混在段落中：
-
-   ✅ 正确格式：
-   ```
-   校方的回应被认为缺乏实质内容。
-
-   > "校方的应对模式在瞬息万变的社交媒体环境中显得僵化和迟缓。"
-
-   这一评价反映了公众的普遍不满。
-   ```
-
-   ❌ 错误格式：
-   ```
-   校方的回应被认为缺乏实质内容。> "校方的应对模式..." 这一评价反映了...
-   ```
-5. 保持与其他章节的逻辑连贯性
-6. 【避免重复】仔细阅读下方已完成的章节内容，不要重复描述相同的信息
-7. 【再次强调】不要添加任何标题！用**粗体**代替小节标题"""
+[Section Content Standards]
+1. Grounded strictly in simulation data retrieved via tools
+2. Richly cited with source statements
+3. Clean Markdown without headers:
+   - Use **bold text** for topic emphasis (instead of sub-headers)
+   - Use lists (- or 1. 2. 3.) for itemized takeaways
+   - Separate paragraphs with blank lines
+   - Strictly NO #, ##, ###, #### header tags
+4. Blockquotes must be isolated paragraphs with blank lines before and after
+5. Ensure logical coherence with prior sections
+6. Avoid redundancy by reviewing completed sections below
+7. Remember: NO Markdown headers! Use **bold** instead."""
 
 SECTION_USER_PROMPT_TEMPLATE = """\
-已完成的章节内容（请仔细阅读，避免重复）：
-{previous_content}
+Completed section contents (review carefully to avoid redundancy):
+{previous_sections_content}
 
-═══════════════════════════════════════════════════════════════
-【当前任务】撰写章节: {section_title}
-═══════════════════════════════════════════════════════════════
+---
 
-【重要提醒】
-1. 仔细阅读上方已完成的章节，避免重复相同的内容！
-2. 开始前必须先调用工具获取模拟数据
-3. 请混合使用不同工具，不要只用一种
-4. 报告内容必须来自检索结果，不要使用自己的知识
+[Current Task] Write Section: {section_title}
+Section Description: {section_description}
 
-【⚠️ 格式警告 - 必须遵守】
-- ❌ 不要写任何标题（#、##、###、####都不行）
-- ❌ 不要写"{section_title}"作为开头
-- ✅ 章节标题由系统自动添加
-- ✅ 直接写正文，用**粗体**代替小节标题
+[Key Reminders]
+1. Review completed sections above to avoid duplicating points!
+2. Invoke tools first to retrieve simulation evidence before drafting
+3. Diversify tool usage across different retrieval modalities
+4. Ground all narrative strictly in tool results
 
-请开始：
-1. 首先思考（Thought）这个章节需要什么信息
-2. 然后调用工具（Action）获取模拟数据
-3. 收集足够信息后输出 Final Answer（纯正文，无任何标题）"""
+[Formatting Constraints]
+- Do NOT write any Markdown headers (#, ##, ###, ####)
+- Do NOT write "{section_title}" at the beginning
+- Section headers are prepended automatically by the system
+- Write pure body content using **bold** for subsection highlights
 
-# ── ReACT 循环内消息模板 ──
+Begin now:
+1. Thought: What simulation evidence is required for this section?
+2. Action: Call a retrieval tool to inspect the simulation world
+3. After sufficient evidence is gathered, output Final Answer (pure body prose without headers)."""
+
+# ── ReACT Loop Message Templates ──
 
 REACT_OBSERVATION_TEMPLATE = """\
-Observation（检索结果）:
+Observation (Retrieval Result):
 
-═══ 工具 {tool_name} 返回 ═══
-{result}
+=== Tool {tool_name} Returned ===
+{tool_result}
+==============================
 
-═══════════════════════════════════════════════════════════════
-已调用工具 {tool_calls_count}/{max_tool_calls} 次（已用: {used_tools_str}）{unused_hint}
-- 如果信息充分：以 "Final Answer:" 开头输出章节内容（必须引用上述原文）
-- 如果需要更多信息：调用一个工具继续检索
-═══════════════════════════════════════════════════════════════"""
+Tools invoked: {tool_calls_count}/{max_tool_calls} (Used: {used_tools_str}){unused_hint}
+- If evidence is sufficient: output section content starting with "Final Answer:" (citing retrieved facts)
+- If more evidence is needed: call another tool to continue retrieval"""
 
 REACT_INSUFFICIENT_TOOLS_MSG = (
-    "【注意】你只调用了{tool_calls_count}次工具，至少需要{min_tool_calls}次。"
-    "请再调用工具获取更多模拟数据，然后再输出 Final Answer。{unused_hint}"
+    "[Notice] You have only invoked tools {tool_calls_count} time(s); at least {min_tool_calls} calls are required. "
+    "Please call a tool to retrieve more simulation data before providing Final Answer.{unused_hint}"
 )
 
 REACT_INSUFFICIENT_TOOLS_MSG_ALT = (
-    "当前只调用了 {tool_calls_count} 次工具，至少需要 {min_tool_calls} 次。"
-    "请调用工具获取模拟数据。{unused_hint}"
+    "Currently only {tool_calls_count} tool call(s) made; at least {min_tool_calls} required. "
+    "Please call tools to retrieve simulation data.{unused_hint}"
 )
 
 REACT_TOOL_LIMIT_MSG = (
-    "工具调用次数已达上限（{tool_calls_count}/{max_tool_calls}），不能再调用工具。"
-    '请立即基于已获取的信息，以 "Final Answer:" 开头输出章节内容。'
+    "Tool invocation limit reached ({tool_calls_count}/{max_tool_calls}). "
+    'Please output the section content immediately starting with "Final Answer:" based on retrieved evidence.'
 )
 
-REACT_UNUSED_TOOLS_HINT = "\n💡 你还没有使用过: {unused_list}，建议尝试不同工具获取多角度信息"
+REACT_UNUSED_TOOLS_HINT = "\n💡 You have not used: {unused_list}. We recommend trying different tools for multi-angle insights."
 
-REACT_FORCE_FINAL_MSG = "已达到工具调用限制，请直接输出 Final Answer: 并生成章节内容。"
-
-# ── Chat prompt ──
+REACT_FORCE_FINAL_MSG = "Tool invocation limit reached. Please output Final Answer: directly and generate the section content."
 
 CHAT_SYSTEM_PROMPT_TEMPLATE = """\
-你是一个简洁高效的模拟预测助手。
+You are a concise, high-efficiency simulation forecast assistant.
 
-【背景】
-预测条件: {simulation_requirement}
+[Background]
+Simulation condition: {simulation_requirement}
 
-【已生成的分析报告】
+[Generated Analysis Report]
 {report_content}
 
-【规则】
-1. 优先基于上述报告内容回答问题
-2. 直接回答问题，避免冗长的思考论述
-3. 仅在报告内容不足以回答时，才调用工具检索更多数据
-4. 回答要简洁、清晰、有条理
+[Rules]
+1. Prioritize answering based on the report content above
+2. Answer questions directly without lengthy preambles
+3. Only invoke retrieval tools when report content is insufficient
+4. Keep answers concise, clear, and structured
 
-【可用工具】（仅在需要时使用，最多调用1-2次）
+[Available Tools] (Use only when necessary, at most 1-2 calls)
 {tools_description}
 
-【工具调用格式】
+[Tool Call Format]
 <tool_call>
-{{"name": "工具名称", "parameters": {{"参数名": "参数值"}}}}
+{{"name": "tool_name", "parameters": {{"param_name": "param_value"}}}}
 </tool_call>
 
-【回答风格】
-- 简洁直接，不要长篇大论
-- 使用 > 格式引用关键内容
-- 优先给出结论，再解释原因"""
+[Response Style]
+- Concise and direct
+- Quote critical statements using > blockquote format
+- State conclusions first, followed by explanations"""
 
-CHAT_OBSERVATION_SUFFIX = "\n\n请简洁回答问题。"
+CHAT_OBSERVATION_SUFFIX = "\n\nPlease answer the question concisely."
 
 
 # ═══════════════════════════════════════════════════════════════
-# ReportAgent 主类
+# ReportAgent Main Class
 # ═══════════════════════════════════════════════════════════════
 
 
 class ReportAgent:
     """
-    Report Agent - 模拟报告生成Agent
+    Report Agent - Simulation Report Generation Agent
 
-    采用ReACT（Reasoning + Acting）模式：
-    1. 规划阶段：分析模拟需求，规划报告目录结构
-    2. 生成阶段：逐章节生成内容，每章节可多次调用工具获取信息
-    3. 反思阶段：检查内容完整性和准确性
+    Adopts ReACT (Reasoning + Acting) pattern:
+    1. Planning stage: Analyzes simulation requirements and designs report outline
+    2. Generation stage: Generates content section by section, calling retrieval tools
+    3. Reflection stage: Validates content completeness and fidelity
     """
     
-    # 最大工具调用次数（每个章节）
+    # Maximum tool calls per section
     MAX_TOOL_CALLS_PER_SECTION = 5
     
-    # 最大反思轮数
+    # Maximum reflection iterations
     MAX_REFLECTION_ROUNDS = 3
     
-    # 对话中的最大工具调用次数
+    # Maximum tool calls in chat mode
     MAX_TOOL_CALLS_PER_CHAT = 2
     
     def __init__(
@@ -896,14 +851,14 @@ class ReportAgent:
         zep_tools: Optional[ZepToolsService] = None
     ):
         """
-        初始化Report Agent
+        Initialize Report Agent
         
         Args:
-            graph_id: 图谱ID
-            simulation_id: 模拟ID
-            simulation_requirement: 模拟需求描述
-            llm_client: LLM客户端（可选）
-            zep_tools: Zep工具服务（可选）
+            graph_id: Graph ID
+            simulation_id: Simulation ID
+            simulation_requirement: Simulation requirement description
+            llm_client: LLM client (optional)
+            zep_tools: Zep retrieval tools service (optional)
         """
         self.graph_id = graph_id
         self.simulation_id = simulation_id
@@ -912,64 +867,64 @@ class ReportAgent:
         self.llm = llm_client or LLMClient()
         self.zep_tools = zep_tools or ZepToolsService()
         
-        # 工具定义
+        # Tool definitions
         self.tools = self._define_tools()
         
-        # 日志记录器（在 generate_report 中初始化）
+        # Action logger (initialized in generate_report)
         self.report_logger: Optional[ReportLogger] = None
-        # 控制台日志记录器（在 generate_report 中初始化）
+        # Console logger (initialized in generate_report)
         self.console_logger: Optional[ReportConsoleLogger] = None
         
         logger.info(t('report.agentInitDone', graphId=graph_id, simulationId=simulation_id))
     
     def _define_tools(self) -> Dict[str, Dict[str, Any]]:
-        """定义可用工具"""
+        """Define available tools"""
         return {
             "insight_forge": {
                 "name": "insight_forge",
                 "description": TOOL_DESC_INSIGHT_FORGE,
                 "parameters": {
-                    "query": "你想深入分析的问题或话题",
-                    "report_context": "当前报告章节的上下文（可选，有助于生成更精准的子问题）"
+                    "query": "The question or topic you want to analyze in depth",
+                    "report_context": "Current section context (optional, helps generate targeted sub-questions)"
                 }
             },
             "panorama_search": {
                 "name": "panorama_search",
                 "description": TOOL_DESC_PANORAMA_SEARCH,
                 "parameters": {
-                    "query": "搜索查询，用于相关性排序",
-                    "include_expired": "是否包含过期/历史内容（默认True）"
+                    "query": "Search query used for relevance ranking",
+                    "include_expired": "Whether to include expired/historical content (default True)"
                 }
             },
             "quick_search": {
                 "name": "quick_search",
                 "description": TOOL_DESC_QUICK_SEARCH,
                 "parameters": {
-                    "query": "搜索查询字符串",
-                    "limit": "返回结果数量（可选，默认10）"
+                    "query": "Search query string",
+                    "limit": "Number of results to return (optional, default 10)"
                 }
             },
             "interview_agents": {
                 "name": "interview_agents",
                 "description": TOOL_DESC_INTERVIEW_AGENTS,
                 "parameters": {
-                    "interview_topic": "采访主题或需求描述（如：'了解学生对宿舍甲醛事件的看法'）",
-                    "max_agents": "最多采访的Agent数量（可选，默认5，最大10）"
+                    "interview_topic": "Interview topic or requirement description",
+                    "max_agents": "Maximum number of agents to interview (optional, default 5, max 10)"
                 }
             }
         }
     
     def _execute_tool(self, tool_name: str, parameters: Dict[str, Any], report_context: str = "") -> str:
         """
-        执行工具调用
+        Execute tool invocation
         
         Args:
-            tool_name: 工具名称
-            parameters: 工具参数
-            report_context: 报告上下文（用于InsightForge）
+            tool_name: Tool name
+            parameters: Tool parameters
+            report_context: Report context (used by InsightForge)
             
         Returns:
-            工具执行结果（文本格式）
+            Tool execution result (text format)
         """
         logger.info(t('report.executingTool', toolName=tool_name, params=parameters))
         
@@ -986,7 +941,7 @@ class ReportAgent:
                 return result.to_text()
             
             elif tool_name == "panorama_search":
-                # 广度搜索 - 获取全貌
+                # Broad search - comprehensive overview
                 query = parameters.get("query", "")
                 include_expired = parameters.get("include_expired", True)
                 if isinstance(include_expired, str):
@@ -999,7 +954,7 @@ class ReportAgent:
                 return result.to_text()
             
             elif tool_name == "quick_search":
-                # 简单搜索 - 快速检索
+                # Fast search - rapid retrieval
                 query = parameters.get("query", "")
                 limit = parameters.get("limit", 10)
                 if isinstance(limit, str):
@@ -1012,7 +967,7 @@ class ReportAgent:
                 return result.to_text()
             
             elif tool_name == "interview_agents":
-                # 深度采访 - 调用真实的OASIS采访API获取模拟Agent的回答（双平台）
+                # In-depth interview - calls OASIS interview API for real agent responses (dual-platform)
                 interview_topic = parameters.get("interview_topic", parameters.get("query", ""))
                 max_agents = parameters.get("max_agents", 5)
                 if isinstance(max_agents, str):
@@ -1026,10 +981,10 @@ class ReportAgent:
                 )
                 return result.to_text()
             
-            # ========== 向后兼容的旧工具（内部重定向到新工具） ==========
+            # ========== Backward compatible legacy tools (redirected internally) ==========
             
             elif tool_name == "search_graph":
-                # 重定向到 quick_search
+                # Redirect to quick_search
                 logger.info(t('report.redirectToQuickSearch'))
                 return self._execute_tool("quick_search", parameters, report_context)
             
@@ -1046,7 +1001,7 @@ class ReportAgent:
                 return json.dumps(result, ensure_ascii=False, indent=2)
             
             elif tool_name == "get_simulation_context":
-                # 重定向到 insight_forge，因为它更强大
+                # Redirect to insight_forge
                 logger.info(t('report.redirectToInsightForge'))
                 query = parameters.get("query", self.simulation_requirement)
                 return self._execute_tool("insight_forge", {"query": query}, report_context)
@@ -1061,26 +1016,26 @@ class ReportAgent:
                 return json.dumps(result, ensure_ascii=False, indent=2)
             
             else:
-                return f"未知工具: {tool_name}。请使用以下工具之一: insight_forge, panorama_search, quick_search"
+                return f"Unknown tool: {tool_name}. Please use one of: insight_forge, panorama_search, quick_search, interview_agents"
                 
         except Exception as e:
             logger.error(t('report.toolExecFailed', toolName=tool_name, error=str(e)))
-            return f"工具执行失败: {str(e)}"
+            return f"Tool execution failed: {str(e)}"
     
-    # 合法的工具名称集合，用于裸 JSON 兜底解析时校验
+    # Valid tool names set, used for fallback bare-JSON parsing validation
     VALID_TOOL_NAMES = {"insight_forge", "panorama_search", "quick_search", "interview_agents"}
 
     def _parse_tool_calls(self, response: str) -> List[Dict[str, Any]]:
         """
-        从LLM响应中解析工具调用
+        Parse tool calls from LLM response
 
-        支持的格式（按优先级）：
+        Supported formats (by priority):
         1. <tool_call>{"name": "tool_name", "parameters": {...}}</tool_call>
-        2. 裸 JSON（响应整体或单行就是一个工具调用 JSON）
+        2. Bare JSON (response or single line is a tool call JSON)
         """
         tool_calls = []
 
-        # 格式1: XML风格（标准格式）
+        # Format 1: XML-style tags (standard format)
         xml_pattern = r'<tool_call>\s*(\{.*?\})\s*</tool_call>'
         for match in re.finditer(xml_pattern, response, re.DOTALL):
             try:
@@ -1092,8 +1047,8 @@ class ReportAgent:
         if tool_calls:
             return tool_calls
 
-        # 格式2: 兜底 - LLM 直接输出裸 JSON（没包 <tool_call> 标签）
-        # 只在格式1未匹配时尝试，避免误匹配正文中的 JSON
+        # Format 2: Fallback - LLM output bare JSON without <tool_call> tags
+        # Only attempted when Format 1 produces no matches
         stripped = response.strip()
         if stripped.startswith('{') and stripped.endswith('}'):
             try:
@@ -1104,7 +1059,7 @@ class ReportAgent:
             except json.JSONDecodeError:
                 pass
 
-        # 响应可能包含思考文字 + 裸 JSON，尝试提取最后一个 JSON 对象
+        # Response may contain thoughts + bare JSON; extract trailing JSON object
         json_pattern = r'(\{"(?:name|tool)"\s*:.*?\})\s*$'
         match = re.search(json_pattern, stripped, re.DOTALL)
         if match:
@@ -1118,11 +1073,11 @@ class ReportAgent:
         return tool_calls
 
     def _is_valid_tool_call(self, data: dict) -> bool:
-        """校验解析出的 JSON 是否是合法的工具调用"""
-        # 支持 {"name": ..., "parameters": ...} 和 {"tool": ..., "params": ...} 两种键名
+        """Validate whether parsed JSON is a valid tool call"""
+        # Supports both name/parameters and tool/params key conventions
         tool_name = data.get("name") or data.get("tool")
         if tool_name and tool_name in self.VALID_TOOL_NAMES:
-            # 统一键名为 name / parameters
+            # Standardize keys to name / parameters
             if "tool" in data:
                 data["name"] = data.pop("tool")
             if "params" in data and "parameters" not in data:
@@ -1131,13 +1086,13 @@ class ReportAgent:
         return False
     
     def _get_tools_description(self) -> str:
-        """生成工具描述文本"""
-        desc_parts = ["可用工具："]
+        """Generate tool description text"""
+        desc_parts = ["Available Tools:"]
         for name, tool in self.tools.items():
             params_desc = ", ".join([f"{k}: {v}" for k, v in tool["parameters"].items()])
             desc_parts.append(f"- {name}: {tool['description']}")
             if params_desc:
-                desc_parts.append(f"  参数: {params_desc}")
+                desc_parts.append(f"  Parameters: {params_desc}")
         return "\n".join(desc_parts)
 
     @staticmethod
@@ -1178,22 +1133,22 @@ class ReportAgent:
         progress_callback: Optional[Callable] = None
     ) -> ReportOutline:
         """
-        规划报告大纲
+        Plan report outline
         
-        使用LLM分析模拟需求，规划报告的目录结构
+        Uses LLM to analyze simulation requirements and design report outline
         
         Args:
-            progress_callback: 进度回调函数
+            progress_callback: Progress callback function
             
         Returns:
-            ReportOutline: 报告大纲
+            ReportOutline: Report outline
         """
         logger.info(t('report.startPlanningOutline'))
         
         if progress_callback:
             progress_callback("planning", 0, t('progress.analyzingRequirements'))
         
-        # 首先获取模拟上下文
+        # First retrieve simulation context
         context = self.zep_tools.get_simulation_context(
             graph_id=self.graph_id,
             simulation_requirement=self.simulation_requirement
@@ -1224,7 +1179,7 @@ class ReportAgent:
             if progress_callback:
                 progress_callback("planning", 80, t('progress.parsingOutline'))
             
-            # 解析大纲
+            # Parse outline
             sections = []
             for section_data in response.get("sections", []):
                 sections.append(ReportSection(
@@ -1233,7 +1188,7 @@ class ReportAgent:
                 ))
             
             outline = ReportOutline(
-                title=response.get("title", "模拟分析报告"),
+                title=response.get("title", "Simulation Analysis Report"),
                 summary=response.get("summary", ""),
                 sections=sections
             )
@@ -1246,14 +1201,14 @@ class ReportAgent:
             
         except Exception as e:
             logger.error(t('report.outlinePlanFailed', error=str(e)))
-            # 返回默认大纲（3个章节，作为fallback）
+            # Fallback default outline (3 sections)
             return ReportOutline(
-                title="未来预测报告",
-                summary="基于模拟预测的未来趋势与风险分析",
+                title="Future Forecast Report",
+                summary="Future trends and risk analysis based on simulation forecast",
                 sections=[
-                    ReportSection(title="预测场景与核心发现"),
-                    ReportSection(title="人群行为预测分析"),
-                    ReportSection(title="趋势展望与风险提示")
+                    ReportSection(title="Scenario Setup & Core Forecast Findings"),
+                    ReportSection(title="Cohort Behavioral Forecast Analysis"),
+                    ReportSection(title="Trends Outlook & Risk Assessment")
                 ]
             )
     
@@ -1266,28 +1221,28 @@ class ReportAgent:
         section_index: int = 0
     ) -> str:
         """
-        使用ReACT模式生成单个章节内容
+        Generate single section content using ReACT pattern
         
-        ReACT循环：
-        1. Thought（思考）- 分析需要什么信息
-        2. Action（行动）- 调用工具获取信息
-        3. Observation（观察）- 分析工具返回结果
-        4. 重复直到信息足够或达到最大次数
-        5. Final Answer（最终回答）- 生成章节内容
+        ReACT Loop:
+        1. Thought - Analyze what information is needed
+        2. Action - Invoke tools to retrieve data
+        3. Observation - Analyze tool results
+        4. Repeat until sufficient evidence gathered or limit reached
+        5. Final Answer - Generate section content
         
         Args:
-            section: 要生成的章节
-            outline: 完整大纲
-            previous_sections: 之前章节的内容（用于保持连贯性）
-            progress_callback: 进度回调
-            section_index: 章节索引（用于日志记录）
+            section: Target section to generate
+            outline: Full outline
+            previous_sections: Previous sections content (for continuity)
+            progress_callback: Progress callback
+            section_index: Section index (for logging)
             
         Returns:
-            章节内容（Markdown格式）
+            Section content (Markdown format)
         """
         logger.info(t('report.reactGenerateSection', title=section.title))
         
-        # 记录章节开始日志
+        # Log section start
         if self.report_logger:
             self.report_logger.log_section_start(section.title, section_index)
         
@@ -1300,16 +1255,16 @@ class ReportAgent:
         )
         system_prompt = f"{system_prompt}\n\n{get_language_instruction()}"
 
-        # 构建用户prompt - 每个已完成章节各传入最大4000字
+        # Build user prompt - up to 4000 chars per completed section
         if previous_sections:
             previous_parts = []
             for sec in previous_sections:
-                # 每个章节最多4000字
+                # Up to 4000 chars per section
                 truncated = sec[:4000] + "..." if len(sec) > 4000 else sec
                 previous_parts.append(truncated)
             previous_content = "\n\n---\n\n".join(previous_parts)
         else:
-            previous_content = "（这是第一个章节）"
+            previous_content = "(This is the first section)"
         
         user_prompt = SECTION_USER_PROMPT_TEMPLATE.format(
             previous_content=previous_content,
@@ -1321,16 +1276,16 @@ class ReportAgent:
             {"role": "user", "content": user_prompt}
         ]
         
-        # ReACT循环
+        # ReACT Loop
         tool_calls_count = 0
-        max_iterations = 5  # 最大迭代轮数
-        min_tool_calls = 3  # 最少工具调用次数
-        conflict_retries = 0  # 工具调用与Final Answer同时出现的连续冲突次数
-        used_tools = set()  # 记录已调用过的工具名
+        max_iterations = 5  # Max iterations
+        min_tool_calls = 3  # Min tool calls required
+        conflict_retries = 0  # Consecutive conflict count
+        used_tools = set()  # Track invoked tool names
         all_tools = {"insight_forge", "panorama_search", "quick_search", "interview_agents"}
 
-        # 报告上下文，用于InsightForge的子问题生成
-        report_context = f"章节标题: {section.title}\n模拟需求: {self.simulation_requirement}"
+        # Section context for InsightForge sub-queries
+        report_context = f"Section Title: {section.title}\nSimulation Requirement: {self.simulation_requirement}"
         
         for iteration in range(max_iterations):
             if progress_callback:
@@ -1340,32 +1295,32 @@ class ReportAgent:
                     t('progress.deepSearchAndWrite', current=tool_calls_count, max=self.MAX_TOOL_CALLS_PER_SECTION)
                 )
             
-            # 调用LLM
+            # Call LLM
             response = self.llm.chat(
                 messages=messages,
                 temperature=0.5,
                 max_tokens=4096
             )
 
-            # 检查 LLM 返回是否为 None（API 异常或内容为空）
+            # Check if LLM response is None (API error or empty)
             if response is None:
                 logger.warning(t('report.sectionIterNone', title=section.title, iteration=iteration + 1))
-                # 如果还有迭代次数，添加消息并重试
+                # If iterations remain, append message and retry
                 if iteration < max_iterations - 1:
-                    messages.append({"role": "assistant", "content": "（响应为空）"})
-                    messages.append({"role": "user", "content": "请继续生成内容。"})
+                    messages.append({"role": "assistant", "content": "(Empty response)"})
+                    messages.append({"role": "user", "content": "Please continue generating content."})
                     continue
-                # 最后一次迭代也返回 None，跳出循环进入强制收尾
+                # Exit loop on final iteration if still None
                 break
 
-            logger.debug(f"LLM响应: {response[:200]}...")
+            logger.debug(f"LLM response: {response[:200]}...")
 
-            # 解析一次，复用结果
+            # Parse once and reuse
             tool_calls = self._parse_tool_calls(response)
             has_tool_calls = bool(tool_calls)
             has_final_answer = "Final Answer:" in response
 
-            # ── 冲突处理：LLM 同时输出了工具调用和 Final Answer ──
+            # ── Conflict handling: LLM output both tool call and Final Answer ──
             if has_tool_calls and has_final_answer:
                 conflict_retries += 1
                 logger.warning(
@@ -1373,22 +1328,22 @@ class ReportAgent:
                 )
 
                 if conflict_retries <= 2:
-                    # 前两次：丢弃本次响应，要求 LLM 重新回复
+                    # First two attempts: discard and ask LLM to re-respond cleanly
                     cleaned_response = ReportAgent._strip_fake_tool_results(response)
                     messages.append({"role": "assistant", "content": cleaned_response})
                     messages.append({
                         "role": "user",
                         "content": (
-                            "【格式错误】你在一次回复中同时包含了工具调用和 Final Answer，这是不允许的。\n"
-                            "每次回复只能做以下两件事之一：\n"
-                            "- 调用一个工具（输出一个 <tool_call> 块，不要写 Final Answer）\n"
-                            "- 输出最终内容（以 'Final Answer:' 开头，不要包含 <tool_call>）\n"
-                            "请重新回复，只做其中一件事。"
+                            "[Format Error] You included both a tool call and Final Answer in the same response, which is not permitted.\n"
+                            "Each response must perform only ONE action:\n"
+                            "- Call a tool (output a single <tool_call> block without Final Answer)\n"
+                            "- Output final content (starting with 'Final Answer:' without <tool_call>)\n"
+                            "Please re-respond performing only one of these actions."
                         ),
                     })
                     continue
                 else:
-                    # 第三次：降级处理，截断到第一个工具调用，强制执行
+                    # Third attempt: fallback truncate to first tool call and execute
                     logger.warning(
                         t('report.sectionConflictDowngrade', title=section.title, conflictCount=conflict_retries)
                     )
@@ -1400,7 +1355,7 @@ class ReportAgent:
                     has_final_answer = False
                     conflict_retries = 0
 
-            # 记录 LLM 响应日志
+            # Log LLM response
             if self.report_logger:
                 self.report_logger.log_llm_response(
                     section_title=section.title,
@@ -1411,14 +1366,14 @@ class ReportAgent:
                     has_final_answer=has_final_answer
                 )
 
-            # ── 情况1：LLM 输出了 Final Answer ──
+            # ── Case 1: LLM output Final Answer ──
             if has_final_answer:
                 cleaned_response = ReportAgent._strip_fake_tool_results(response)
-                # 工具调用次数不足，拒绝并要求继续调工具
+                # Insufficient tool calls, reject and prompt to continue retrieval
                 if tool_calls_count < min_tool_calls:
                     messages.append({"role": "assistant", "content": cleaned_response})
                     unused_tools = all_tools - used_tools
-                    unused_hint = f"（这些工具还未使用，推荐用一下他们: {', '.join(unused_tools)}）" if unused_tools else ""
+                    unused_hint = f" (Unused tools recommended: {', '.join(unused_tools)})" if unused_tools else ""
                     messages.append({
                         "role": "user",
                         "content": REACT_INSUFFICIENT_TOOLS_MSG.format(
@@ -1429,7 +1384,7 @@ class ReportAgent:
                     })
                     continue
 
-                # 正常结束
+                # Normal completion
                 final_answer = cleaned_response.split("Final Answer:")[-1].strip()
                 logger.info(t('report.sectionGenDone', title=section.title, count=tool_calls_count))
 
@@ -1442,9 +1397,9 @@ class ReportAgent:
                     )
                 return final_answer
 
-            # ── 情况2：LLM 尝试调用工具 ──
+            # ── Case 2: LLM attempted tool call ──
             if has_tool_calls:
-                # 工具额度已耗尽 → 明确告知，要求输出 Final Answer
+                # Tool budget exhausted -> instruct to output Final Answer
                 if tool_calls_count >= self.MAX_TOOL_CALLS_PER_SECTION:
                     cleaned_response = ReportAgent._strip_fake_tool_results(response)
                     messages.append({"role": "assistant", "content": cleaned_response})
@@ -1457,7 +1412,7 @@ class ReportAgent:
                     })
                     continue
 
-                # 只执行第一个工具调用
+                # Execute only first tool call
                 call = tool_calls[0]
                 if len(tool_calls) > 1:
                     logger.info(t('report.multiToolOnlyFirst', total=len(tool_calls), toolName=call['name']))
@@ -1489,7 +1444,7 @@ class ReportAgent:
                 tool_calls_count += 1
                 used_tools.add(call['name'])
 
-                # 构建未使用工具提示
+                # Build unused tools hint
                 unused_tools = all_tools - used_tools
                 unused_hint = ""
                 if unused_tools and tool_calls_count < self.MAX_TOOL_CALLS_PER_SECTION:
@@ -1510,14 +1465,14 @@ class ReportAgent:
                 })
                 continue
 
-            # ── 情况3：既没有工具调用，也没有 Final Answer ──
+            # ── Case 3: Neither tool call nor Final Answer present ──
             cleaned_response = ReportAgent._strip_fake_tool_results(response)
             messages.append({"role": "assistant", "content": cleaned_response})
 
             if tool_calls_count < min_tool_calls:
-                # 工具调用次数不足，推荐未用过的工具
+                # Tool calls insufficient, recommend unused tools
                 unused_tools = all_tools - used_tools
-                unused_hint = f"（这些工具还未使用，推荐用一下他们: {', '.join(unused_tools)}）" if unused_tools else ""
+                unused_hint = f" (Unused tools recommended: {', '.join(unused_tools)})" if unused_tools else ""
 
                 messages.append({
                     "role": "user",
@@ -1529,8 +1484,8 @@ class ReportAgent:
                 })
                 continue
 
-            # 工具调用已足够，LLM 输出了内容但没带 "Final Answer:" 前缀
-            # 直接将这段内容作为最终答案，不再空转
+            # Tool calls sufficient, LLM output body content without Final Answer prefix
+            # Accept body content directly as final answer
             logger.info(t('report.sectionNoPrefix', title=section.title, count=tool_calls_count))
             final_answer = cleaned_response
 
@@ -1543,7 +1498,7 @@ class ReportAgent:
                 )
             return final_answer
         
-        # 达到最大迭代次数，强制生成内容
+        # Max iterations reached, force finalize content
         logger.warning(t('report.sectionMaxIter', title=section.title))
         messages.append({"role": "user", "content": REACT_FORCE_FINAL_MSG})
         
@@ -1553,7 +1508,7 @@ class ReportAgent:
             max_tokens=4096
         )
 
-        # 检查强制收尾时 LLM 返回是否为 None
+        # Check if force finalize response is None
         if response is None:
             logger.error(t('report.sectionForceFailed', title=section.title))
             final_answer = t('report.sectionGenFailedContent')
@@ -1562,7 +1517,7 @@ class ReportAgent:
         else:
             final_answer = response
         
-        # 记录章节内容生成完成日志
+        # Log section content generation complete
         if self.report_logger:
             self.report_logger.log_section_content(
                 section_title=section.title,
@@ -1579,29 +1534,29 @@ class ReportAgent:
         report_id: Optional[str] = None
     ) -> Report:
         """
-        生成完整报告（分章节实时输出）
+        Generate complete report with real-time section-by-section streaming
         
-        每个章节生成完成后立即保存到文件夹，不需要等待整个报告完成。
-        文件结构：
+        Saves each section immediately to disk upon completion without waiting for full report.
+        File structure:
         reports/{report_id}/
-            meta.json       - 报告元信息
-            outline.json    - 报告大纲
-            progress.json   - 生成进度
-            section_01.md   - 第1章节
-            section_02.md   - 第2章节
+            meta.json       - Report metadata
+            outline.json    - Report outline
+            progress.json   - Generation progress
+            section_01.md   - Section 1
+            section_02.md   - Section 2
             ...
-            full_report.md  - 完整报告
+            full_report.md  - Assembled complete report
         
         Args:
-            progress_callback: 进度回调函数 (stage, progress, message)
-            report_id: 报告ID（可选，如果不传则自动生成）
+            progress_callback: Progress callback function (stage, progress, message)
+            report_id: Report ID (optional, auto-generated if omitted)
             
         Returns:
-            Report: 完整报告
+            Report: Complete report object
         """
         import uuid
         
-        # 如果没有传入 report_id，则自动生成
+        # Auto-generate report_id if not supplied
         if not report_id:
             report_id = f"report_{uuid.uuid4().hex[:12]}"
         start_time = datetime.now()
@@ -1615,14 +1570,14 @@ class ReportAgent:
             created_at=datetime.now().isoformat()
         )
         
-        # 已完成的章节标题列表（用于进度追踪）
+        # Completed section titles list (for progress tracking)
         completed_section_titles = []
         
         try:
-            # 初始化：创建报告文件夹并保存初始状态
+            # Initialize report folder and persist initial state
             ReportManager._ensure_report_folder(report_id)
             
-            # 初始化日志记录器（结构化日志 agent_log.jsonl）
+            # Initialize structured action logger (agent_log.jsonl)
             self.report_logger = ReportLogger(report_id)
             self.report_logger.log_start(
                 simulation_id=self.simulation_id,
@@ -1630,7 +1585,7 @@ class ReportAgent:
                 simulation_requirement=self.simulation_requirement
             )
             
-            # 初始化控制台日志记录器（console_log.txt）
+            # Initialize console logger (console_log.txt)
             self.console_logger = ReportConsoleLogger(report_id)
             
             ReportManager.update_progress(
@@ -1639,14 +1594,14 @@ class ReportAgent:
             )
             ReportManager.save_report(report)
             
-            # 阶段1: 规划大纲
+            # Stage 1: Plan outline
             report.status = ReportStatus.PLANNING
             ReportManager.update_progress(
                 report_id, "planning", 5, t('progress.startPlanningOutline'),
                 completed_sections=[]
             )
             
-            # 记录规划开始日志
+            # Log planning start
             self.report_logger.log_planning_start()
             
             if progress_callback:
@@ -1658,10 +1613,10 @@ class ReportAgent:
             )
             report.outline = outline
             
-            # 记录规划完成日志
+            # Log planning complete
             self.report_logger.log_planning_complete(outline.to_dict())
             
-            # 保存大纲到文件
+            # Save outline to disk
             ReportManager.save_outline(report_id, outline)
             ReportManager.update_progress(
                 report_id, "planning", 15, t('progress.outlineDone', count=len(outline.sections)),
@@ -1671,17 +1626,17 @@ class ReportAgent:
             
             logger.info(t('report.outlineSavedToFile', reportId=report_id))
             
-            # 阶段2: 逐章节生成（分章节保存）
+            # Stage 2: Generate section by section (streaming save)
             report.status = ReportStatus.GENERATING
             
             total_sections = len(outline.sections)
-            generated_sections = []  # 保存内容用于上下文
+            generated_sections = []  # Store contents for context
             
             for i, section in enumerate(outline.sections):
                 section_num = i + 1
                 base_progress = 20 + int((i / total_sections) * 70)
                 
-                # 更新进度
+                # Update progress
                 ReportManager.update_progress(
                     report_id, "generating", base_progress,
                     t('progress.generatingSection', title=section.title, current=section_num, total=total_sections),
@@ -1696,7 +1651,7 @@ class ReportAgent:
                         t('progress.generatingSection', title=section.title, current=section_num, total=total_sections)
                     )
                 
-                # 生成主章节内容
+                # Generate section content
                 section_content = self._generate_section_react(
                     section=section,
                     outline=outline,
@@ -1713,11 +1668,11 @@ class ReportAgent:
                 section.content = section_content
                 generated_sections.append(f"## {section.title}\n\n{section_content}")
 
-                # 保存章节
+                # Save section
                 ReportManager.save_section(report_id, section_num, section)
                 completed_section_titles.append(section.title)
 
-                # 记录章节完成日志
+                # Log section complete
                 full_section_content = f"## {section.title}\n\n{section_content}"
 
                 if self.report_logger:
@@ -1729,7 +1684,7 @@ class ReportAgent:
 
                 logger.info(t('report.sectionSaved', reportId=report_id, sectionNum=f"{section_num:02d}"))
                 
-                # 更新进度
+                # Update progress
                 ReportManager.update_progress(
                     report_id, "generating", 
                     base_progress + int(70 / total_sections),
@@ -1738,7 +1693,7 @@ class ReportAgent:
                     completed_sections=completed_section_titles
                 )
             
-            # 阶段3: 组装完整报告
+            # Stage 3: Assemble full report
             if progress_callback:
                 progress_callback("generating", 95, t('progress.assemblingReport'))
             
@@ -1747,22 +1702,22 @@ class ReportAgent:
                 completed_sections=completed_section_titles
             )
             
-            # 使用ReportManager组装完整报告
+            # Assemble full report via ReportManager
             report.markdown_content = ReportManager.assemble_full_report(report_id, outline)
             report.status = ReportStatus.COMPLETED
             report.completed_at = datetime.now().isoformat()
             
-            # 计算总耗时
+            # Calculate total elapsed time
             total_time_seconds = (datetime.now() - start_time).total_seconds()
             
-            # 记录报告完成日志
+            # Log report complete
             if self.report_logger:
                 self.report_logger.log_report_complete(
                     total_sections=total_sections,
                     total_time_seconds=total_time_seconds
                 )
             
-            # 保存最终报告
+            # Save final report
             ReportManager.save_report(report)
             ReportManager.update_progress(
                 report_id, "completed", 100, t('progress.reportComplete'),
@@ -1774,7 +1729,7 @@ class ReportAgent:
             
             logger.info(t('report.reportGenDone', reportId=report_id))
             
-            # 关闭控制台日志记录器
+            # Close console logger
             if self.console_logger:
                 self.console_logger.close()
                 self.console_logger = None
@@ -1786,11 +1741,11 @@ class ReportAgent:
             report.status = ReportStatus.FAILED
             report.error = str(e)
             
-            # 记录错误日志
+            # Log error event
             if self.report_logger:
                 self.report_logger.log_error(str(e), "failed")
             
-            # 保存失败状态
+            # Save failed state
             try:
                 ReportManager.save_report(report)
                 ReportManager.update_progress(
@@ -1798,9 +1753,9 @@ class ReportAgent:
                     completed_sections=completed_section_titles
                 )
             except Exception:
-                pass  # 忽略保存失败的错误
+                pass  # Ignore failure saving error
             
-            # 关闭控制台日志记录器
+            # Close console logger
             if self.console_logger:
                 self.console_logger.close()
                 self.console_logger = None
@@ -1813,60 +1768,60 @@ class ReportAgent:
         chat_history: List[Dict[str, str]] = None
     ) -> Dict[str, Any]:
         """
-        与Report Agent对话
+        Chat with Report Agent.
         
-        在对话中Agent可以自主调用检索工具来回答问题
+        Agent autonomously queries retrieval tools to answer user questions.
         
         Args:
-            message: 用户消息
-            chat_history: 对话历史
+            message: User message
+            chat_history: Chat history
             
         Returns:
             {
-                "response": "Agent回复",
-                "tool_calls": [调用的工具列表],
-                "sources": [信息来源]
+                "response": "Agent response",
+                "tool_calls": [List of invoked tools],
+                "sources": [Information sources]
             }
         """
         logger.info(t('report.agentChat', message=message[:50]))
         
         chat_history = chat_history or []
         
-        # 获取已生成的报告内容
+        # Retrieve generated report content
         report_content = ""
         try:
             report = ReportManager.get_report_by_simulation(self.simulation_id)
             if report and report.markdown_content:
-                # 限制报告长度，避免上下文过长
+                # Truncate report content to prevent context overflow
                 report_content = report.markdown_content[:15000]
                 if len(report.markdown_content) > 15000:
-                    report_content += "\n\n... [报告内容已截断] ..."
+                    report_content += "\n\n... [Report content truncated] ..."
         except Exception as e:
             logger.warning(t('report.fetchReportFailed', error=e))
         
         system_prompt = CHAT_SYSTEM_PROMPT_TEMPLATE.format(
             simulation_requirement=self.simulation_requirement,
-            report_content=report_content if report_content else "（暂无报告）",
+            report_content=report_content if report_content else "(No report available)",
             tools_description=self._get_tools_description(),
         )
         system_prompt = f"{system_prompt}\n\n{get_language_instruction()}"
 
-        # 构建消息
+        # Construct messages
         messages = [{"role": "system", "content": system_prompt}]
         
-        # 添加历史对话
-        for h in chat_history[-10:]:  # 限制历史长度
+        # Append chat history
+        for h in chat_history[-10:]:  # Limit history window
             messages.append(h)
         
-        # 添加用户消息
+        # Append user message
         messages.append({
             "role": "user", 
             "content": message
         })
         
-        # ReACT循环（简化版）
+        # ReACT Loop (simplified)
         tool_calls_made = []
-        max_iterations = 2  # 减少迭代轮数
+        max_iterations = 2  # Limit iterations
         
         for iteration in range(max_iterations):
             response = self.llm.chat(
@@ -1874,11 +1829,11 @@ class ReportAgent:
                 temperature=0.5
             )
             
-            # 解析工具调用
+            # Parse tool calls
             tool_calls = self._parse_tool_calls(response)
             
             if not tool_calls:
-                # 没有工具调用，直接返回响应
+                # No tool calls, return response directly
                 clean_response = re.sub(r'<tool_call>.*?</tool_call>', '', response, flags=re.DOTALL)
                 clean_response = re.sub(r'\[TOOL_CALL\].*?\)', '', clean_response)
                 clean_response = ReportAgent._strip_fake_tool_results(clean_response)
@@ -1889,34 +1844,34 @@ class ReportAgent:
                     "sources": [tc.get("parameters", {}).get("query", "") for tc in tool_calls_made]
                 }
             
-            # 执行工具调用（限制数量）
+            # Execute tool invocation (constrained count)
             tool_results = []
-            for call in tool_calls[:1]:  # 每轮最多执行1次工具调用
+            for call in tool_calls[:1]:  # Max 1 tool call per turn
                 if len(tool_calls_made) >= self.MAX_TOOL_CALLS_PER_CHAT:
                     break
                 result = self._execute_tool(call["name"], call.get("parameters", {}))
                 tool_results.append({
                     "tool": call["name"],
-                    "result": result[:1500]  # 限制结果长度
+                    "result": result[:1500]  # Truncate result length
                 })
                 tool_calls_made.append(call)
             
-            # 将结果添加到消息
+            # Append results to messages
             cleaned_response = ReportAgent._strip_fake_tool_results(response)
             messages.append({"role": "assistant", "content": cleaned_response})
-            observation = "\n".join([f"[{r['tool']}结果]\n{r['result']}" for r in tool_results])
+            observation = "\n".join([f"[{r['tool']} Result]\n{r['result']}" for r in tool_results])
             messages.append({
                 "role": "user",
                 "content": observation + CHAT_OBSERVATION_SUFFIX
             })
         
-        # 达到最大迭代，获取最终响应
+        # Max iterations reached, retrieve final response
         final_response = self.llm.chat(
             messages=messages,
             temperature=0.5
         )
         
-        # 清理响应
+        # Clean response
         clean_response = re.sub(r'<tool_call>.*?</tool_call>', '', final_response, flags=re.DOTALL)
         clean_response = re.sub(r'\[TOOL_CALL\].*?\)', '', clean_response)
         clean_response = ReportAgent._strip_fake_tool_results(clean_response)
@@ -1930,95 +1885,94 @@ class ReportAgent:
 
 class ReportManager:
     """
-    报告管理器
+    Report Manager
     
-    负责报告的持久化存储和检索
+    Manages report persistence and retrieval.
     
-    文件结构（分章节输出）：
+    File structure (section-by-section streaming):
     reports/
       {report_id}/
-        meta.json          - 报告元信息和状态
-        outline.json       - 报告大纲
-        progress.json      - 生成进度
-        section_01.md      - 第1章节
-        section_02.md      - 第2章节
+        meta.json          - Report metadata and status
+        outline.json       - Report outline
+        progress.json      - Generation progress
+        section_01.md      - Section 1
+        section_02.md      - Section 2
         ...
-        full_report.md     - 完整报告
+        full_report.md     - Assembled complete report
     """
     
-    # 报告存储目录
+    # Report storage directory
     REPORTS_DIR = os.path.join(Config.UPLOAD_FOLDER, 'reports')
     
     @classmethod
     def _ensure_reports_dir(cls):
-        """确保报告根目录存在"""
+        """Ensure report root directory exists"""
         os.makedirs(cls.REPORTS_DIR, exist_ok=True)
     
     @classmethod
     def _get_report_folder(cls, report_id: str) -> str:
-        """获取报告文件夹路径"""
+        """Get report folder path"""
         return os.path.join(cls.REPORTS_DIR, report_id)
     
     @classmethod
     def _ensure_report_folder(cls, report_id: str) -> str:
-        """确保报告文件夹存在并返回路径"""
+        """Ensure report directory exists and return path"""
         folder = cls._get_report_folder(report_id)
         os.makedirs(folder, exist_ok=True)
         return folder
     
     @classmethod
     def _get_report_path(cls, report_id: str) -> str:
-        """获取报告元信息文件路径"""
+        """Get report metadata file path"""
         return os.path.join(cls._get_report_folder(report_id), "meta.json")
     
     @classmethod
     def _get_report_markdown_path(cls, report_id: str) -> str:
-        """获取完整报告Markdown文件路径"""
+        """Get full report Markdown file path"""
         return os.path.join(cls._get_report_folder(report_id), "full_report.md")
     
     @classmethod
     def _get_outline_path(cls, report_id: str) -> str:
-        """获取大纲文件路径"""
+        """Get outline file path"""
         return os.path.join(cls._get_report_folder(report_id), "outline.json")
     
     @classmethod
     def _get_progress_path(cls, report_id: str) -> str:
-        """获取进度文件路径"""
+        """Get progress file path"""
         return os.path.join(cls._get_report_folder(report_id), "progress.json")
     
     @classmethod
     def _get_section_path(cls, report_id: str, section_index: int) -> str:
-        """获取章节Markdown文件路径"""
+        """Get section Markdown file path"""
         return os.path.join(cls._get_report_folder(report_id), f"section_{section_index:02d}.md")
     
     @classmethod
     def _get_agent_log_path(cls, report_id: str) -> str:
-        """获取 Agent 日志文件路径"""
+        """Get agent log file path"""
         return os.path.join(cls._get_report_folder(report_id), "agent_log.jsonl")
     
     @classmethod
     def _get_console_log_path(cls, report_id: str) -> str:
-        """获取控制台日志文件路径"""
+        """Get console log file path"""
         return os.path.join(cls._get_report_folder(report_id), "console_log.txt")
     
     @classmethod
     def get_console_log(cls, report_id: str, from_line: int = 0) -> Dict[str, Any]:
         """
-        获取控制台日志内容
+        Retrieve console log content.
         
-        这是报告生成过程中的控制台输出日志（INFO、WARNING等），
-        与 agent_log.jsonl 的结构化日志不同。
+        Contains raw console output (INFO, WARNING, etc.) distinct from structured agent_log.jsonl.
         
         Args:
-            report_id: 报告ID
-            from_line: 从第几行开始读取（用于增量获取，0 表示从头开始）
+            report_id: Report ID
+            from_line: Line offset to read from (0 for entire file)
             
         Returns:
             {
-                "logs": [日志行列表],
-                "total_lines": 总行数,
-                "from_line": 起始行号,
-                "has_more": 是否还有更多日志
+                "logs": [List of log lines],
+                "total_lines": Total line count,
+                "from_line": Starting line offset,
+                "has_more": Whether more logs remain
             }
         """
         log_path = cls._get_console_log_path(report_id)
@@ -2038,26 +1992,26 @@ class ReportManager:
             for i, line in enumerate(f):
                 total_lines = i + 1
                 if i >= from_line:
-                    # 保留原始日志行，去掉末尾换行符
+                    # Retain log lines without trailing newlines
                     logs.append(line.rstrip('\n\r'))
         
         return {
             "logs": logs,
             "total_lines": total_lines,
             "from_line": from_line,
-            "has_more": False  # 已读取到末尾
+            "has_more": False  # Reached end of file
         }
     
     @classmethod
     def get_console_log_stream(cls, report_id: str) -> List[str]:
         """
-        获取完整的控制台日志（一次性获取全部）
+        Retrieve complete console logs (all at once)
         
         Args:
-            report_id: 报告ID
+            report_id: Report ID
             
         Returns:
-            日志行列表
+            List of log lines
         """
         result = cls.get_console_log(report_id, from_line=0)
         return result["logs"]
@@ -2065,18 +2019,18 @@ class ReportManager:
     @classmethod
     def get_agent_log(cls, report_id: str, from_line: int = 0) -> Dict[str, Any]:
         """
-        获取 Agent 日志内容
+        Retrieve Agent log content
         
         Args:
-            report_id: 报告ID
-            from_line: 从第几行开始读取（用于增量获取，0 表示从头开始）
+            report_id: Report ID
+            from_line: Line offset to read from (0 for entire file)
             
         Returns:
             {
-                "logs": [日志条目列表],
-                "total_lines": 总行数,
-                "from_line": 起始行号,
-                "has_more": 是否还有更多日志
+                "logs": [List of log entries],
+                "total_lines": Total line count,
+                "from_line": Starting line offset,
+                "has_more": Whether more logs remain
             }
         """
         log_path = cls._get_agent_log_path(report_id)
@@ -2100,26 +2054,26 @@ class ReportManager:
                         log_entry = json.loads(line.strip())
                         logs.append(log_entry)
                     except json.JSONDecodeError:
-                        # 跳过解析失败的行
+                        # Skip unparseable lines
                         continue
         
         return {
             "logs": logs,
             "total_lines": total_lines,
             "from_line": from_line,
-            "has_more": False  # 已读取到末尾
+            "has_more": False  # Reached end of file
         }
     
     @classmethod
     def get_agent_log_stream(cls, report_id: str) -> List[Dict[str, Any]]:
         """
-        获取完整的 Agent 日志（用于一次性获取全部）
+        Retrieve complete Agent logs (all at once)
         
         Args:
-            report_id: 报告ID
+            report_id: Report ID
             
         Returns:
-            日志条目列表
+            List of log entries
         """
         result = cls.get_agent_log(report_id, from_line=0)
         return result["logs"]
@@ -2127,9 +2081,9 @@ class ReportManager:
     @classmethod
     def save_outline(cls, report_id: str, outline: ReportOutline) -> None:
         """
-        保存报告大纲
+        Save report outline.
         
-        在规划阶段完成后立即调用
+        Invoked immediately after planning stage completes.
         """
         cls._ensure_report_folder(report_id)
         
@@ -2146,27 +2100,27 @@ class ReportManager:
         section: ReportSection
     ) -> str:
         """
-        保存单个章节
+        Save single section
 
-        在每个章节生成完成后立即调用，实现分章节输出
+        Invoked immediately upon section generation to support incremental streaming.
 
         Args:
-            report_id: 报告ID
-            section_index: 章节索引（从1开始）
-            section: 章节对象
+            report_id: Report ID
+            section_index: Section index (1-based)
+            section: Section object
 
         Returns:
-            保存的文件路径
+            Saved file path
         """
         cls._ensure_report_folder(report_id)
 
-        # 构建章节Markdown内容 - 清理可能存在的重复标题
+        # Build section Markdown content - strip redundant titles
         cleaned_content = cls._clean_section_content(section.content, section.title)
         md_content = f"## {section.title}\n\n"
         if cleaned_content:
             md_content += f"{cleaned_content}\n\n"
 
-        # 保存文件
+        # Save file
         file_suffix = f"section_{section_index:02d}.md"
         file_path = os.path.join(cls._get_report_folder(report_id), file_suffix)
         with open(file_path, 'w', encoding='utf-8') as f:
@@ -2178,17 +2132,17 @@ class ReportManager:
     @classmethod
     def _clean_section_content(cls, content: str, section_title: str) -> str:
         """
-        清理章节内容
+        Clean section content.
         
-        1. 移除内容开头与章节标题重复的Markdown标题行
-        2. 将所有 ### 及以下级别的标题转换为粗体文本
+        1. Strips redundant Markdown headers matching section title at start
+        2. Converts all sub-headers (###, etc.) to bold prose
         
         Args:
-            content: 原始内容
-            section_title: 章节标题
+            content: Raw content
+            section_title: Section title
             
         Returns:
-            清理后的内容
+            Cleaned content
         """
         import re
         
@@ -2203,26 +2157,26 @@ class ReportManager:
         for i, line in enumerate(lines):
             stripped = line.strip()
             
-            # 检查是否是Markdown标题行
+            # Check if line is a Markdown header
             heading_match = re.match(r'^(#{1,6})\s+(.+)$', stripped)
             
             if heading_match:
                 level = len(heading_match.group(1))
                 title_text = heading_match.group(2).strip()
                 
-                # 检查是否是与章节标题重复的标题（跳过前5行内的重复）
+                # Check if header duplicates section title (skip if within first 5 lines)
                 if i < 5:
                     if title_text == section_title or title_text.replace(' ', '') == section_title.replace(' ', ''):
                         skip_next_empty = True
                         continue
                 
-                # 将所有级别的标题（#, ##, ###, ####等）转换为粗体
-                # 因为章节标题由系统添加，内容中不应有任何标题
+                # Convert all header levels (#, ##, ###, ####, etc.) to bold text
+                # Section headers are added automatically by system; body contains no headers
                 cleaned_lines.append(f"**{title_text}**")
-                cleaned_lines.append("")  # 添加空行
+                cleaned_lines.append("")  # Add blank line
                 continue
             
-            # 如果上一行是被跳过的标题，且当前行为空，也跳过
+            # Skip empty line immediately following a stripped header
             if skip_next_empty and stripped == '':
                 skip_next_empty = False
                 continue
@@ -2230,14 +2184,14 @@ class ReportManager:
             skip_next_empty = False
             cleaned_lines.append(line)
         
-        # 移除开头的空行
+        # Remove leading empty lines
         while cleaned_lines and cleaned_lines[0].strip() == '':
             cleaned_lines.pop(0)
         
-        # 移除开头的分隔线
+        # Remove leading horizontal rules
         while cleaned_lines and cleaned_lines[0].strip() in ['---', '***', '___']:
             cleaned_lines.pop(0)
-            # 同时移除分隔线后的空行
+            # Remove blank lines following horizontal rules
             while cleaned_lines and cleaned_lines[0].strip() == '':
                 cleaned_lines.pop(0)
         
@@ -2254,9 +2208,9 @@ class ReportManager:
         completed_sections: List[str] = None
     ) -> None:
         """
-        更新报告生成进度
+        Update report generation progress.
         
-        前端可以通过读取progress.json获取实时进度
+        Frontend polls progress.json for real-time generation metrics.
         """
         cls._ensure_report_folder(report_id)
         
@@ -2274,7 +2228,7 @@ class ReportManager:
     
     @classmethod
     def get_progress(cls, report_id: str) -> Optional[Dict[str, Any]]:
-        """获取报告生成进度"""
+        """Get report generation progress"""
         path = cls._get_progress_path(report_id)
         
         if not os.path.exists(path):
@@ -2286,9 +2240,9 @@ class ReportManager:
     @classmethod
     def get_generated_sections(cls, report_id: str) -> List[Dict[str, Any]]:
         """
-        获取已生成的章节列表
+        Get list of generated sections.
         
-        返回所有已保存的章节文件信息
+        Returns metadata for all persisted section files.
         """
         folder = cls._get_report_folder(report_id)
         
@@ -2302,7 +2256,7 @@ class ReportManager:
                 with open(file_path, 'r', encoding='utf-8') as f:
                     content = f.read()
 
-                # 从文件名解析章节索引
+                # Parse section index from filename
                 parts = filename.replace('.md', '').split('_')
                 section_index = int(parts[1])
 
@@ -2317,26 +2271,26 @@ class ReportManager:
     @classmethod
     def assemble_full_report(cls, report_id: str, outline: ReportOutline) -> str:
         """
-        组装完整报告
+        Assemble full report.
         
-        从已保存的章节文件组装完整报告，并进行标题清理
+        Concatenates saved section files into complete report with title cleanup.
         """
         folder = cls._get_report_folder(report_id)
         
-        # 构建报告头部
+        # Build report header
         md_content = f"# {outline.title}\n\n"
         md_content += f"> {outline.summary}\n\n"
         md_content += f"---\n\n"
         
-        # 按顺序读取所有章节文件
+        # Sequentially read all section files
         sections = cls.get_generated_sections(report_id)
         for section_info in sections:
             md_content += section_info["content"]
         
-        # 后处理：清理整个报告的标题问题
+        # Post-processing: clean header hierarchy throughout report
         md_content = cls._post_process_report(md_content, outline)
         
-        # 保存完整报告
+        # Save full report
         full_path = cls._get_report_markdown_path(report_id)
         with open(full_path, 'w', encoding='utf-8') as f:
             f.write(md_content)
@@ -2347,18 +2301,18 @@ class ReportManager:
     @classmethod
     def _post_process_report(cls, content: str, outline: ReportOutline) -> str:
         """
-        后处理报告内容
+        Post-process report content.
         
-        1. 移除重复的标题
-        2. 保留报告主标题(#)和章节标题(##)，移除其他级别的标题(###, ####等)
-        3. 清理多余的空行和分隔线
+        1. Removes redundant headers
+        2. Retains main report header (#) and section headers (##); converts others to bold
+        3. Cleans extraneous blank lines and horizontal rules
         
         Args:
-            content: 原始报告内容
-            outline: 报告大纲
+            content: Raw report content
+            outline: Report outline
             
         Returns:
-            处理后的内容
+            Processed content
         """
         import re
         
@@ -2366,7 +2320,7 @@ class ReportManager:
         processed_lines = []
         prev_was_heading = False
         
-        # 收集大纲中的所有章节标题
+        # Collect all section titles from outline
         section_titles = set()
         for section in outline.sections:
             section_titles.add(section.title)
@@ -2376,14 +2330,14 @@ class ReportManager:
             line = lines[i]
             stripped = line.strip()
             
-            # 检查是否是标题行
+            # Check if line is a header
             heading_match = re.match(r'^(#{1,6})\s+(.+)$', stripped)
             
             if heading_match:
                 level = len(heading_match.group(1))
                 title = heading_match.group(2).strip()
                 
-                # 检查是否是重复标题（在连续5行内出现相同内容的标题）
+                # Check if header is duplicated within 5 lines
                 is_duplicate = False
                 for j in range(max(0, len(processed_lines) - 5), len(processed_lines)):
                     prev_line = processed_lines[j].strip()
@@ -2395,43 +2349,43 @@ class ReportManager:
                             break
                 
                 if is_duplicate:
-                    # 跳过重复标题及其后的空行
+                    # Skip duplicate header and following blank line
                     i += 1
                     while i < len(lines) and lines[i].strip() == '':
                         i += 1
                     continue
                 
-                # 标题层级处理：
-                # - # (level=1) 只保留报告主标题
-                # - ## (level=2) 保留章节标题
-                # - ### 及以下 (level>=3) 转换为粗体文本
+                # Header hierarchy normalization:
+                # - # (level=1) Main report title only
+                # - ## (level=2) Section titles
+                # - ### and lower (level>=3) Converted to bold prose
                 
                 if level == 1:
                     if title == outline.title:
-                        # 保留报告主标题
+                        # Retain main report title
                         processed_lines.append(line)
                         prev_was_heading = True
                     elif title in section_titles:
-                        # 章节标题错误使用了#，修正为##
+                        # Section title erroneously used #, fix to ##
                         processed_lines.append(f"## {title}")
                         prev_was_heading = True
                     else:
-                        # 其他一级标题转为粗体
+                        # Convert other level 1 headers to bold
                         processed_lines.append(f"**{title}**")
                         processed_lines.append("")
                         prev_was_heading = False
                 elif level == 2:
                     if title in section_titles or title == outline.title:
-                        # 保留章节标题
+                        # Retain section title
                         processed_lines.append(line)
                         prev_was_heading = True
                     else:
-                        # 非章节的二级标题转为粗体
+                        # Convert non-section level 2 headers to bold
                         processed_lines.append(f"**{title}**")
                         processed_lines.append("")
                         prev_was_heading = False
                 else:
-                    # ### 及以下级别的标题转换为粗体文本
+                    # Convert level 3+ headers to bold prose
                     processed_lines.append(f"**{title}**")
                     processed_lines.append("")
                     prev_was_heading = False
@@ -2440,12 +2394,12 @@ class ReportManager:
                 continue
             
             elif stripped == '---' and prev_was_heading:
-                # 跳过标题后紧跟的分隔线
+                # Skip horizontal rule immediately after header
                 i += 1
                 continue
             
             elif stripped == '' and prev_was_heading:
-                # 标题后只保留一个空行
+                # Retain single blank line after header
                 if processed_lines and processed_lines[-1].strip() != '':
                     processed_lines.append(line)
                 prev_was_heading = False
@@ -2456,7 +2410,7 @@ class ReportManager:
             
             i += 1
         
-        # 清理连续的多个空行（保留最多2个）
+        # Clean consecutive blank lines (retain max 2)
         result_lines = []
         empty_count = 0
         for line in processed_lines:
@@ -2472,18 +2426,18 @@ class ReportManager:
     
     @classmethod
     def save_report(cls, report: Report) -> None:
-        """保存报告元信息和完整报告"""
+        """Save report metadata and full report"""
         cls._ensure_report_folder(report.report_id)
         
-        # 保存元信息JSON
+        # Save metadata JSON
         with open(cls._get_report_path(report.report_id), 'w', encoding='utf-8') as f:
             json.dump(report.to_dict(), f, ensure_ascii=False, indent=2)
         
-        # 保存大纲
+        # Save outline
         if report.outline:
             cls.save_outline(report.report_id, report.outline)
         
-        # 保存完整Markdown报告
+        # Save complete Markdown report
         if report.markdown_content:
             with open(cls._get_report_markdown_path(report.report_id), 'w', encoding='utf-8') as f:
                 f.write(report.markdown_content)
@@ -2492,11 +2446,11 @@ class ReportManager:
     
     @classmethod
     def get_report(cls, report_id: str) -> Optional[Report]:
-        """获取报告"""
+        """Get report"""
         path = cls._get_report_path(report_id)
         
         if not os.path.exists(path):
-            # 兼容旧格式：检查直接存储在reports目录下的文件
+            # Backward compatibility: check files stored directly under reports directory
             old_path = os.path.join(cls.REPORTS_DIR, f"{report_id}.json")
             if os.path.exists(old_path):
                 path = old_path
@@ -2506,7 +2460,7 @@ class ReportManager:
         with open(path, 'r', encoding='utf-8') as f:
             data = json.load(f)
         
-        # 重建Report对象
+        # Reconstruct Report object
         outline = None
         if data.get('outline'):
             outline_data = data['outline']
@@ -2522,7 +2476,7 @@ class ReportManager:
                 sections=sections
             )
         
-        # 如果markdown_content为空，尝试从full_report.md读取
+        # If markdown_content is empty, read from full_report.md
         markdown_content = data.get('markdown_content', '')
         if not markdown_content:
             full_report_path = cls._get_report_markdown_path(report_id)
@@ -2545,17 +2499,17 @@ class ReportManager:
     
     @classmethod
     def get_report_by_simulation(cls, simulation_id: str) -> Optional[Report]:
-        """根据模拟ID获取报告"""
+        """Get report by simulation ID"""
         cls._ensure_reports_dir()
         
         for item in os.listdir(cls.REPORTS_DIR):
             item_path = os.path.join(cls.REPORTS_DIR, item)
-            # 新格式：文件夹
+            # Directory format
             if os.path.isdir(item_path):
                 report = cls.get_report(item)
                 if report and report.simulation_id == simulation_id:
                     return report
-            # 兼容旧格式：JSON文件
+            # Legacy format: JSON file
             elif item.endswith('.json'):
                 report_id = item[:-5]
                 report = cls.get_report(report_id)
@@ -2566,19 +2520,19 @@ class ReportManager:
     
     @classmethod
     def list_reports(cls, simulation_id: Optional[str] = None, limit: int = 50) -> List[Report]:
-        """列出报告"""
+        """List reports"""
         cls._ensure_reports_dir()
         
         reports = []
         for item in os.listdir(cls.REPORTS_DIR):
             item_path = os.path.join(cls.REPORTS_DIR, item)
-            # 新格式：文件夹
+            # Directory format
             if os.path.isdir(item_path):
                 report = cls.get_report(item)
                 if report:
                     if simulation_id is None or report.simulation_id == simulation_id:
                         reports.append(report)
-            # 兼容旧格式：JSON文件
+            # Legacy format: JSON file
             elif item.endswith('.json'):
                 report_id = item[:-5]
                 report = cls.get_report(report_id)
@@ -2586,25 +2540,25 @@ class ReportManager:
                     if simulation_id is None or report.simulation_id == simulation_id:
                         reports.append(report)
         
-        # 按创建时间倒序
+        # Sort by creation time descending
         reports.sort(key=lambda r: r.created_at, reverse=True)
         
         return reports[:limit]
     
     @classmethod
     def delete_report(cls, report_id: str) -> bool:
-        """删除报告（整个文件夹）"""
+        """Delete report directory"""
         import shutil
         
         folder_path = cls._get_report_folder(report_id)
         
-        # 新格式：删除整个文件夹
+        # Directory format: delete entire folder
         if os.path.exists(folder_path) and os.path.isdir(folder_path):
             shutil.rmtree(folder_path)
             logger.info(t('report.reportFolderDeleted', reportId=report_id))
             return True
         
-        # 兼容旧格式：删除单独的文件
+        # Legacy format: delete individual file
         deleted = False
         old_json_path = os.path.join(cls.REPORTS_DIR, f"{report_id}.json")
         old_md_path = os.path.join(cls.REPORTS_DIR, f"{report_id}.md")

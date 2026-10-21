@@ -13,6 +13,67 @@ from app.services.zep_entity_reader import EntityNode, ZepEntityReader
 from app.services.zep_tools import ZepToolsService
 
 
+def test_entity_reader_accepts_default_zep_entity_nodes_without_type_filter():
+    reader = object.__new__(ZepEntityReader)
+    reader.get_all_nodes = lambda _graph_id: [
+        {
+            "uuid": "node-1",
+            "name": "Alice",
+            "labels": ["Entity"],
+            "summary": "A participant",
+            "attributes": {},
+        },
+        {
+            "uuid": "node-2",
+            "name": "Acme",
+            "labels": ["Node"],
+            "summary": "An organization",
+            "attributes": {},
+        },
+    ]
+    reader.get_all_edges = lambda _graph_id: []
+
+    result = reader.filter_defined_entities(
+        "graph-id",
+        defined_entity_types=None,
+        enrich_with_edges=False,
+    )
+
+    assert result.filtered_count == 2
+    assert result.entity_types == {"Entity"}
+    assert all(entity.get_entity_type() == "Entity" for entity in result.entities)
+
+
+def test_entity_reader_keeps_explicit_type_filter_strict_but_case_insensitive():
+    reader = object.__new__(ZepEntityReader)
+    reader.get_all_nodes = lambda _graph_id: [
+        {
+            "uuid": "node-1",
+            "name": "Alice",
+            "labels": ["entity", "person"],
+            "summary": "",
+            "attributes": {},
+        },
+        {
+            "uuid": "node-2",
+            "name": "Unknown",
+            "labels": ["Entity"],
+            "summary": "",
+            "attributes": {},
+        },
+    ]
+    reader.get_all_edges = lambda _graph_id: []
+
+    result = reader.filter_defined_entities(
+        "graph-id",
+        defined_entity_types=["Person"],
+        enrich_with_edges=False,
+    )
+
+    assert result.filtered_count == 1
+    assert result.entity_types == {"Person"}
+
+
 def test_report_search_caps_the_query_sent_to_zep():
     calls = []
 

@@ -55,9 +55,7 @@ OWNER_AVATAR_SHA256 = "0b469b43ffc2e2dad3ea63970b3483f38c0199162ff46819cfa19a023
 OWNER_AVATAR_DIMENSIONS = (64, 64)
 MAX_INLINE_AVATAR_BYTES = 64_000
 
-# Star History's reviewed 64x64 RGBA watermark icon, embedded exactly as used
-# by the upstream MIT-licensed renderer (Copyright 2025 Star History). The
-# corresponding license notice is retained in THIRD_PARTY_NOTICES.md.
+# Star History's 64x64 RGBA watermark icon.
 WATERMARK_LOGO_BASE64 = (
     "iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQA"
     "APoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAABmJLR0QA/wD/AP+gvaeTAAAPcElEQVR42uWbbWxeZ3nHf9d1"
@@ -842,8 +840,8 @@ def _monotone_x_path(points: Sequence[tuple[float, float]]) -> str:
 def render_svg(state: Mapping[str, Any], theme: str) -> bytes:
     """Render the dependency-free Star History-compatible SVG.
 
-    The visual contract is a clean-room Python reimplementation of the MIT
-    licensed ``star-history/star-history`` renderer behavior reviewed for this
+    The visual contract is a clean-room Python reimplementation of the
+    ``star-history/star-history`` renderer behavior reviewed for this
     setup. No narayann7 JavaScript, npm package, or runtime dependency is
     vendored or executed here.
     """
