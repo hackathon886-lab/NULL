@@ -1386,7 +1386,7 @@ Return the list of sub-questions in JSON format."""
             # Check if API call succeeded
             if not api_result.get("success", False):
                 error_msg = api_result.get("error", "Unknown error")
-                logger.warning(t("console.interviewApiReturnedFailure", error=error_msg))
+                logger.info(t("console.interviewApiReturnedFailure", error=error_msg))
                 result.summary = f"Interview API call failed: {error_msg}. Please check OASIS simulation environment status."
                 return result
             

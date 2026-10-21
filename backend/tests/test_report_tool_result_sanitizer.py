@@ -2,7 +2,12 @@ from types import SimpleNamespace
 
 import pytest
 
-from app.services.report_agent import ReportAgent
+from app.services.report_agent import (
+    REACT_OBSERVATION_TEMPLATE,
+    ReportAgent,
+    ReportOutline,
+    ReportSection,
+)
 
 
 @pytest.mark.parametrize(
@@ -61,3 +66,50 @@ def test_plan_outline_uses_sample_facts_placeholder(monkeypatch):
 
     assert outline.title == "Forecast Report"
     assert [section.title for section in outline.sections] == ["Section 1", "Section 2"]
+
+
+def test_generate_section_reacts_without_missing_section_description_keyerror():
+    agent = object.__new__(ReportAgent)
+    agent.simulation_requirement = "Forecast community stress"
+    agent.report_logger = None
+    agent._get_tools_description = lambda: "Example tool description"
+
+    class DummyLLM:
+        def chat(self, messages, temperature, max_tokens):
+            return "Final Answer: This section explains the forecast clearly."
+
+    agent.llm = DummyLLM()
+
+    section = ReportSection(
+        title="Section 1",
+        description="Focus on initial market reactions",
+    )
+    outline = ReportOutline(
+        title="Forecast Report",
+        summary="Summary of the forecast",
+        sections=[section],
+    )
+
+    content = agent._generate_section_react(
+        section=section,
+        outline=outline,
+        previous_sections=[],
+        section_index=1,
+    )
+
+    assert "This section explains the forecast clearly" in content
+
+
+def test_react_observation_template_uses_result_key_and_renders_cleanly():
+    rendered = ReportAgent._safe_format(
+        REACT_OBSERVATION_TEMPLATE,
+        tool_name="insight_forge",
+        result="some evidence",
+        tool_calls_count=1,
+        max_tool_calls=5,
+        used_tools_str="insight_forge",
+        unused_hint="",
+    )
+
+    assert "some evidence" in rendered
+    assert "=== Tool insight_forge Returned ===" in rendered

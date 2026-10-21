@@ -13,6 +13,7 @@ import os
 import json
 import time
 import re
+from collections import defaultdict
 from typing import Dict, Any, List, Optional, Callable
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -400,11 +401,13 @@ class ReportSection:
     """Report section"""
     title: str
     content: str = ""
+    description: str = ""
 
     def to_dict(self) -> Dict[str, Any]:
         return {
             "title": self.title,
-            "content": self.content
+            "content": self.content,
+            "description": self.description
         }
 
     def to_markdown(self, level: int = 2) -> str:
@@ -761,7 +764,7 @@ REACT_OBSERVATION_TEMPLATE = """\
 Observation (Retrieval Result):
 
 === Tool {tool_name} Returned ===
-{tool_result}
+{result}
 ==============================
 
 Tools invoked: {tool_calls_count}/{max_tool_calls} (Used: {used_tools_str}){unused_hint}
@@ -1085,6 +1088,12 @@ class ReportAgent:
             return True
         return False
     
+    @staticmethod
+    def _safe_format(template: str, **kwargs: Any) -> str:
+        """Render a prompt template without crashing on missing placeholders."""
+        safe_kwargs = defaultdict(str, kwargs)
+        return template.format_map(safe_kwargs)
+
     def _get_tools_description(self) -> str:
         """Generate tool description text"""
         desc_parts = ["Available Tools:"]
@@ -1159,7 +1168,8 @@ class ReportAgent:
         
         system_prompt = f"{PLAN_SYSTEM_PROMPT}\n\n{get_language_instruction()}"
         sample_facts = json.dumps(context.get('related_facts', [])[:10], ensure_ascii=False, indent=2)
-        user_prompt = PLAN_USER_PROMPT_TEMPLATE.format(
+        user_prompt = ReportAgent._safe_format(
+            PLAN_USER_PROMPT_TEMPLATE,
             simulation_requirement=self.simulation_requirement,
             total_nodes=context.get('graph_statistics', {}).get('total_nodes', 0),
             total_edges=context.get('graph_statistics', {}).get('total_edges', 0),
@@ -1185,7 +1195,8 @@ class ReportAgent:
             for section_data in response.get("sections", []):
                 sections.append(ReportSection(
                     title=section_data.get("title", ""),
-                    content=""
+                    content="",
+                    description=section_data.get("description", "")
                 ))
             
             outline = ReportOutline(
@@ -1247,11 +1258,14 @@ class ReportAgent:
         if self.report_logger:
             self.report_logger.log_section_start(section.title, section_index)
         
-        system_prompt = SECTION_SYSTEM_PROMPT_TEMPLATE.format(
+        section_description = getattr(section, "description", "") or ""
+        system_prompt = ReportAgent._safe_format(
+            SECTION_SYSTEM_PROMPT_TEMPLATE,
             report_title=outline.title,
             report_summary=outline.summary,
             simulation_requirement=self.simulation_requirement,
             section_title=section.title,
+            section_description=section_description,
             tools_description=self._get_tools_description(),
         )
         system_prompt = f"{system_prompt}\n\n{get_language_instruction()}"
@@ -1266,10 +1280,12 @@ class ReportAgent:
             previous_content = "\n\n---\n\n".join(previous_parts)
         else:
             previous_content = "(This is the first section)"
-        
-        user_prompt = SECTION_USER_PROMPT_TEMPLATE.format(
-            previous_content=previous_content,
+
+        user_prompt = ReportAgent._safe_format(
+            SECTION_USER_PROMPT_TEMPLATE,
+            previous_sections_content=previous_content,
             section_title=section.title,
+            section_description=section_description,
         )
 
         messages = [
@@ -1377,7 +1393,8 @@ class ReportAgent:
                     unused_hint = f" (Unused tools recommended: {', '.join(unused_tools)})" if unused_tools else ""
                     messages.append({
                         "role": "user",
-                        "content": REACT_INSUFFICIENT_TOOLS_MSG.format(
+                        "content": ReportAgent._safe_format(
+                            REACT_INSUFFICIENT_TOOLS_MSG,
                             tool_calls_count=tool_calls_count,
                             min_tool_calls=min_tool_calls,
                             unused_hint=unused_hint,
@@ -1406,7 +1423,8 @@ class ReportAgent:
                     messages.append({"role": "assistant", "content": cleaned_response})
                     messages.append({
                         "role": "user",
-                        "content": REACT_TOOL_LIMIT_MSG.format(
+                        "content": ReportAgent._safe_format(
+                            REACT_TOOL_LIMIT_MSG,
                             tool_calls_count=tool_calls_count,
                             max_tool_calls=self.MAX_TOOL_CALLS_PER_SECTION,
                         ),
@@ -1449,13 +1467,14 @@ class ReportAgent:
                 unused_tools = all_tools - used_tools
                 unused_hint = ""
                 if unused_tools and tool_calls_count < self.MAX_TOOL_CALLS_PER_SECTION:
-                    unused_hint = REACT_UNUSED_TOOLS_HINT.format(unused_list="、".join(unused_tools))
+                    unused_hint = ReportAgent._safe_format(REACT_UNUSED_TOOLS_HINT, unused_list="、".join(unused_tools))
 
                 cleaned_response = ReportAgent._strip_fake_tool_results(response)
                 messages.append({"role": "assistant", "content": cleaned_response})
                 messages.append({
                     "role": "user",
-                    "content": REACT_OBSERVATION_TEMPLATE.format(
+                    "content": ReportAgent._safe_format(
+                        REACT_OBSERVATION_TEMPLATE,
                         tool_name=call["name"],
                         result=result,
                         tool_calls_count=tool_calls_count,
@@ -1477,7 +1496,8 @@ class ReportAgent:
 
                 messages.append({
                     "role": "user",
-                    "content": REACT_INSUFFICIENT_TOOLS_MSG_ALT.format(
+                    "content": ReportAgent._safe_format(
+                        REACT_INSUFFICIENT_TOOLS_MSG_ALT,
                         tool_calls_count=tool_calls_count,
                         min_tool_calls=min_tool_calls,
                         unused_hint=unused_hint,
@@ -1500,7 +1520,7 @@ class ReportAgent:
             return final_answer
         
         # Max iterations reached, force finalize content
-        logger.warning(t('report.sectionMaxIter', title=section.title))
+        logger.info(t('report.sectionMaxIter', title=section.title))
         messages.append({"role": "user", "content": REACT_FORCE_FINAL_MSG})
         
         response = self.llm.chat(
@@ -1800,7 +1820,8 @@ class ReportAgent:
         except Exception as e:
             logger.warning(t('report.fetchReportFailed', error=e))
         
-        system_prompt = CHAT_SYSTEM_PROMPT_TEMPLATE.format(
+        system_prompt = ReportAgent._safe_format(
+            CHAT_SYSTEM_PROMPT_TEMPLATE,
             simulation_requirement=self.simulation_requirement,
             report_content=report_content if report_content else "(No report available)",
             tools_description=self._get_tools_description(),
@@ -2469,7 +2490,8 @@ class ReportManager:
             for s in outline_data.get('sections', []):
                 sections.append(ReportSection(
                     title=s['title'],
-                    content=s.get('content', '')
+                    content=s.get('content', ''),
+                    description=s.get('description', '')
                 ))
             outline = ReportOutline(
                 title=outline_data['title'],
