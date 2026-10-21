@@ -7,7 +7,7 @@ import os
 from dotenv import load_dotenv
 
 # Load .env file from project root directory
-# Path: MiroFish/.env (relative to backend/app/config.py)
+# Path: Lokantra/.env (relative to backend/app/config.py)
 project_root_env = os.path.join(os.path.dirname(__file__), '../../.env')
 
 if os.path.exists(project_root_env):
@@ -21,7 +21,7 @@ class Config:
     """Flask configuration class"""
     
     # Flask configuration
-    SECRET_KEY = os.environ.get('SECRET_KEY', 'mirofish-secret-key')
+    SECRET_KEY = os.environ.get('SECRET_KEY', 'lokantra-secret-key')
     DEBUG = os.environ.get('FLASK_DEBUG', 'False').lower() == 'true'
     
     # JSON configuration - disable ASCII escaping
@@ -72,7 +72,7 @@ class Config:
         if not cls.ZEP_API_KEY:
             errors.append("ZEP_API_KEY is not configured")
         if os.environ.get("ZEP_API_URL"):
-            errors.append("ZEP_API_URL is not supported; MiroFish connects exclusively to Zep Cloud")
+            errors.append("ZEP_API_URL is not supported; Lokantra connects exclusively to Zep Cloud")
         if cls.DEBUG:
             import warnings
             warnings.warn("Flask DEBUG mode is enabled. Do not use in production.", RuntimeWarning)

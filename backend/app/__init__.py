@@ -1,5 +1,5 @@
 """
-MiroFish Backend - Flask Application Factory
+Lokantra Backend - Flask Application Factory
 """
 
 import os
@@ -26,7 +26,7 @@ def create_app(config_class=Config):
         app.json.ensure_ascii = False
     
     # Setup logger
-    logger = setup_logger('mirofish')
+    logger = setup_logger('lokantra')
     
     # Only print startup info in the reloader child process to avoid duplicate logs in debug mode
     is_reloader_process = os.environ.get('WERKZEUG_RUN_MAIN') == 'true'
@@ -35,7 +35,7 @@ def create_app(config_class=Config):
     
     if should_log_startup:
         logger.info("=" * 50)
-        logger.info("MiroFish Backend starting up...")
+        logger.info("Lokantra Backend starting up...")
         logger.info("=" * 50)
     
     # Enable CORS
@@ -50,14 +50,14 @@ def create_app(config_class=Config):
     # Request logging middleware
     @app.before_request
     def log_request():
-        logger = get_logger('mirofish.request')
+        logger = get_logger('lokantra.request')
         logger.debug(f"Request: {request.method} {request.path}")
         if request.content_type and 'json' in request.content_type:
             logger.debug(f"Request body: {request.get_json(silent=True)}")
     
     @app.after_request
     def log_response(response):
-        logger = get_logger('mirofish.request')
+        logger = get_logger('lokantra.request')
         logger.debug(f"Response: {response.status_code}")
         return response
     
@@ -70,9 +70,9 @@ def create_app(config_class=Config):
     # Health check
     @app.route('/health')
     def health():
-        return {'status': 'ok', 'service': 'MiroFish Backend'}
+        return {'status': 'ok', 'service': 'Lokantra Backend'}
     
     if should_log_startup:
-        logger.info("MiroFish Backend startup complete")
+        logger.info("Lokantra Backend startup complete")
     
     return app

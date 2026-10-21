@@ -26,7 +26,7 @@ from ..utils.zep import (
     normalize_zep_search_query,
 )
 
-logger = get_logger('mirofish.zep_tools')
+logger = get_logger('lokantra.zep_tools')
 
 
 @dataclass

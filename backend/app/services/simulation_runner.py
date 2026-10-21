@@ -28,7 +28,7 @@ from ..utils.zep import (
 from .zep_graph_memory_updater import ZepGraphMemoryManager
 from .simulation_ipc import SimulationIPCClient, CommandType, IPCResponse
 
-logger = get_logger('mirofish.simulation_runner')
+logger = get_logger('lokantra.simulation_runner')
 
 # Flag tracking if cleanup handlers are registered
 _cleanup_registered = False

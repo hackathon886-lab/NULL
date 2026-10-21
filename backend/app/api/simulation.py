@@ -24,7 +24,7 @@ from ..utils.locale import t, get_locale, set_locale
 from ..utils.zep_lifecycle import get_graph_readers, graph_lifecycle_lock
 from ..models.project import ProjectManager
 
-logger = get_logger('mirofish.api.simulation')
+logger = get_logger('lokantra.api.simulation')
 
 
 def _get_default_platform(simulation_id: str) -> str:
@@ -202,7 +202,7 @@ def create_simulation():
     Request (JSON):
         {
             "project_id": "proj_xxxx",      // Required
-            "graph_id": "mirofish_xxxx",    // Optional, fetched from project if omitted
+            "graph_id": "lokantra_xxxx",    // Optional, fetched from project if omitted
             "enable_twitter": true,          // Optional, default true
             "enable_reddit": true            // Optional, default true
         }
@@ -213,7 +213,7 @@ def create_simulation():
             "data": {
                 "simulation_id": "sim_xxxx",
                 "project_id": "proj_xxxx",
-                "graph_id": "mirofish_xxxx",
+                "graph_id": "lokantra_xxxx",
                 "status": "created",
                 "enable_twitter": true,
                 "enable_reddit": true,
@@ -1429,7 +1429,7 @@ def generate_profiles():
     
     Request (JSON):
         {
-            "graph_id": "mirofish_xxxx",     // Required
+            "graph_id": "lokantra_xxxx",     // Required
             "entity_types": ["Student"],      // Optional
             "use_llm": true,                  // Optional
             "platform": "reddit"              // Optional

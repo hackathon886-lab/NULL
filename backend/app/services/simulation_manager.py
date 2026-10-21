@@ -19,7 +19,7 @@ from .oasis_profile_generator import OasisProfileGenerator, OasisAgentProfile
 from .simulation_config_generator import SimulationConfigGenerator, SimulationParameters
 from ..utils.locale import t
 
-logger = get_logger('mirofish.simulation')
+logger = get_logger('lokantra.simulation')
 
 
 class SimulationStatus(str, Enum):
@@ -555,7 +555,7 @@ class SimulationManager:
                 "parallel": f"python {scripts_dir}/run_parallel_simulation.py --config {config_path}",
             },
             "instructions": (
-                f"1. Activate conda environment: conda activate MiroFish\n"
+                f"1. Activate conda environment: conda activate Lokantra\n"
                 f"2. Run simulation (scripts located at {scripts_dir}):\n"
                 f"   - Run Twitter standalone: python {scripts_dir}/run_twitter_simulation.py --config {config_path}\n"
                 f"   - Run Reddit standalone: python {scripts_dir}/run_reddit_simulation.py --config {config_path}\n"

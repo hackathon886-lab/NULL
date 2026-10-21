@@ -2,10 +2,10 @@
   <div class="home-container">
     <!-- Top Navigation Bar -->
     <nav class="navbar">
-      <div class="nav-brand">MIROFISH</div>
+      <div class="nav-brand"><img src="../assets/logo/lokantra_wordmark.png" alt="LOKĀNTRA" class="nav-logo-wordmark" /></div>
       <div class="nav-links">
         <LanguageSwitcher />
-        <a href="https://github.com/666ghj/MiroFish" target="_blank" class="github-link">
+        <a href="https://github.com/Lokantra" target="_blank" class="github-link">
           {{ $t('nav.visitGithub') }} <span class="arrow">↗</span>
         </a>
       </div>
@@ -44,7 +44,7 @@
         <div class="hero-right">
           <!-- Logo Area -->
           <div class="logo-container">
-            <img src="../assets/logo/MiroFish_logo_left.jpeg" alt="MiroFish Logo" class="hero-logo" />
+            <img src="../assets/logo/lokantra_emblem.png" alt="LOKĀNTRA Emblem" class="hero-logo" />
           </div>
           
           <button class="scroll-down-btn" @click="scrollToBottom">
@@ -338,7 +338,7 @@ const startSimulation = () => {
 
 /* Top navigation */
 .navbar {
-  height: 60px;
+  height: 64px;
   background: var(--black);
   color: var(--white);
   display: flex;
@@ -347,11 +347,21 @@ const startSimulation = () => {
   padding: 0 40px;
 }
 
+
+
+
+
 .nav-brand {
-  font-family: var(--font-mono);
-  font-weight: 800;
-  letter-spacing: 1px;
-  font-size: 1.2rem;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.nav-logo-wordmark {
+  height: 46px;
+  width: auto;
+  object-fit: contain;
+  display: block;
 }
 
 .nav-links {
@@ -518,8 +528,10 @@ const startSimulation = () => {
 }
 
 .hero-logo {
-  max-width: 500px; /* Adjust logo size */
+  max-width: 520px;
   width: 100%;
+  object-fit: contain;
+  user-select: none;
 }
 
 .scroll-down-btn {
@@ -890,9 +902,11 @@ const startSimulation = () => {
   }
   
   .hero-logo {
-    max-width: 200px;
-    margin-bottom: 20px;
-  }
+  max-width: 520px;
+  width: 100%;
+  object-fit: contain;
+  user-select: none;
+}
 }
 </style>
 

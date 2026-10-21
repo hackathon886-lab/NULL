@@ -3,7 +3,7 @@
     <!-- Header -->
     <header class="app-header">
       <div class="header-left">
-        <div class="brand" @click="router.push('/')">MIROFISH</div>
+        <div class="brand" @click="router.push('/')"><img src="../assets/logo/lokantra_wordmark.png" alt="LOKĀNTRA" class="brand-wordmark" /></div>
       </div>
       
       <div class="header-center">
@@ -430,7 +430,7 @@ onUnmounted(() => {
 
 /* Header */
 .app-header {
-  height: 60px;
+  height: 64px;
   border-bottom: 1px solid #EAEAEA;
   display: flex;
   align-items: center;
@@ -447,7 +447,28 @@ onUnmounted(() => {
   transform: translateX(-50%);
 }
 
+
+
+
+
+.brand-wordmark {
+  height: 44px;
+  width: auto;
+  object-fit: contain;
+  display: block;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.brand-wordmark:hover {
+  transform: scale(1.03);
+}
+
 .brand {
+  display: flex;
+  align-items: center;
+  display: flex;
+  align-items: center;
   font-family: 'JetBrains Mono', monospace;
   font-weight: 800;
   font-size: 18px;

@@ -24,7 +24,7 @@ from ..utils.zep_lifecycle import (
     unregister_graph_reader,
 )
 
-logger = get_logger('mirofish.api.report')
+logger = get_logger('lokantra.api.report')
 
 
 # ============== Report Generation APIs ==============
@@ -1057,7 +1057,7 @@ def search_graph_tool():
     
     Request (JSON):
         {
-            "graph_id": "mirofish_xxxx",
+            "graph_id": "lokantra_xxxx",
             "query": "Search query",
             "limit": 10
         }
@@ -1105,7 +1105,7 @@ def get_graph_statistics_tool():
     
     Request (JSON):
         {
-            "graph_id": "mirofish_xxxx"
+            "graph_id": "lokantra_xxxx"
         }
     """
     try:

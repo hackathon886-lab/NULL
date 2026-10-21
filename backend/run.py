@@ -1,5 +1,5 @@
 """
-MiroFish Backend Entry Point
+Lokantra Backend Entry Point
 """
 
 import os

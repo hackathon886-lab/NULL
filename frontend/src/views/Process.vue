@@ -2,7 +2,7 @@
   <div class="process-page">
     <!-- Top Navigation Bar -->
     <nav class="navbar">
-      <div class="nav-brand" @click="goHome">MIROFISH</div>
+      <div class="nav-brand" @click="goHome"><img src="../assets/logo/lokantra_wordmark.png" alt="LOKĀNTRA" class="brand-wordmark" /></div>
       
       <!-- Middle Step Indicator -->
       <div class="nav-center">
@@ -1122,14 +1122,35 @@ onUnmounted(() => {
   align-items: center;
   justify-content: space-between;
   padding: 0 24px;
-  height: 56px;
+  height: 64px;
   background: #000;
   color: #fff;
   z-index: 10;
   position: relative;
 }
 
+
+
+
+
+.brand-wordmark {
+  height: 44px;
+  width: auto;
+  object-fit: contain;
+  display: block;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.brand-wordmark:hover {
+  transform: scale(1.03);
+}
+
 .nav-brand {
+  display: flex;
+  align-items: center;
+  display: flex;
+  align-items: center;
   font-size: 1rem;
   font-weight: 700;
   letter-spacing: 0.1em;

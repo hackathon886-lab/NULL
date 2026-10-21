@@ -607,7 +607,7 @@ Please design entity types and relationship types suitable for social public opi
         code_lines = [
             '"""',
             'Custom Entity Type Definitions',
-            'Generated automatically by MiroFish for social simulation',
+            'Generated automatically by Lokantra for social simulation',
             '"""',
             '',
             'from pydantic import Field',
