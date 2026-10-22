@@ -12,7 +12,6 @@
         <span class="btn-terminal-icon">&gt;_</span>
         <span class="btn-terminal-title">{{ title || 'Terminal' }}</span>
         <span v-if="isActive || (logs && logs.length > 0)" class="btn-live-pulse" title="Active"></span>
-        <span v-if="logs && logs.length > 0" class="btn-log-count">{{ logs.length }}</span>
       </button>
     </Transition>
 
@@ -21,7 +20,6 @@
       <div 
         v-if="isOpen" 
         class="windows-terminal-modal"
-        :class="{ 'is-maximized': isMaximized }"
         role="dialog"
         aria-label="Windows Terminal"
       >
@@ -36,39 +34,14 @@
             </div>
           </div>
 
-          <!-- Windows Window Control Buttons -->
+          <!-- Windows Window Control Buttons: Only "X" -->
           <div class="win-controls">
-            <!-- Minimize Button (turns back into corner button) -->
-            <button 
-              class="win-btn win-btn-minimize" 
-              @click="minimizeTerminal" 
-              title="Minimize to button"
-            >
-              <svg width="10" height="1" viewBox="0 0 10 1">
-                <rect width="10" height="1" fill="currentColor"/>
-              </svg>
-            </button>
-
-            <!-- Maximize / Restore Button -->
-            <button 
-              class="win-btn win-btn-maximize" 
-              @click="toggleMaximize" 
-              :title="isMaximized ? 'Restore' : 'Maximize'"
-            >
-              <svg v-if="!isMaximized" width="10" height="10" viewBox="0 0 10 10">
-                <rect x="0.5" y="0.5" width="9" height="9" fill="none" stroke="currentColor"/>
-              </svg>
-              <svg v-else width="10" height="10" viewBox="0 0 10 10">
-                <rect x="2" y="0" width="8" height="8" fill="none" stroke="currentColor"/>
-                <rect x="0" y="2" width="8" height="8" fill="#1F1F1F" stroke="currentColor"/>
-              </svg>
-            </button>
-
-            <!-- Close Button (also minimizes back to corner button) -->
+            <!-- Close Button Only -->
             <button 
               class="win-btn win-btn-close" 
-              @click="minimizeTerminal" 
-              title="Close to button"
+              @click="closeTerminal" 
+              title="Close"
+              aria-label="Close"
             >
               <svg width="10" height="10" viewBox="0 0 10 10">
                 <line x1="0" y1="0" x2="10" y2="10" stroke="currentColor" stroke-width="1.2"/>
@@ -81,7 +54,7 @@
         <!-- Terminal Body -->
         <div class="win-terminal-body" ref="terminalBodyRef">
           <div class="terminal-banner">
-            <div>Microsoft Windows [Version 10.0.22631.3007]</div>
+            <div>Microsoft Windows</div>
             <div>(c) Lokantra Swarm Simulation Environment. All rights reserved.</div>
             <div class="terminal-divider">------------------------------------------------------------</div>
           </div>
@@ -132,7 +105,6 @@ const props = defineProps({
 })
 
 const isOpen = ref(false)
-const isMaximized = ref(false)
 const terminalBodyRef = ref(null)
 
 const openTerminal = () => {
@@ -140,13 +112,8 @@ const openTerminal = () => {
   scrollToBottom()
 }
 
-const minimizeTerminal = () => {
+const closeTerminal = () => {
   isOpen.value = false
-}
-
-const toggleMaximize = () => {
-  isMaximized.value = !isMaximized.value
-  scrollToBottom()
 }
 
 const scrollToBottom = () => {
@@ -179,10 +146,10 @@ const getMsgClass = (msg) => {
   return ''
 }
 
-// Handle ESC to minimize
+// Handle ESC to close
 const handleKeyDown = (e) => {
   if (e.key === 'Escape' && isOpen.value) {
-    minimizeTerminal()
+    closeTerminal()
   }
 }
 
@@ -262,15 +229,6 @@ onUnmounted(() => {
   100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(76, 175, 80, 0); }
 }
 
-.btn-log-count {
-  background: #2A2A2A;
-  color: #AAA;
-  font-size: 11px;
-  padding: 1px 6px;
-  border-radius: 10px;
-  border: 1px solid #444;
-}
-
 /* --- 2. Windows Terminal Floating Window --- */
 .windows-terminal-modal {
   position: fixed;
@@ -289,19 +247,6 @@ onUnmounted(() => {
   overflow: hidden;
   z-index: 10000;
   backdrop-filter: blur(16px);
-  transition: width 0.25s ease, height 0.25s ease, transform 0.25s ease;
-}
-
-.windows-terminal-modal.is-maximized {
-  top: 70px;
-  left: 24px;
-  right: 24px;
-  bottom: 24px;
-  width: calc(100vw - 48px);
-  height: calc(100vh - 94px);
-  max-width: none;
-  max-height: none;
-  border-radius: 6px;
 }
 
 /* Windows Terminal Titlebar */

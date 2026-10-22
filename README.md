@@ -12,7 +12,6 @@
 
 [![Build](https://img.shields.io/badge/Build-Passing-brightgreen?style=flat-square)]()
 [![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?style=flat-square&logo=docker&logoColor=white)](https://hub.docker.com/)
-[![Version](https://img.shields.io/badge/Version-v0.1.0-blue?style=flat-square)]()
 [![License](https://img.shields.io/badge/License-MIT-yellow?style=flat-square)]()
 
 </div>
@@ -107,6 +106,14 @@ npm run dev
 ```bash
 npm run backend   # Start backend only
 npm run frontend  # Start frontend only
+```
+
+#### 4. Run Tests
+
+Run backend tests through `uv` so they use the same environment and dependencies installed by `npm run setup:backend`:
+
+```bash
+npm run test:backend
 ```
 
 ### Option 2: Docker Deployment

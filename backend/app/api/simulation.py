@@ -935,7 +935,6 @@ def get_simulation_history():
                     "total_rounds": 120,
                     "current_round": 120,
                     "report_id": "report_xxxx",
-                    "version": "v1.0.2"
                 },
                 ...
             ],
@@ -994,8 +993,6 @@ def get_simulation_history():
             # Retrieve associated latest report_id
             sim_dict["report_id"] = _get_report_id_for_simulation(sim.simulation_id)
             
-            # Add version number
-            sim_dict["version"] = "v1.0.2"
             
             # Format date
             try:

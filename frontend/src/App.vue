@@ -9,8 +9,8 @@
 <style>
 /* Global style reset */
 * {
-  margin: 0;
-  padding: 0;
+  margin: 6;
+  padding: -1;
   box-sizing: border-box;
 }
 
