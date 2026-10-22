@@ -1,16 +1,13 @@
 <template>
   <div class="home-container fixed inset-0 w-screen h-screen overflow-hidden text-black select-none" style="font-family: var(--font-body);">
-    <!-- Background Video (mouse-scrub controlled) -->
-    <video
-      ref="videoRef"
-      src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260530_042513_df96a13b-6155-4f6e-8b93-c9dee66fba08.mp4"
-      class="fixed inset-0 w-full h-full object-cover z-0 pointer-events-none"
-      style="object-position: 50% center;"
-      muted
-      playsinline
-      preload="auto"
-      @seeked="handleSeeked"
-    ></video>
+    <!-- Interactive Background Canvas (0-latency preloaded frame sequence) -->
+    <canvas
+      ref="canvasRef"
+      width="1920"
+      height="1085"
+      class="fixed inset-0 w-full h-full object-cover z-0 pointer-events-none transition-transform duration-500 ease-out"
+      style="object-position: left center; transform: scale(1.1); transform-origin: left center;"
+    ></canvas>
 
     <!-- Subtle vignette gradient on the left to ensure text pops with high legibility -->
     <div class="fixed inset-0 pointer-events-none z-0 bg-gradient-to-r from-white/30 via-white/10 to-transparent"></div>
@@ -31,17 +28,25 @@
       <div class="w-full max-w-xl lg:max-w-2xl relative z-10 flex flex-col items-start text-left">
         <!-- 1. Blurred intro label -->
         <div
-          class="pointer-events-none select-none mb-4 sm:mb-6"
-          style="font-size: clamp(17px, 2.2vw, 24px); line-height: 1.35; font-weight: 400; color: rgba(0, 0, 0, 0.75); filter: blur(1.5px); font-family: var(--font-body);"
+          class="pointer-events-none select-none mb-3 sm:mb-4"
+          style="font-size: clamp(16px, 2.1vw, 22px); line-height: 1.35; font-weight: 400; color: rgba(0, 0, 0, 0.7); filter: blur(1.5px); font-family: var(--font-body);"
         >
           Hey there, meet LOK&#256;NTRA,<br />
           {{ $t('home.tagline') }}
         </div>
 
-        <!-- 2. Typewriter text -->
+        <!-- 2. CRAZY BOLD HERO HIGHLIGHT: "Upload Reports, Predict The Unseen" -->
+        <div class="hero-highlight-wrap mb-4 sm:mb-6 select-none">
+          <h1 class="hero-highlight-title">
+            <span class="hero-text-dark">Upload Reports,</span>
+            <span class="hero-text-gold">Predict The Unseen</span>
+          </h1>
+        </div>
+
+        <!-- 3. Blurred normal content (Typewriter text) -->
         <p
-          class="text-black mb-6 sm:mb-8 select-text"
-          style="font-size: clamp(18px, 2.4vw, 26px); line-height: 1.45; font-weight: 400; min-height: 70px; font-family: var(--font-body); letter-spacing: -0.01em;"
+          class="text-black mb-6 sm:mb-8 select-text pointer-events-none"
+          style="font-size: clamp(17px, 2.3vw, 24px); line-height: 1.45; font-weight: 400; min-height: 64px; font-family: var(--font-body); letter-spacing: -0.01em; filter: blur(1.5px);"
         >
           {{ displayedText }}<span v-if="!typewriterDone" class="inline-block w-[2px] h-[1.15em] bg-black align-middle ml-[2px] cursor-blink"></span>
         </p>
@@ -289,61 +294,76 @@ const router = useRouter()
 const activeModal = ref(null)
 const showPills = ref(false)
 
-// Video scrubbing state
-const videoRef = ref(null)
-let prevX = null
-let targetTime = 0
-let isSeeking = false
-const SENSITIVITY = 0.8
+// Interactive Head Rotation Canvas Engine (0-latency preloaded WebP sequence)
+const canvasRef = ref(null)
+const TOTAL_FRAMES = 97
+const frameImages = []
+let loadedFrames = 0
+let currentFrame = 48
+let targetFrame = 48
+let animId = null
+let hasDrawnInitial = false
 
 // Typewriter state
-const fullTypewriterText = 'From a single document, LOK\u0100NTRA extracts reality seeds to auto-generate a parallel world with up to million-scale Agents. Inject variables from a god\'s-eye view to find the optimal solution in complex group dynamics.'
+const fullTypewriterText = 'Auto-Generate Parallel World. Million-Scale Agents. God\'s-Eye View. Optimal Solution in Complex Dynamics.'
 const displayedText = ref('')
 const typewriterDone = ref(false)
 
-// Video seeking handlers
-const requestSeek = () => {
-  const video = videoRef.value
-  if (!video || isSeeking || !video.duration) return
+const drawFrame = (index) => {
+  const canvas = canvasRef.value
+  if (!canvas) return
+  const ctx = canvas.getContext('2d', { alpha: false })
+  if (!ctx) return
 
-  if (Math.abs(video.currentTime - targetTime) > 0.02) {
-    isSeeking = true
-    video.currentTime = targetTime
+  const idx = Math.max(0, Math.min(TOTAL_FRAMES - 1, Math.round(index)))
+  const img = frameImages[idx]
+  if (img && img.complete && img.naturalWidth > 0) {
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
   }
 }
 
-const handleSeeked = () => {
-  isSeeking = false
-  const video = videoRef.value
-  if (!video || !video.duration) return
-
-  if (Math.abs(video.currentTime - targetTime) > 0.02) {
-    requestSeek()
+const preloadFrames = () => {
+  for (let i = 0; i < TOTAL_FRAMES; i++) {
+    const img = new Image()
+    img.src = `/frames/f_${String(i).padStart(3, '0')}.webp`
+    img.onload = () => {
+      loadedFrames++
+      if ((i === Math.round(currentFrame) || !hasDrawnInitial) && canvasRef.value) {
+        drawFrame(i)
+        hasDrawnInitial = true
+      }
+    }
+    frameImages.push(img)
   }
+}
+
+const startRenderLoop = () => {
+  const render = () => {
+    const diff = targetFrame - currentFrame
+    if (Math.abs(diff) > 0.02) {
+      const factor = Math.abs(diff) > 15 ? 0.45 : 0.28
+      currentFrame += diff * factor
+      drawFrame(currentFrame)
+    }
+    animId = requestAnimationFrame(render)
+  }
+  animId = requestAnimationFrame(render)
 }
 
 const handleMouseMove = (e) => {
-  const video = videoRef.value
-  if (!video || !video.duration) return
+  const ratio = Math.max(0, Math.min(1, e.clientX / window.innerWidth))
+  targetFrame = ratio * (TOTAL_FRAMES - 1)
+}
 
-  const currentX = e.clientX
-  if (prevX === null) {
-    prevX = currentX
-    return
+const handleTouchMove = (e) => {
+  if (e.touches && e.touches.length > 0) {
+    const ratio = Math.max(0, Math.min(1, e.touches[0].clientX / window.innerWidth))
+    targetFrame = ratio * (TOTAL_FRAMES - 1)
   }
-
-  const delta = currentX - prevX
-  prevX = currentX
-
-  const duration = video.duration
-  const offset = (delta / window.innerWidth) * SENSITIVITY * duration
-  targetTime = Math.max(0, Math.min(duration, targetTime + offset))
-
-  requestSeek()
 }
 
 const handleMouseLeave = () => {
-  prevX = null
+  // Preserve current position
 }
 
 // Form and file upload logic
@@ -435,14 +455,21 @@ onMounted(() => {
     }, 38)
   }, 600)
 
-  // Attach mouse scrub listeners to window
-  window.addEventListener('mousemove', handleMouseMove)
+  // Initialize canvas frame sequence & render loop
+  preloadFrames()
+  startRenderLoop()
+
+  // Attach mouse and touch scrub listeners to window
+  window.addEventListener('mousemove', handleMouseMove, { passive: true })
+  window.addEventListener('touchmove', handleTouchMove, { passive: true })
   window.addEventListener('mouseleave', handleMouseLeave)
 
   onUnmounted(() => {
     if (timer) clearTimeout(timer)
     if (interval) clearInterval(interval)
+    if (animId) cancelAnimationFrame(animId)
     window.removeEventListener('mousemove', handleMouseMove)
+    window.removeEventListener('touchmove', handleTouchMove)
     window.removeEventListener('mouseleave', handleMouseLeave)
   })
 })
@@ -468,6 +495,51 @@ onMounted(() => {
   overflow: hidden;
   background: var(--white);
   color: var(--black);
+}
+
+/* --- Bold Unique Hero Highlight Line --- */
+.hero-highlight-wrap {
+  position: relative;
+  user-select: none;
+}
+
+.hero-highlight-title {
+  font-family: var(--font-display, 'Syne', 'ClashDisplay', sans-serif);
+  font-size: clamp(32px, 5.2vw, 62px);
+  font-weight: 800;
+  line-height: 1.06;
+  letter-spacing: -0.038em;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1em;
+  margin: 0;
+}
+
+.hero-text-dark {
+  color: #050505;
+  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.7);
+}
+
+.hero-text-gold {
+  background: linear-gradient(125deg, #92400e 0%, #b45309 18%, #d97706 38%, #f59e0b 58%, #fef08a 78%, #f59e0b 90%, #d97706 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: gold-shimmer 6s linear infinite;
+  filter: drop-shadow(0 2px 18px rgba(245, 158, 11, 0.35));
+  display: inline-block;
+}
+
+@keyframes gold-shimmer {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
 }
 
 /* Modal fade animation */

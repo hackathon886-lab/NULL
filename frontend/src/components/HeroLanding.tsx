@@ -52,17 +52,18 @@ export function useTypewriter(text: string, speed = 38, startDelay = 600) {
 export const HeroLanding: React.FC<HeroLandingProps> = ({
   brandName = 'LOK\u0100NTRA',
   tagline = 'Concise & Universal Swarm Intelligence Engine',
-  typewriterText = 'From a single document, LOK\u0100NTRA extracts reality seeds to auto-generate a parallel world with up to million-scale Agents. Inject variables from a god\'s-eye view to find the optimal solution in complex group dynamics.',
+  typewriterText = 'LOK\u0100NTRA extracts reality. Auto-Generate Parallel World. Million-Scale Agents. God\'s-Eye View. Optimal Solution in Complex Dynamics.',
   email = 'contact@lokantra.ai',
   onNavigate
 }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [pillsVisible, setPillsVisible] = useState(false);
 
-  const videoRef = useRef<HTMLVideoElement | null>(null);
-  const prevXRef = useRef<number | null>(null);
-  const targetTimeRef = useRef<number>(0);
-  const isSeekingRef = useRef<boolean>(false);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const targetFrameRef = useRef<number>(48);
+  const currentFrameRef = useRef<number>(48);
+  const imagesRef = useRef<HTMLImageElement[]>([]);
+  const animIdRef = useRef<number | null>(null);
 
   const { displayed, done } = useTypewriter(typewriterText, 38, 600);
 
@@ -74,63 +75,70 @@ export const HeroLanding: React.FC<HeroLandingProps> = ({
     return () => clearTimeout(timer);
   }, []);
 
-  // Request next seek without flooding
-  const requestSeek = useCallback(() => {
-    const video = videoRef.current;
-    if (!video || isSeekingRef.current || !video.duration) return;
-
-    if (Math.abs(video.currentTime - targetTimeRef.current) > 0.02) {
-      isSeekingRef.current = true;
-      video.currentTime = targetTimeRef.current;
-    }
-  }, []);
-
-  const handleSeeked = useCallback(() => {
-    isSeekingRef.current = false;
-    const video = videoRef.current;
-    if (!video || !video.duration) return;
-
-    if (Math.abs(video.currentTime - targetTimeRef.current) > 0.02) {
-      requestSeek();
-    }
-  }, [requestSeek]);
-
-  // Video mouse scrubbing logic
+  // Preload frames and start canvas render loop
   useEffect(() => {
-    const SENSITIVITY = 0.8;
+    const TOTAL_FRAMES = 97;
+    const canvas = canvasRef.current;
+    const images: HTMLImageElement[] = [];
+
+    const drawFrame = (frameIndex: number) => {
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d', { alpha: false });
+      if (!ctx) return;
+      const idx = Math.max(0, Math.min(TOTAL_FRAMES - 1, Math.round(frameIndex)));
+      const img = images[idx];
+      if (img && img.complete && img.naturalWidth > 0) {
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      }
+    };
+
+    let hasDrawn = false;
+    for (let i = 0; i < TOTAL_FRAMES; i++) {
+      const img = new Image();
+      img.src = `/frames/f_${String(i).padStart(3, '0')}.webp`;
+      img.onload = () => {
+        if (!hasDrawn || i === 48) {
+          drawFrame(48);
+          hasDrawn = true;
+        }
+      };
+      images.push(img);
+    }
+    imagesRef.current = images;
+
+    // Render loop
+    const render = () => {
+      const diff = targetFrameRef.current - currentFrameRef.current;
+      if (Math.abs(diff) > 0.02) {
+        const factor = Math.abs(diff) > 15 ? 0.45 : 0.28;
+        currentFrameRef.current += diff * factor;
+        drawFrame(currentFrameRef.current);
+      }
+      animIdRef.current = requestAnimationFrame(render);
+    };
+    animIdRef.current = requestAnimationFrame(render);
 
     const handleMouseMove = (e: MouseEvent) => {
-      const video = videoRef.current;
-      if (!video || !video.duration) return;
+      const ratio = Math.max(0, Math.min(1, e.clientX / window.innerWidth));
+      targetFrameRef.current = ratio * (TOTAL_FRAMES - 1);
+    };
 
-      const currentX = e.clientX;
-      if (prevXRef.current === null) {
-        prevXRef.current = currentX;
-        return;
+    const handleTouchMove = (e: TouchEvent) => {
+      if (e.touches && e.touches.length > 0) {
+        const ratio = Math.max(0, Math.min(1, e.touches[0].clientX / window.innerWidth));
+        targetFrameRef.current = ratio * (TOTAL_FRAMES - 1);
       }
-
-      const delta = currentX - prevXRef.current;
-      prevXRef.current = currentX;
-
-      const duration = video.duration;
-      const offset = (delta / window.innerWidth) * SENSITIVITY * duration;
-      targetTimeRef.current = Math.max(0, Math.min(duration, targetTimeRef.current + offset));
-
-      requestSeek();
     };
 
-    const handleMouseLeave = () => {
-      prevXRef.current = null;
-    };
-
-    window.addEventListener('mousemove', handleMouseMove);
-    window.addEventListener('mouseleave', handleMouseLeave);
+    window.addEventListener('mousemove', handleMouseMove, { passive: true });
+    window.addEventListener('touchmove', handleTouchMove, { passive: true });
 
     return () => {
+      if (animIdRef.current) cancelAnimationFrame(animIdRef.current);
       window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('mouseleave', handleMouseLeave);
+      window.removeEventListener('touchmove', handleTouchMove);
     };
-  }, [requestSeek]);
+  }, []);
 
 
   const handleNav = (target: string) => {
@@ -147,16 +155,17 @@ export const HeroLanding: React.FC<HeroLandingProps> = ({
 
   return (
     <div className="relative min-h-screen w-full overflow-x-hidden text-black select-none font-(--font-body)">
-      {/* Background Video (mouse-scrub controlled) */}
-      <video
-        ref={videoRef}
-        src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260530_042513_df96a13b-6155-4f6e-8b93-c9dee66fba08.mp4"
-        className="fixed inset-0 w-full h-full object-cover z-0 pointer-events-none"
-        style={{ objectPosition: '70% center' }}
-        muted
-        playsInline
-        preload="auto"
-        onSeeked={handleSeeked}
+      {/* Interactive Background Canvas (0-latency preloaded frame sequence) */}
+      <canvas
+        ref={canvasRef}
+        width={1920}
+        height={1085}
+        className="fixed inset-0 w-full h-full object-cover z-0 pointer-events-none transition-transform duration-500 ease-out"
+        style={{
+          objectPosition: 'left center',
+          transform: 'scale(1.1)',
+          transformOrigin: 'left center'
+        }}
       />
 
       {/* Subtle vignette gradient on the left to ensure text pops with high legibility */}
@@ -178,13 +187,13 @@ export const HeroLanding: React.FC<HeroLandingProps> = ({
         <div className="w-full max-w-xl lg:max-w-2xl relative z-10 flex flex-col items-start text-left">
           {/* 1. Blurred intro label */}
           <div
-            className="pointer-events-none select-none mb-4 sm:mb-6"
+            className="pointer-events-none select-none mb-3 sm:mb-4"
             style={{
-              fontSize: 'clamp(17px, 2.2vw, 24px)',
+              fontSize: 'clamp(16px, 2.1vw, 22px)',
               lineHeight: 1.35,
               fontWeight: 400,
-              color: 'rgba(0, 0, 0, 0.75)',
-              filter: 'blur(2.5px)',
+              color: 'rgba(0, 0, 0, 0.7)',
+              filter: 'blur(1.5px)',
               fontFamily: 'var(--font-body)'
             }}
           >
@@ -192,16 +201,25 @@ export const HeroLanding: React.FC<HeroLandingProps> = ({
             {tagline}
           </div>
 
-          {/* 2. Typewriter text */}
+          {/* 2. Bold Unique Crazy Hero Highlight */}
+          <div className="hero-highlight-wrap mb-4 sm:mb-6 select-none">
+            <h1 className="hero-highlight-title">
+              <span className="hero-text-dark">Upload Reports,</span>
+              <span className="hero-text-gold">Predict The Unseen</span>
+            </h1>
+          </div>
+
+          {/* 3. Blurred normal content (Typewriter text) */}
           <p
-            className="text-black mb-6 sm:mb-8 select-text"
+            className="text-black mb-6 sm:mb-8 select-text pointer-events-none"
             style={{
-              fontSize: 'clamp(18px, 2.4vw, 26px)',
+              fontSize: 'clamp(17px, 2.3vw, 24px)',
               lineHeight: 1.45,
               fontWeight: 400,
-              minHeight: '70px',
+              minHeight: '64px',
               fontFamily: 'var(--font-body)',
-              letterSpacing: '-0.01em'
+              letterSpacing: '-0.01em',
+              filter: 'blur(1.5px)'
             }}
           >
             {displayed}

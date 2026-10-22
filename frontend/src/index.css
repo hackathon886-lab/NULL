@@ -1,8 +1,49 @@
 @import "tailwindcss";
 
+@font-face {
+  font-family: 'Syne';
+  src: url('./assets/fonts/Syne-ExtraBold.ttf') format('truetype');
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Syne';
+  src: url('./assets/fonts/Syne-Bold.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'ClashDisplay';
+  src: url('./assets/fonts/ClashDisplay-Bold.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'ClashDisplay';
+  src: url('./assets/fonts/ClashDisplay-Semibold.woff2') format('woff2');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Unbounded';
+  src: url('./assets/fonts/Unbounded-Bold.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   --font-heading: 'HelveticaNowDisplay-Medium', 'Helvetica Neue', Arial, sans-serif;
   --font-body: 'HelveticaNowDisplayW01-Rg', 'Helvetica Neue', Arial, sans-serif;
+  --font-display: 'Syne', 'ClashDisplay', sans-serif;
 }
 
 body {
@@ -20,4 +61,49 @@ body {
 
 .cursor-blink {
   animation: blink 1s step-end infinite;
+}
+
+/* --- Bold Unique Hero Highlight Line --- */
+.hero-highlight-wrap {
+  position: relative;
+  user-select: none;
+}
+
+.hero-highlight-title {
+  font-family: var(--font-display, 'Syne', 'ClashDisplay', sans-serif);
+  font-size: clamp(30px, 5vw, 60px);
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.038em;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1em;
+  margin: 0;
+}
+
+.hero-text-dark {
+  color: #050505;
+  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.7);
+}
+
+.hero-text-gold {
+  background: linear-gradient(125deg, #92400e 0%, #b45309 18%, #d97706 38%, #f59e0b 58%, #fef08a 78%, #f59e0b 90%, #d97706 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: gold-shimmer 6s linear infinite;
+  filter: drop-shadow(0 2px 18px rgba(245, 158, 11, 0.35));
+  display: inline-block;
+}
+
+@keyframes gold-shimmer {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
 }
