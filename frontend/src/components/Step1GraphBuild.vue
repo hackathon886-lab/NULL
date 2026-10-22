@@ -6,7 +6,7 @@
         <div class="card-header">
           <div class="step-info">
             <span class="step-num">01</span>
-            <span class="step-title">{{ $t('step1.ontologyGeneration') }}</span>
+            <span class="step-title">Reality Blueprint</span>
           </div>
           <div class="step-status">
             <span v-if="currentPhase > 0" class="badge success">{{ $t('step1.ontologyCompleted') }}</span>
@@ -110,7 +110,7 @@
         <div class="card-header">
           <div class="step-info">
             <span class="step-num">02</span>
-            <span class="step-title">{{ $t('step1.graphRagBuild') }}</span>
+            <span class="step-title">Knowledge Mapping</span>
           </div>
           <div class="step-status">
             <span v-if="currentPhase > 1" class="badge success">{{ $t('step1.ontologyCompleted') }}</span>
@@ -148,7 +148,7 @@
         <div class="card-header">
           <div class="step-info">
             <span class="step-num">03</span>
-            <span class="step-title">{{ $t('step1.buildComplete') }}</span>
+            <span class="step-title">Graph Built. Brain Relaxed.</span>
           </div>
           <div class="step-status">
             <span v-if="currentPhase >= 2" class="badge accent">{{ $t('step1.inProgress') }}</span>
