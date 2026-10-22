@@ -1213,7 +1213,7 @@ input:checked + .slider:before {
 /* Building hint */
 .graph-building-hint {
   position: absolute;
-  bottom: 160px; /* Moved up from 80px */
+  bottom: 20px; /* Moved up from 80px */
   left: 50%;
   transform: translateX(-50%);
   background: rgba(0, 0, 0, 0.65);

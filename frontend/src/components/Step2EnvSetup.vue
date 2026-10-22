@@ -615,19 +615,12 @@
       </div>
     </Transition>
 
-    <!-- Bottom Info / Logs -->
-    <div class="system-logs">
-      <div class="log-header">
-        <span class="log-title">SYSTEM DASHBOARD</span>
-        <span class="log-id">{{ simulationId || 'NO_SIMULATION' }}</span>
-      </div>
-      <div class="log-content" ref="logContent">
-        <div class="log-line" v-for="(log, idx) in systemLogs" :key="idx">
-          <span class="log-time">{{ log.time }}</span>
-          <span class="log-msg">{{ log.msg }}</span>
-        </div>
-      </div>
-    </div>
+    <!-- Floating Windows Terminal Component -->
+    <FloatingTerminal
+      title="SYSTEM DASHBOARD"
+      :sub-id="projectData?.project_id || 'NO_PROJECT'"
+      :logs="systemLogs"
+    />
   </div>
 </template>
 

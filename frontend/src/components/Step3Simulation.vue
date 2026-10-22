@@ -269,19 +269,13 @@
       </div>
     </div>
 
-    <!-- Bottom Info / Logs -->
-    <div class="system-logs">
-      <div class="log-header">
-        <span class="log-title">SIMULATION MONITOR</span>
-        <span class="log-id">{{ simulationId || 'NO_SIMULATION' }}</span>
-      </div>
-      <div class="log-content" ref="logContent">
-        <div class="log-line" v-for="(log, idx) in systemLogs" :key="idx">
-          <span class="log-time">{{ log.time }}</span>
-          <span class="log-msg">{{ log.msg }}</span>
-        </div>
-      </div>
-    </div>
+    <!-- Floating Windows Terminal Component -->
+    <FloatingTerminal
+      title="SIMULATION MONITOR"
+      :sub-id="simulationId || 'NO_SIMULATION'"
+      :logs="systemLogs"
+      :is-active="runStatus.is_running || isGeneratingReport"
+    />
   </div>
 </template>
 
@@ -296,6 +290,7 @@ import {
   getRunStatusDetail
 } from '../api/simulation'
 import { generateReport } from '../api/report'
+import FloatingTerminal from './FloatingTerminal.vue'
 
 const { t } = useI18n()
 

@@ -29,12 +29,9 @@
     "title": "LOKĀNTRA - Predict Everything",
     "description": "LOKĀNTRA - Social Media Opinion Simulation System"
   },
-  "nav": {
-    "visitGithub": "Visit our Github page"
-  },
   "home": {
     "tagline": "Concise & Universal Swarm Intelligence Engine",
-    "version": "/ v0.1-Preview",
+    "version": "/ v0.1",
     "heroTitle1": "Upload Reports,",
     "heroTitle2": "Predict the Future",
     "heroDesc": "From a single document, {brand} extracts reality seeds to auto-generate a parallel world with up to {agentScale}. Inject variables from a god's-eye view to find the {optimalSolution} in complex group dynamics.",

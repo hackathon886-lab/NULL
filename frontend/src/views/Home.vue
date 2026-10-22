@@ -3,12 +3,7 @@
     <!-- Top Navigation Bar -->
     <nav class="navbar">
       <div class="nav-brand"><img src="../assets/logo/lokantra_wordmark.png" alt="LOKĀNTRA" class="nav-logo-wordmark" /></div>
-      <div class="nav-links">
-        <LanguageSwitcher />
-        <a href="https://github.com/Lokantra" target="_blank" class="github-link">
-          {{ $t('nav.visitGithub') }} <span class="arrow">↗</span>
-        </a>
-      </div>
+      
     </nav>
 
     <div class="main-content">
@@ -215,8 +210,6 @@
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import HistoryDatabase from '../components/HistoryDatabase.vue'
-import LanguageSwitcher from '../components/LanguageSwitcher.vue'
-
 const router = useRouter()
 
 // Form data
@@ -364,31 +357,13 @@ const startSimulation = () => {
   display: block;
 }
 
-.nav-links {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
 
-.github-link {
-  color: var(--white);
-  text-decoration: none;
-  font-family: var(--font-mono);
-  font-size: 0.9rem;
-  font-weight: 500;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  transition: opacity 0.2s;
-}
 
-.github-link:hover {
-  opacity: 0.8;
-}
 
-.arrow {
-  font-family: sans-serif;
-}
+
+
+
+
 
 /* Main content area */
 .main-content {
@@ -933,9 +908,7 @@ html[lang="en"] .tag-row {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
-html[lang="en"] .navbar .nav-links {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-}
+html[lang="en"] .navbar 
 
 /* Left pane: system status + workflow */
 html[lang="en"] .status-section {
