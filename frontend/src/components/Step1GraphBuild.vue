@@ -173,7 +173,6 @@
     <!-- Floating Windows Terminal Component -->
     <FloatingTerminal
       title="SYSTEM DASHBOARD"
-      :sub-id="projectData?.project_id || 'NO_PROJECT'"
       :logs="systemLogs"
     />
   </div>
