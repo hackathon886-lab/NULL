@@ -5,20 +5,6 @@
       <div class="header-left">
         <div class="brand" @click="router.push('/')"><img src="../assets/logo/lokantra_wordmark.png" alt="LOKĀNTRA" class="brand-wordmark" /></div>
       </div>
-      
-      <div class="header-center">
-        <div class="view-switcher">
-          <button 
-            v-for="mode in ['graph', 'split', 'workbench']" 
-            :key="mode"
-            class="switch-btn"
-            :class="{ active: viewMode === mode }"
-            @click="viewMode = mode"
-          >
-            {{ { graph: $t('main.layoutGraph'), split: $t('main.layoutSplit'), workbench: $t('main.layoutWorkbench') }[mode] }}
-          </button>
-        </div>
-      </div>
 
       <div class="header-right">
         
@@ -34,10 +20,8 @@
       </div>
     </header>
 
-    <!-- Main Content Area -->
-    <main class="content-area">
-      <!-- Left Panel: Graph -->
-      <div class="panel-wrapper left" :style="leftPanelStyle">
+    <main class="content-area" ref="contentAreaRef" :class="{ dragging: isDragging }">
+      <div class="panel-wrapper left" :style="{ width: `${leftPanelWidth}%` }">
         <GraphPanel 
           :graphData="graphData"
           :loading="graphLoading"
@@ -48,8 +32,9 @@
         />
       </div>
 
-      <!-- Right Panel: Step 4 Report Generation -->
-      <div class="panel-wrapper right" :style="rightPanelStyle">
+      <div class="splitter" @pointerdown.prevent="startDragging" aria-label="Resize panels" title="Drag to resize panels"></div>
+
+      <div class="panel-wrapper right" :style="{ width: `${100 - leftPanelWidth}%` }">
         <Step4Report
           :reportId="currentReportId"
           :simulationId="simulationId"
@@ -63,7 +48,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import GraphPanel from '../components/GraphPanel.vue'
@@ -80,8 +65,14 @@ const props = defineProps({
   reportId: String
 })
 
-// Layout State - Defaults to workbench view
-const viewMode = ref('workbench')
+const MIN_PANEL_WIDTH = 25
+const MAX_PANEL_WIDTH = 75
+const contentAreaRef = ref(null)
+const leftPanelWidth = ref(50)
+const isDragging = ref(false)
+const dragStartX = ref(0)
+const dragStartWidth = ref(50)
+const animationFrame = ref(null)
 
 // Data State
 const currentReportId = ref(route.params.reportId)
@@ -92,18 +83,46 @@ const graphLoading = ref(false)
 const systemLogs = ref([])
 const currentStatus = ref('processing') // processing | completed | error
 
-// --- Computed Layout Styles ---
-const leftPanelStyle = computed(() => {
-  if (viewMode.value === 'graph') return { width: '100%', opacity: 1, transform: 'translateX(0)' }
-  if (viewMode.value === 'workbench') return { width: '0%', opacity: 0, transform: 'translateX(-20px)' }
-  return { width: '50%', opacity: 1, transform: 'translateX(0)' }
-})
+const clampPanelWidth = (value) => Math.min(MAX_PANEL_WIDTH, Math.max(MIN_PANEL_WIDTH, value))
 
-const rightPanelStyle = computed(() => {
-  if (viewMode.value === 'workbench') return { width: '100%', opacity: 1, transform: 'translateX(0)' }
-  if (viewMode.value === 'graph') return { width: '0%', opacity: 0, transform: 'translateX(20px)' }
-  return { width: '50%', opacity: 1, transform: 'translateX(0)' }
-})
+const applyPanelWidth = (nextWidth) => {
+  if (animationFrame.value) cancelAnimationFrame(animationFrame.value)
+
+  animationFrame.value = requestAnimationFrame(() => {
+    leftPanelWidth.value = clampPanelWidth(nextWidth)
+    animationFrame.value = null
+  })
+}
+
+const startDragging = (event) => {
+  if (!contentAreaRef.value) return
+  isDragging.value = true
+  dragStartX.value = event.clientX
+  dragStartWidth.value = leftPanelWidth.value
+
+  window.addEventListener('pointermove', handleDrag)
+  window.addEventListener('pointerup', stopDragging)
+  window.addEventListener('pointercancel', stopDragging)
+}
+
+const handleDrag = (event) => {
+  if (!isDragging.value || !contentAreaRef.value) return
+
+  const rect = contentAreaRef.value.getBoundingClientRect()
+  const deltaPercent = ((event.clientX - dragStartX.value) / rect.width) * 100
+  applyPanelWidth(dragStartWidth.value + deltaPercent)
+}
+
+const stopDragging = () => {
+  isDragging.value = false
+  if (animationFrame.value) {
+    cancelAnimationFrame(animationFrame.value)
+    animationFrame.value = null
+  }
+  window.removeEventListener('pointermove', handleDrag)
+  window.removeEventListener('pointerup', stopDragging)
+  window.removeEventListener('pointercancel', stopDragging)
+}
 
 // --- Status Computed ---
 const statusClass = computed(() => {
@@ -131,10 +150,8 @@ const updateStatus = (status) => {
 
 // --- Layout Methods ---
 const toggleMaximize = (target) => {
-  if (viewMode.value === target) {
-    viewMode.value = 'split'
-  } else {
-    viewMode.value = target
+  if (target === 'graph') {
+    leftPanelWidth.value = 68
   }
 }
 
@@ -212,6 +229,10 @@ onMounted(() => {
   addLog(t('log.reportViewInit'))
   loadReportData()
 })
+
+onUnmounted(() => {
+  stopDragging()
+})
 </script>
 
 <style scoped>
@@ -237,16 +258,6 @@ onMounted(() => {
   position: relative;
 }
 
-.header-center {
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-}
-
-
-
-
-
 .brand-wordmark {
   height: 44px;
   width: auto;
@@ -263,39 +274,11 @@ onMounted(() => {
 .brand {
   display: flex;
   align-items: center;
-  display: flex;
-  align-items: center;
   font-family: 'JetBrains Mono', monospace;
   font-weight: 800;
   font-size: 18px;
   letter-spacing: 1px;
   cursor: pointer;
-}
-
-.view-switcher {
-  display: flex;
-  background: #F5F5F5;
-  padding: 4px;
-  border-radius: 6px;
-  gap: 4px;
-}
-
-.switch-btn {
-  border: none;
-  background: transparent;
-  padding: 6px 16px;
-  font-size: 12px;
-  font-weight: 600;
-  color: #666;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.switch-btn.active {
-  background: #FFF;
-  color: #000;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
 
 .header-right {
@@ -358,14 +341,52 @@ onMounted(() => {
   overflow: hidden;
 }
 
+.content-area.dragging .panel-wrapper,
+.content-area.dragging .splitter {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
 .panel-wrapper {
   height: 100%;
   overflow: hidden;
-  transition: width 0.4s cubic-bezier(0.25, 0.8, 0.25, 1), opacity 0.3s ease, transform 0.3s ease;
-  will-change: width, opacity, transform;
+  transition: width 0.08s ease;
 }
 
 .panel-wrapper.left {
+  min-width: 25%;
+  max-width: 75%;
   border-right: 1px solid #EAEAEA;
+}
+
+.splitter {
+  position: relative;
+  width: 12px;
+  min-width: 12px;
+  cursor: col-resize;
+  background: transparent;
+  border-left: 1px solid #EAEAEA;
+  border-right: 1px solid #EAEAEA;
+  z-index: 2;
+  transition: background-color 0.15s ease;
+}
+
+.splitter::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 4px;
+  height: 40px;
+  border-radius: 9999px;
+  background: rgba(0, 0, 0, 0.18);
+  transition: background 0.15s ease, transform 0.15s ease;
+}
+
+.splitter:hover::before,
+.splitter:active::before {
+  background: rgba(0, 0, 0, 0.35);
+  transform: translate(-50%, -50%) scaleY(1.08);
 }
 </style>
