@@ -128,6 +128,3 @@ docker compose up -d
 
 Reads `.env` from root directory by default, maps ports `3000 (frontend) / 5001 (backend)`
 
-## 📄 Acknowledgments
-
-LOKĀNTRA's simulation engine is powered by **[OASIS (Open Agent Social Interaction Simulations)](https://github.com/camel-ai/oasis)**. We sincerely thank the CAMEL-AI team for their open-source contributions!
