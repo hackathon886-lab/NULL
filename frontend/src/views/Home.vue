@@ -422,7 +422,7 @@
               </div>
 
               <!-- Start Button -->
-              <div class="console-section btn-section">
+              <div class="console-section btn-section flex flex-col gap-3">
                 <button 
                   class="start-engine-btn"
                   @click="startSimulation"
@@ -431,6 +431,15 @@
                   <span v-if="!loading">{{ $t('home.startEngine') }}</span>
                   <span v-else>{{ $t('home.initializing') }}</span>
                   <span class="btn-arrow">&rarr;</span>
+                </button>
+
+                <button 
+                  v-if="!files.length"
+                  type="button"
+                  class="quick-demo-btn"
+                  @click="quickDemoSimulation"
+                >
+                  <span>⚡ Quick Demo: Launch Venom Reality Seed</span>
                 </button>
               </div>
             </div>
@@ -684,6 +693,14 @@ const addFiles = (newFiles) => {
 
 const removeFile = (index) => {
   files.value.splice(index, 1)
+}
+
+const quickDemoSimulation = () => {
+  formData.value.simulationRequirement = 'Simulate autonomous swarm agent reaction to anomalous bio-tech volatility and divergent sentiment trajectories.'
+  const mockBlob = new Blob(['# Venom Reality Blueprint\n\nBio-tech market volatility and swarm multi-agent consensus dynamics.'], { type: 'text/markdown' })
+  const mockFile = new File([mockBlob], 'venom_reality_seed.md', { type: 'text/markdown' })
+  files.value = [mockFile]
+  startSimulation()
 }
 
 const startSimulation = () => {
@@ -1479,4 +1496,30 @@ onMounted(() => {
   70% { box-shadow: 0 0 0 8px rgba(255, 255, 255, 0); }
   100% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0); }
 }
+
+.quick-demo-btn {
+  background: rgba(255, 87, 34, 0.12);
+  border: 1px dashed rgba(255, 87, 34, 0.4);
+  color: #ff7043;
+  padding: 10px 18px;
+  border-radius: 999px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.quick-demo-btn:hover {
+  background: rgba(255, 87, 34, 0.22);
+  border-color: #ff5722;
+  color: #ffffff;
+  box-shadow: 0 0 16px rgba(255, 87, 34, 0.4);
+  transform: translateY(-1px);
+}
+
 </style>

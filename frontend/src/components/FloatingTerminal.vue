@@ -451,7 +451,7 @@ onUnmounted(() => {
   align-items: center;
   gap: 10px;
   cursor: pointer;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.1);
+  box-shadow: none;
   font-family: 'JetBrains Mono', Consolas, monospace;
   font-size: 13px;
   font-weight: 600;
@@ -465,7 +465,7 @@ onUnmounted(() => {
   background: #1E1E1E;
   border-color: #555555;
   transform: translateY(-2px);
-  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(255, 255, 255, 0.18);
+  box-shadow: none;
 }
 
 .floating-terminal-btn:active {
@@ -473,7 +473,7 @@ onUnmounted(() => {
 }
 
 .btn-terminal-icon {
-  color: #FF5722;
+  color: #ffffff;
   font-weight: 800;
   font-size: 14px;
 }
@@ -486,16 +486,14 @@ onUnmounted(() => {
 .btn-live-pulse {
   width: 8px;
   height: 8px;
-  background: #4CAF50;
+  background: #FFFFFF;
   border-radius: 50%;
-  box-shadow: 0 0 8px #4CAF50;
-  animation: pulse-dot 1.8s infinite;
+  animation: pulse-dot-mono 1.8s ease-in-out infinite;
 }
 
-@keyframes pulse-dot {
-  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.7); }
-  70% { transform: scale(1.1); box-shadow: 0 0 0 6px rgba(76, 175, 80, 0); }
-  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(76, 175, 80, 0); }
+@keyframes pulse-dot-mono {
+  0%, 100% { transform: scale(0.85); opacity: 0.5; }
+  50% { transform: scale(1.2); opacity: 1; }
 }
 
 /* --- 2. Windows Terminal Floating Window --- */
@@ -510,7 +508,7 @@ onUnmounted(() => {
   background: #0C0C0C;
   border: 1px solid rgba(255, 255, 255, 0.16);
   border-radius: 8px;
-  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(255, 255, 255, 0.08);
+  box-shadow: none;
   display: flex;
   flex-direction: column;
   overflow: visible;
@@ -632,16 +630,16 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   gap: 8px;
-  border-top: 2px solid #FF5722;
+  border-top: 2px solid #ffffff;
   font-family: 'JetBrains Mono', Consolas, monospace;
   font-size: 11.5px;
   color: #F0F0F0;
   font-weight: 500;
-  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.25);
+  box-shadow: none;
 }
 
 .win-tab-icon {
-  color: #FF5722;
+  color: #ffffff;
   font-weight: 800;
 }
 

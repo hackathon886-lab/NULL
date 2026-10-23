@@ -1,5 +1,5 @@
 <template>
-  <div class="main-view">
+  <div class="main-view venom-theme">
     <!-- Header -->
     <header class="app-header">
       <div class="header-left">
@@ -305,20 +305,24 @@ onMounted(async () => {
   height: 100vh;
   display: flex;
   flex-direction: column;
-  background: #FFF;
+  background: radial-gradient(circle at 50% 0%, #0d0d12 0%, #050507 50%, #000000 100%);
+  color: #f5f5f7;
   overflow: hidden;
-  font-family: 'Space Grotesk', 'Noto Sans SC', system-ui, sans-serif;
+  font-family: var(--font-body, system-ui, sans-serif);
 }
 
 /* Header */
 .app-header {
   height: 64px;
-  border-bottom: 1px solid #EAEAEA;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 24px;
-  background: #FFF;
+  background: rgba(8, 8, 12, 0.85);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.65);
   z-index: 100;
   position: relative;
 }
@@ -336,8 +340,13 @@ onMounted(async () => {
   transition: transform 0.2s ease;
 }
 
+.brand-wordmark {
+  filter: drop-shadow(0 0 20px rgba(255, 255, 255, 0.22)) drop-shadow(0 4px 12px rgba(0, 0, 0, 0.95));
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
 .brand-wordmark:hover {
-  transform: scale(1.03);
+  transform: scale(1.04);
+  filter: drop-shadow(0 0 28px rgba(255, 255, 255, 0.38)) brightness(1.15);
 }
 
 .brand {
@@ -360,28 +369,35 @@ onMounted(async () => {
 
 .view-switcher {
   display: flex;
-  background: #F5F5F5;
+  background: rgba(18, 18, 24, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   padding: 4px;
-  border-radius: 6px;
+  border-radius: 999px;
   gap: 4px;
+  backdrop-filter: blur(12px);
 }
 
 .switch-btn {
   border: none;
   background: transparent;
   padding: 6px 16px;
-  font-size: 12px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
   font-weight: 600;
-  color: #666;
-  border-radius: 4px;
+  color: #a1a1aa;
+  border-radius: 999px;
   cursor: pointer;
   transition: all 0.2s;
 }
 
+.switch-btn:hover {
+  color: #ffffff;
+}
+
 .switch-btn.active {
-  background: #FFF;
-  color: #000;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  background: #ffffff;
+  color: #000000;
+  box-shadow: 0 0 14px rgba(255, 255, 255, 0.6);
 }
 
 .header-right {
@@ -400,18 +416,20 @@ onMounted(async () => {
 .step-num {
   font-family: 'JetBrains Mono', monospace;
   font-weight: 700;
-  color: #999;
+  color: #a1a1aa;
 }
 
 .step-name {
-  font-weight: 700;
-  color: #000;
+  font-family: var(--font-display, 'Syne', sans-serif);
+  font-weight: 800;
+  color: #ffffff;
+  text-shadow: 0 0 16px rgba(255, 255, 255, 0.25);
 }
 
 .step-divider {
   width: 1px;
   height: 14px;
-  background-color: #E0E0E0;
+  background-color: rgba(255, 255, 255, 0.15);
 }
 
 .status-indicator {
@@ -430,8 +448,8 @@ onMounted(async () => {
   background: #CCC;
 }
 
-.status-indicator.processing .dot { background: #FF5722; animation: pulse 1s infinite; }
-.status-indicator.completed .dot { background: #4CAF50; }
+.status-indicator.processing .dot { background: #FF5722; box-shadow: 0 0 10px #FF5722, 0 0 22px rgba(255, 87, 34, 0.8); animation: pulse 1.8s infinite; }
+.status-indicator.completed .dot { background: #10B981; box-shadow: 0 0 10px #10B981, 0 0 20px rgba(16, 185, 129, 0.7); }
 .status-indicator.error .dot { background: #F44336; }
 
 @keyframes pulse { 50% { opacity: 0.5; } }
@@ -452,7 +470,7 @@ onMounted(async () => {
 }
 
 .panel-wrapper.left {
-  border-right: 1px solid #EAEAEA;
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
 }
 </style>
 

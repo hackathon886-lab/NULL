@@ -1098,8 +1098,9 @@ onUnmounted(() => {
   height: 100%;
   display: flex;
   flex-direction: column;
-  background: #FAFAFA;
-  font-family: 'Space Grotesk', 'Noto Sans SC', system-ui, sans-serif;
+  background: radial-gradient(circle at 85% 15%, #0e0e14 0%, #060608 60%, #020203 100%);
+  color: #f5f5f7;
+  font-family: var(--font-body, system-ui, sans-serif);
 }
 
 .scroll-container {
@@ -1111,65 +1112,97 @@ onUnmounted(() => {
   gap: 20px;
 }
 
+.scroll-container::-webkit-scrollbar {
+  width: 6px;
+}
+.scroll-container::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+}
+
 /* Step Card */
 .step-card {
-  background: #FFF;
-  border-radius: 8px;
-  padding: 20px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-  border: 1px solid #EAEAEA;
-  transition: all 0.3s ease;
+  background: linear-gradient(180deg, rgba(18, 18, 24, 0.82) 0%, rgba(9, 9, 13, 0.94) 100%);
+  border-radius: 18px;
+  padding: 24px;
+  box-shadow: 
+    0 12px 36px -8px rgba(0, 0, 0, 0.85),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   position: relative;
+  color: #f5f5f7;
 }
 
 .step-card.active {
-  border-color: #FF5722;
-  box-shadow: 0 4px 12px rgba(255, 87, 34, 0.08);
+  border-color: rgba(255, 87, 34, 0.7);
+  box-shadow: 
+    0 0 35px rgba(255, 87, 34, 0.22),
+    0 20px 50px rgba(0, 0, 0, 0.9),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22);
+}
+
+.step-card.completed {
+  border-color: rgba(16, 185, 129, 0.45);
+  box-shadow: 
+    0 0 25px rgba(16, 185, 129, 0.14),
+    0 16px 40px rgba(0, 0, 0, 0.8);
 }
 
 .card-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 16px;
+  margin-bottom: 18px;
 }
 
 .step-info {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
 }
 
 .step-num {
   font-family: 'JetBrains Mono', monospace;
-  font-size: 20px;
-  font-weight: 700;
-  color: #E0E0E0;
+  font-size: 22px;
+  font-weight: 800;
+  color: #52525b;
 }
 
-.step-card.active .step-num,
+.step-card.active .step-num {
+  color: #ffffff;
+  text-shadow: 0 0 16px rgba(255, 255, 255, 0.6), 0 0 28px rgba(255, 87, 34, 0.45);
+}
+
 .step-card.completed .step-num {
-  color: #000;
+  color: #10B981;
+  text-shadow: 0 0 14px rgba(16, 185, 129, 0.5);
 }
 
 .step-title {
-  font-weight: 600;
-  font-size: 14px;
-  letter-spacing: 0.5px;
+  font-family: var(--font-display, 'Syne', sans-serif);
+  font-weight: 700;
+  font-size: 16px;
+  color: #ffffff;
+  letter-spacing: -0.01em;
 }
 
 .badge {
+  font-family: 'JetBrains Mono', monospace;
   font-size: 10px;
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-weight: 600;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-weight: 700;
   text-transform: uppercase;
+  letter-spacing: 0.6px;
 }
 
-.badge.success { background: #E8F5E9; color: #2E7D32; }
-.badge.processing { background: #FF5722; color: #FFF; }
-.badge.pending { background: #F5F5F5; color: #999; }
-.badge.accent { background: #E3F2FD; color: #1565C0; }
+.badge.success { background: rgba(16, 185, 129, 0.16); border: 1px solid #10B981; color: #34D399; box-shadow: 0 0 14px rgba(16, 185, 129, 0.4); }
+.badge.processing { background: rgba(255, 87, 34, 0.18); border: 1px solid #FF5722; color: #ff7043; box-shadow: 0 0 14px rgba(255, 87, 34, 0.45); }
+.badge.pending { background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.12); color: #71717a; }
+.badge.accent { background: rgba(255, 87, 34, 0.18); border: 1px solid #FF5722; color: #ff7043; }
 
 .card-content {
   /* No extra padding - uses step-card's padding */
@@ -1184,7 +1217,7 @@ onUnmounted(() => {
 
 .description {
   font-size: 12px;
-  color: #666;
+  color: #a1a1ad;
   line-height: 1.5;
   margin-bottom: 16px;
 }
@@ -1218,7 +1251,7 @@ onUnmounted(() => {
 
 .action-btn.secondary {
   background: #F5F5F5;
-  color: #333;
+  color: #f4f4f5;
 }
 
 .action-btn.secondary:hover:not(:disabled) {
@@ -1267,7 +1300,7 @@ onUnmounted(() => {
 
 .info-label {
   font-size: 12px;
-  color: #666;
+  color: #a1a1ad;
 }
 
 .info-value {
@@ -1327,7 +1360,7 @@ onUnmounted(() => {
 .preview-title {
   font-size: 12px;
   font-weight: 600;
-  color: #666;
+  color: #a1a1ad;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
@@ -1355,7 +1388,7 @@ onUnmounted(() => {
 }
 
 .profile-card {
-  background: #FAFAFA;
+  background: rgba(14, 14, 18, 0.85);
   border: 1px solid #E5E5E5;
   border-radius: 6px;
   padding: 14px;
@@ -1365,7 +1398,7 @@ onUnmounted(() => {
 
 .profile-card:hover {
   border-color: #999;
-  background: #FFF;
+  background: rgba(20, 20, 26, 0.85);
 }
 
 .profile-header {
@@ -1393,7 +1426,7 @@ onUnmounted(() => {
 
 .profile-profession {
   font-size: 11px;
-  color: #666;
+  color: #a1a1ad;
   background: #F0F0F0;
   padding: 2px 8px;
   border-radius: 3px;
@@ -1458,7 +1491,7 @@ onUnmounted(() => {
 .config-block-title {
   font-size: 12px;
   font-weight: 600;
-  color: #666;
+  color: #a1a1ad;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
@@ -1574,7 +1607,7 @@ onUnmounted(() => {
 
 .agent-card:hover {
   border-color: #999;
-  background: #FFF;
+  background: rgba(20, 20, 26, 0.85);
 }
 
 /* Agent Card Header */
@@ -1772,7 +1805,7 @@ onUnmounted(() => {
 .platform-name {
   font-size: 13px;
   font-weight: 600;
-  color: #333;
+  color: #f4f4f5;
 }
 
 .platform-params {
@@ -1835,7 +1868,7 @@ onUnmounted(() => {
 }
 
 .profile-modal {
-  background: #FFF;
+  background: rgba(20, 20, 26, 0.85);
   border-radius: 16px;
   width: 90%;
   max-width: 600px;
@@ -1851,7 +1884,7 @@ onUnmounted(() => {
   justify-content: space-between;
   align-items: flex-start;
   padding: 24px;
-  background: #FFF;
+  background: rgba(20, 20, 26, 0.85);
   border-bottom: 1px solid #F0F0F0;
 }
 
@@ -1880,7 +1913,7 @@ onUnmounted(() => {
 
 .modal-profession {
   font-size: 12px;
-  color: #666;
+  color: #a1a1ad;
   background: #F5F5F5;
   padding: 4px 10px;
   border-radius: 4px;
@@ -1906,7 +1939,7 @@ onUnmounted(() => {
 }
 
 .close-btn:hover {
-  color: #333;
+  color: #f4f4f5;
 }
 
 .modal-body {
@@ -1943,7 +1976,7 @@ onUnmounted(() => {
 .info-value {
   font-size: 15px;
   font-weight: 600;
-  color: #333;
+  color: #f4f4f5;
 }
 
 .info-value.mbti {
@@ -1968,7 +2001,7 @@ onUnmounted(() => {
 
 .section-bio {
   font-size: 14px;
-  color: #333;
+  color: #f4f4f5;
   line-height: 1.6;
   margin: 0;
   padding: 16px;
@@ -2024,7 +2057,7 @@ onUnmounted(() => {
   display: block;
   font-size: 12px;
   font-weight: 700;
-  color: #333;
+  color: #f4f4f5;
   margin-bottom: 4px;
 }
 
@@ -2107,7 +2140,7 @@ onUnmounted(() => {
 }
 
 .log-time {
-  color: #666;
+  color: #a1a1ad;
   min-width: 75px;
 }
 
@@ -2141,7 +2174,7 @@ onUnmounted(() => {
   display: block;
   font-size: 12px;
   font-weight: 600;
-  color: #666;
+  color: #a1a1ad;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   margin-bottom: 12px;
@@ -2160,7 +2193,7 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   gap: 8px;
-  color: #666;
+  color: #a1a1ad;
   font-size: 13px;
   letter-spacing: 0.5px;
   margin-bottom: 12px;
@@ -2187,7 +2220,7 @@ onUnmounted(() => {
 }
 
 .topics-section {
-  background: #FFF;
+  background: rgba(20, 20, 26, 0.85);
 }
 
 .hot-topics-grid {
@@ -2212,7 +2245,7 @@ onUnmounted(() => {
 }
 
 .initial-posts-section {
-  border-top: 1px solid #EAEAEA;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
   padding-top: 16px;
 }
 
@@ -2255,7 +2288,7 @@ onUnmounted(() => {
 .post-role {
   font-size: 11px;
   font-weight: 700;
-  color: #333;
+  color: #f4f4f5;
   text-transform: uppercase;
 }
 
@@ -2269,7 +2302,7 @@ onUnmounted(() => {
 .post-username {
   font-family: 'JetBrains Mono', monospace;
   font-size: 10px;
-  color: #666;
+  color: #a1a1ad;
   line-height: 1;
   vertical-align: baseline;
 }
@@ -2289,7 +2322,7 @@ onUnmounted(() => {
 .rounds-config-section {
   margin: 24px 0;
   padding-top: 24px;
-  border-top: 1px solid #EAEAEA;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .rounds-header {
@@ -2361,7 +2394,7 @@ onUnmounted(() => {
   top: 2px;
   width: 16px;
   height: 16px;
-  background: #FFF;
+  background: rgba(20, 20, 26, 0.85);
   border-radius: 50%;
   box-shadow: 0 1px 3px rgba(0,0,0,0.1);
   transition: transform 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
@@ -2412,7 +2445,7 @@ onUnmounted(() => {
 
 .val-unit {
   font-size: 12px;
-  color: #666;
+  color: #a1a1ad;
   font-weight: 500;
 }
 
@@ -2448,7 +2481,7 @@ onUnmounted(() => {
   width: 16px;
   height: 16px;
   border-radius: 50%;
-  background: #FFF;
+  background: rgba(20, 20, 26, 0.85);
   border: 2px solid #000;
   cursor: pointer;
   box-shadow: 0 1px 4px rgba(0,0,0,0.1);
