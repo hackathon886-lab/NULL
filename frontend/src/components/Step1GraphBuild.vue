@@ -477,19 +477,11 @@ watch(() => props.systemLogs.length, () => {
   opacity: 0.35;
 }
 
-.hanging-cables-group {
-  animation: web-breathe 9s ease-in-out infinite alternate;
-  transform-origin: 50% 0%;
-}
+.hanging-cables-group { animation: none; }
 
-.hanging-droplets-group {
-  animation: web-drip-sway 7s ease-in-out infinite alternate;
-  transform-origin: 50% 0%;
-}
+.hanging-droplets-group { animation: none; }
 
-.fissure-cracks-group {
-  animation: crack-pulse 5s ease-in-out infinite alternate;
-}
+.fissure-cracks-group { animation: none; }
 
 @keyframes web-breathe {
   0% { transform: scaleY(1) translateY(0); }
@@ -541,9 +533,7 @@ watch(() => props.systemLogs.length, () => {
   border-radius: 18px;
   padding: 24px;
   border: 1px solid rgba(255, 255, 255, 0.13);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   position: relative;
   z-index: 10;
 }
@@ -611,9 +601,7 @@ watch(() => props.systemLogs.length, () => {
   padding: 4px 12px;
   border-radius: 999px;
   text-transform: uppercase;
-  backdrop-filter: blur(2px);
-  -webkit-backdrop-filter: blur(2px);
-  transition: all 0.25s ease;
+transition: all 0.25s ease;
 }
 
 .badge.processing,
@@ -645,9 +633,7 @@ watch(() => props.systemLogs.length, () => {
   color: #a1a1aa;
   background: rgba(18, 18, 24, 0.8);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border-radius: 8px;
+border-radius: 8px;
   padding: 5px 12px;
   margin-bottom: 14px;
 }
@@ -680,9 +666,7 @@ watch(() => props.systemLogs.length, () => {
   padding: 12px 18px;
   background: rgba(22, 22, 28, 0.78);
   border: 1px solid rgba(255, 255, 255, 0.2);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border-radius: 12px;
+border-radius: 12px;
   margin-bottom: 16px;
   animation: pulse-progress-bw 2.5s ease-in-out infinite alternate;
 }
@@ -738,9 +722,7 @@ watch(() => props.systemLogs.length, () => {
   font-size: 11px;
   color: #f4f4f5;
   font-family: 'JetBrains Mono', monospace;
-  backdrop-filter: blur(2px);
-  -webkit-backdrop-filter: blur(2px);
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .entity-tag.clickable {
@@ -762,9 +744,7 @@ watch(() => props.systemLogs.length, () => {
   right: 20px;
   bottom: 20px;
   background: rgba(10, 10, 14, 0.85);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  z-index: 15;
+z-index: 15;
   border: 1px solid rgba(255, 255, 255, 0.18);
   border-radius: 16px;
   display: flex;
@@ -782,8 +762,6 @@ watch(() => props.systemLogs.length, () => {
   padding: 14px 18px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   background: rgba(255, 255, 255, 0.03);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
 }
 
 .detail-title-group {
@@ -938,9 +916,7 @@ watch(() => props.systemLogs.length, () => {
   gap: 14px;
   background: rgba(8, 8, 12, 0.65);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  padding: 18px;
+padding: 18px;
   border-radius: 14px;
 }
 
@@ -948,9 +924,7 @@ watch(() => props.systemLogs.length, () => {
   text-align: center;
   background: rgba(20, 20, 26, 0.78);
   border: 1px solid rgba(255, 255, 255, 0.12);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border-radius: 12px;
+border-radius: 12px;
   padding: 16px 10px;
   transition: all 0.2s ease;
 }
@@ -992,9 +966,7 @@ watch(() => props.systemLogs.length, () => {
   outline: none;
   cursor: pointer;
   background: rgba(22, 22, 30, 0.9);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  color: #FFFFFF;
+color: #FFFFFF;
   font-family: var(--font-display, 'Syne', sans-serif);
   font-size: 14px;
   font-weight: 700;

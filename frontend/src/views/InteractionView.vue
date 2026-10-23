@@ -1,27 +1,44 @@
 <template>
-  <div class="main-view">
+  <div class="main-view venom-theme">
     <!-- Header -->
     <header class="app-header">
       <div class="header-left">
-        <div class="brand" @click="router.push('/home')"><img src="../assets/logo/lokantra_wordmark.png" alt="LOKĀNTRA" class="brand-wordmark" /></div>
+        <div class="brand" @click="router.push('/home')"><img src="../assets/logo/lokantra_chrome_wordmark.png" alt="LOKĀNTRA" class="brand-wordmark" /></div>
       </div>
-      
+
+      <!-- Center: 2 View Mode Switcher Buttons -->
       <div class="header-center">
         <div class="view-switcher">
           <button 
-            v-for="mode in ['graph', 'split', 'workbench']" 
-            :key="mode"
-            class="switch-btn"
-            :class="{ active: viewMode === mode }"
-            @click="viewMode = mode"
+            class="switch-btn" 
+            :class="{ active: viewMode === 'graph' }"
+            @click="setMode('graph')"
+            title="Switch to full Knowledge Graph view"
           >
-            {{ { graph: $t('main.layoutGraph'), split: $t('main.layoutSplit'), workbench: $t('main.layoutWorkbench') }[mode] }}
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="18" cy="5" r="3"></circle>
+              <circle cx="6" cy="12" r="3"></circle>
+              <circle cx="18" cy="19" r="3"></circle>
+              <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+              <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+            </svg>
+            <span>Graph</span>
+          </button>
+          <button 
+            class="switch-btn" 
+            :class="{ active: viewMode === 'interaction' }"
+            @click="setMode('interaction')"
+            title="Switch to full Deep Interaction view"
+          >
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+            </svg>
+            <span>Deep Interaction</span>
           </button>
         </div>
       </div>
 
       <div class="header-right">
-        
         <div class="workflow-step">
           <span class="step-num">Step 5/5</span>
           <span class="step-name">{{ $tm('main.stepNames')[4] }}</span>
@@ -35,9 +52,13 @@
     </header>
 
     <!-- Main Content Area -->
-    <main class="content-area">
-      <!-- Left Panel: Graph -->
-      <div class="panel-wrapper left" :style="leftPanelStyle">
+    <main class="content-area" ref="contentAreaRef">
+      <!-- Left Panel: Graph (Full width when viewMode === 'graph') -->
+      <div 
+        class="panel-wrapper left" 
+        :class="{ 'is-hidden': viewMode !== 'graph' }"
+        :style="leftPanelStyle"
+      >
         <GraphPanel 
           :graphData="graphData"
           :loading="graphLoading"
@@ -48,8 +69,12 @@
         />
       </div>
 
-      <!-- Right Panel: Step 5 Deep Interaction -->
-      <div class="panel-wrapper right" :style="rightPanelStyle">
+      <!-- Right Panel: Step 5 Deep Interaction (Full width when viewMode === 'interaction') -->
+      <div 
+        class="panel-wrapper right" 
+        :class="{ 'is-hidden': viewMode !== 'interaction' }"
+        :style="rightPanelStyle"
+      >
         <Step5Interaction
           :reportId="currentReportId"
           :simulationId="simulationId"
@@ -63,7 +88,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import GraphPanel from '../components/GraphPanel.vue'
@@ -80,8 +105,29 @@ const props = defineProps({
   reportId: String
 })
 
-// Layout State - Defaults to workbench view
-const viewMode = ref('workbench')
+// Layout State - Defaults to deep interaction workbench
+const viewMode = ref('interaction') // 'graph' | 'interaction'
+
+const setMode = (mode) => {
+  viewMode.value = mode
+  nextTick(() => {
+    window.dispatchEvent(new Event('resize'))
+  })
+}
+
+const leftPanelStyle = computed(() => {
+  if (viewMode.value === 'graph') {
+    return { width: '100%', display: 'block' }
+  }
+  return { width: '0%', display: 'none' }
+})
+
+const rightPanelStyle = computed(() => {
+  if (viewMode.value === 'interaction') {
+    return { width: '100%', display: 'block' }
+  }
+  return { width: '0%', display: 'none' }
+})
 
 // Data State
 const currentReportId = ref(route.params.reportId)
@@ -91,19 +137,6 @@ const graphData = ref(null)
 const graphLoading = ref(false)
 const systemLogs = ref([])
 const currentStatus = ref('ready') // ready | processing | completed | error
-
-// --- Computed Layout Styles ---
-const leftPanelStyle = computed(() => {
-  if (viewMode.value === 'graph') return { width: '100%', opacity: 1, transform: 'translateX(0)' }
-  if (viewMode.value === 'workbench') return { width: '0%', opacity: 0, transform: 'translateX(-20px)' }
-  return { width: '50%', opacity: 1, transform: 'translateX(0)' }
-})
-
-const rightPanelStyle = computed(() => {
-  if (viewMode.value === 'workbench') return { width: '100%', opacity: 1, transform: 'translateX(0)' }
-  if (viewMode.value === 'graph') return { width: '0%', opacity: 0, transform: 'translateX(20px)' }
-  return { width: '50%', opacity: 1, transform: 'translateX(0)' }
-})
 
 // --- Status Computed ---
 const statusClass = computed(() => {
@@ -132,10 +165,12 @@ const updateStatus = (status) => {
 
 // --- Layout Methods ---
 const toggleMaximize = (target) => {
-  if (viewMode.value === target) {
-    viewMode.value = 'split'
-  } else {
-    viewMode.value = target
+  if (target === 'graph') {
+    if (viewMode.value === 'graph') {
+      setMode('interaction')
+    } else {
+      setMode('graph')
+    }
   }
 }
 
@@ -220,33 +255,24 @@ onMounted(() => {
   height: 100vh;
   display: flex;
   flex-direction: column;
-  background: #FFF;
+  background: radial-gradient(circle at 50% 0%, #0d0d12 0%, #050507 50%, #000000 100%);
+  color: #f5f5f7;
   overflow: hidden;
-  font-family: 'Space Grotesk', 'Noto Sans SC', system-ui, sans-serif;
+  font-family: var(--font-body, system-ui, sans-serif);
 }
 
 /* Header */
 .app-header {
   height: 64px;
-  border-bottom: 1px solid #EAEAEA;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 24px;
-  background: #FFF;
+  background: #08080c;
   z-index: 100;
   position: relative;
 }
-
-.header-center {
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-}
-
-
-
-
 
 .brand-wordmark {
   height: 44px;
@@ -264,8 +290,6 @@ onMounted(() => {
 .brand {
   display: flex;
   align-items: center;
-  display: flex;
-  align-items: center;
   font-family: 'JetBrains Mono', monospace;
   font-weight: 800;
   font-size: 18px;
@@ -273,30 +297,65 @@ onMounted(() => {
   cursor: pointer;
 }
 
+/* Header Center View Switcher */
+.header-center {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  z-index: 10;
+}
+
 .view-switcher {
   display: flex;
-  background: #F5F5F5;
-  padding: 4px;
-  border-radius: 6px;
+  align-items: center;
+  background: rgba(18, 18, 24, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 3px;
+  border-radius: 8px;
   gap: 4px;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
 
 .switch-btn {
-  border: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid transparent;
   background: transparent;
   padding: 6px 16px;
   font-size: 12px;
-  font-weight: 600;
-  color: #666;
-  border-radius: 4px;
+  font-weight: 700;
+  color: #94A3B8;
+  border-radius: 6px;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  letter-spacing: 0.03em;
+  font-family: var(--font-body, system-ui, sans-serif);
+}
+
+.switch-btn svg {
+  flex-shrink: 0;
+  transition: stroke 0.2s ease;
+}
+
+.switch-btn:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.06);
 }
 
 .switch-btn.active {
-  background: #FFF;
-  color: #000;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  background: #ffffff;
+  color: #000000;
+  border-color: #ffffff;
+  font-weight: 800;
+  box-shadow: 0 2px 8px rgba(255, 255, 255, 0.15);
+}
+
+.switch-btn.active svg {
+  stroke: #000000;
 }
 
 .header-right {
@@ -315,18 +374,19 @@ onMounted(() => {
 .step-num {
   font-family: 'JetBrains Mono', monospace;
   font-weight: 700;
-  color: #999;
+  color: #a1a1aa;
 }
 
 .step-name {
-  font-weight: 700;
-  color: #000;
+  font-family: var(--font-display, 'Syne', sans-serif);
+  font-weight: 800;
+  color: #ffffff;
 }
 
 .step-divider {
   width: 1px;
   height: 14px;
-  background-color: #E0E0E0;
+  background-color: rgba(255, 255, 255, 0.15);
 }
 
 .status-indicator {
@@ -334,7 +394,7 @@ onMounted(() => {
   align-items: center;
   gap: 8px;
   font-size: 12px;
-  color: #666;
+  color: #a1a1aa;
   font-weight: 500;
 }
 
@@ -345,29 +405,37 @@ onMounted(() => {
   background: #CCC;
 }
 
-.status-indicator.ready .dot { background: #4CAF50; }
-.status-indicator.processing .dot { background: #FF9800; animation: pulse 1s infinite; }
-.status-indicator.completed .dot { background: #4CAF50; }
+.status-indicator.ready .dot { background: #ffffff; }
+.status-indicator.processing .dot { background: #ffffff; animation: pulse 1s infinite; }
+.status-indicator.completed .dot { background: #ffffff; }
 .status-indicator.error .dot { background: #F44336; }
 
 @keyframes pulse { 50% { opacity: 0.5; } }
 
-/* Content */
+/* Content Area */
 .content-area {
   flex: 1;
   display: flex;
   position: relative;
   overflow: hidden;
+  width: 100%;
 }
 
 .panel-wrapper {
   height: 100%;
   overflow: hidden;
-  transition: width 0.4s cubic-bezier(0.25, 0.8, 0.25, 1), opacity 0.3s ease, transform 0.3s ease;
-  will-change: width, opacity, transform;
+  transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.panel-wrapper.is-hidden {
+  display: none !important;
 }
 
 .panel-wrapper.left {
-  border-right: 1px solid #EAEAEA;
+  width: 100%;
+}
+
+.panel-wrapper.right {
+  width: 100%;
 }
 </style>

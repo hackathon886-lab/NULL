@@ -757,6 +757,20 @@ class SimulationRunner:
                                 "Stopped graph memory updates: simulation_id=%s",
                                 simulation_id,
                             )
+                        except TimeoutError as timeout_err:
+                            logger.warning(
+                                f"Graph memory ingestion wait timed out for simulation {simulation_id}: {timeout_err}. "
+                                f"All batches were submitted to Zep Cloud and will complete indexing asynchronously. "
+                                f"Marking simulation as completed."
+                            )
+                            ZepGraphMemoryManager.force_remove_updater(simulation_id)
+                            cls._graph_memory_enabled.pop(simulation_id, None)
+                            desired_status = (
+                                RunnerStatus.STOPPED
+                                if simulation_id in cls._manual_stop_requests
+                                else RunnerStatus.COMPLETED
+                            )
+                            error_message = None
                         except Exception as error:
                             logger.error(f"Failed to stop graph memory updater: {error}")
                             desired_status = RunnerStatus.FAILED
@@ -1079,6 +1093,13 @@ class SimulationRunner:
                 if cls._graph_memory_enabled.get(simulation_id, False):
                     try:
                         ZepGraphMemoryManager.stop_updater(simulation_id)
+                        cls._graph_memory_enabled.pop(simulation_id, None)
+                    except TimeoutError as timeout_err:
+                        logger.warning(
+                            f"Zep graph memory updater timed out during manual stop: {timeout_err}. "
+                            f"All batches were submitted to Zep Cloud. Marking simulation as stopped."
+                        )
+                        ZepGraphMemoryManager.force_remove_updater(simulation_id)
                         cls._graph_memory_enabled.pop(simulation_id, None)
                     except Exception as error:
                         state.runner_status = RunnerStatus.FAILED
@@ -1759,7 +1780,13 @@ class SimulationRunner:
         ipc_client = SimulationIPCClient(sim_dir)
 
         if not ipc_client.check_env_alive():
-            raise ValueError(f"Simulation environment is not running or closed, cannot execute Interview: {simulation_id}")
+            logger.info(f"Live simulation IPC environment not active; using direct agent interview: simulation_id={simulation_id}, agent_id={agent_id}")
+            return cls._interview_agent_direct(
+                simulation_id=simulation_id,
+                agent_id=agent_id,
+                prompt=prompt,
+                platform=platform
+            )
 
         logger.info(f"Sent Interview command: simulation_id={simulation_id}, agent_id={agent_id}, platform={platform}")
 
@@ -1821,7 +1848,12 @@ class SimulationRunner:
         ipc_client = SimulationIPCClient(sim_dir)
 
         if not ipc_client.check_env_alive():
-            raise ValueError(f"Simulation environment is not running or closed, cannot execute Interview: {simulation_id}")
+            logger.info(f"Live simulation IPC environment not active; using direct batch interview: simulation_id={simulation_id}, count={len(interviews)}")
+            return cls._interview_agents_batch_direct(
+                simulation_id=simulation_id,
+                interviews=interviews,
+                platform=platform
+            )
 
         logger.info(f"Sent batch Interview command: simulation_id={simulation_id}, count={len(interviews)}, platform={platform}")
 
@@ -2062,3 +2094,379 @@ class SimulationRunner:
             results = results[:limit]
         
         return results
+
+    # ============== Direct Agent Interview Methods (Offline Fallback) ==============
+
+    @classmethod
+    def _get_agent_profile(cls, sim_dir: str, agent_id: int, platform: str) -> Optional[Dict[str, Any]]:
+        """Load profile for a given agent_id and platform"""
+        # If twitter platform requested, inspect twitter_profiles.csv first
+        if platform == "twitter":
+            csv_path = os.path.join(sim_dir, "twitter_profiles.csv")
+            if os.path.exists(csv_path):
+                import csv
+                try:
+                    with open(csv_path, 'r', encoding='utf-8', newline='') as f:
+                        reader = list(csv.DictReader(f))
+                        for idx, row in enumerate(reader):
+                            uid = row.get("user_id") or row.get("id")
+                            if uid is not None and str(uid) == str(agent_id):
+                                return row
+                            if idx == agent_id:
+                                return row
+                except Exception as e:
+                    logger.warning(f"Error reading twitter_profiles.csv: {e}")
+
+        # Check reddit / json profiles
+        json_path = os.path.join(sim_dir, "reddit_profiles.json")
+        if not os.path.exists(json_path):
+            json_path = os.path.join(sim_dir, "profiles.json")
+
+        if os.path.exists(json_path):
+            try:
+                with open(json_path, 'r', encoding='utf-8') as f:
+                    profiles = json.load(f)
+                    if isinstance(profiles, list):
+                        for idx, p in enumerate(profiles):
+                            uid = p.get("user_id") if p.get("user_id") is not None else p.get("id")
+                            if uid is not None and str(uid) == str(agent_id):
+                                return p
+                            if idx == agent_id:
+                                return p
+            except Exception as e:
+                logger.warning(f"Error reading reddit_profiles.json: {e}")
+
+        # If still not found and platform was reddit, try twitter CSV as fallback
+        if platform != "twitter":
+            csv_path = os.path.join(sim_dir, "twitter_profiles.csv")
+            if os.path.exists(csv_path):
+                import csv
+                try:
+                    with open(csv_path, 'r', encoding='utf-8', newline='') as f:
+                        reader = list(csv.DictReader(f))
+                        for idx, row in enumerate(reader):
+                            uid = row.get("user_id") or row.get("id")
+                            if uid is not None and str(uid) == str(agent_id):
+                                return row
+                            if idx == agent_id:
+                                return row
+                except Exception as e:
+                    logger.warning(f"Error reading fallback twitter_profiles.csv: {e}")
+
+        return None
+
+    @classmethod
+    def _get_agent_recent_actions(cls, sim_dir: str, agent_id: int, platform: str) -> List[str]:
+        """Retrieve recent posts and comments for the agent from simulation database"""
+        actions = []
+        db_path = os.path.join(sim_dir, f"{platform}_simulation.db")
+        if not os.path.exists(db_path):
+            alt_platform = "reddit" if platform == "twitter" else "twitter"
+            alt_path = os.path.join(sim_dir, f"{alt_platform}_simulation.db")
+            if os.path.exists(alt_path):
+                db_path = alt_path
+
+        if os.path.exists(db_path):
+            import sqlite3
+            try:
+                conn = sqlite3.connect(db_path)
+                cursor = conn.cursor()
+                try:
+                    cursor.execute("SELECT content FROM post WHERE user_id = ? ORDER BY created_at DESC LIMIT 3", (agent_id,))
+                    for row in cursor.fetchall():
+                        if row[0]:
+                            actions.append(f"Post: {row[0]}")
+                except Exception:
+                    pass
+
+                try:
+                    cursor.execute("SELECT content FROM comment WHERE user_id = ? ORDER BY created_at DESC LIMIT 3", (agent_id,))
+                    for row in cursor.fetchall():
+                        if row[0]:
+                            actions.append(f"Comment: {row[0]}")
+                except Exception:
+                    pass
+                conn.close()
+            except Exception as e:
+                logger.warning(f"Failed to query agent actions from database: {e}")
+
+        return actions
+
+    @classmethod
+    def _generate_agent_response(
+        cls,
+        profile: Optional[Dict[str, Any]],
+        sim_requirement: str,
+        past_actions: List[str],
+        prompt: str
+    ) -> str:
+        """Generate an authentic response via LLM in the persona of the agent"""
+        from ..utils.llm_client import LLMClient
+
+        clean_prompt = prompt or ""
+        prefix = "Drawing upon your persona, all past memories, and actions, reply directly in plain text without invoking any tools: "
+        if clean_prompt.startswith(prefix):
+            clean_prompt = clean_prompt[len(prefix):].strip()
+
+        if not profile:
+            name = "Agent"
+            username = "agent"
+            bio = "Active participant in this social simulation."
+            persona = "An active participant in this social simulation."
+            profession = "Community Member"
+            topics = ""
+        else:
+            name = profile.get("name") or profile.get("username") or "Agent"
+            username = profile.get("username") or "agent"
+            bio = profile.get("bio") or profile.get("description") or ""
+            persona = profile.get("persona") or profile.get("user_char") or bio or "A social simulation participant"
+            profession = profile.get("profession") or profile.get("role") or "Participant"
+            interested_topics = profile.get("interested_topics") or ""
+            topics = ", ".join(interested_topics) if isinstance(interested_topics, list) else str(interested_topics)
+
+        actions_context = ""
+        if past_actions:
+            actions_context = "\nYour past activities and statements in this simulation:\n" + "\n".join(f"- {act}" for act in past_actions[:4])
+
+        system_prompt = (
+            f"You are roleplaying as {name} (@{username}) on social media.\n"
+            f"Your Role/Profession: {profession}\n"
+            f"Your Bio: {bio}\n"
+            f"Your Core Persona & Perspective: {persona}\n"
+            f"{'Your Interests: ' + topics if topics else ''}\n"
+            f"{'Simulation Background Topic: ' + sim_requirement if sim_requirement else ''}\n"
+            f"{actions_context}\n\n"
+            f"CRITICAL INSTRUCTIONS:\n"
+            f"1. Stay completely in-character as {name} reflecting your specific background, tone, knowledge, and worldview.\n"
+            f"2. Respond naturally to the user's message as an individual agent. Keep your tone realistic and personal.\n"
+            f"3. Do NOT mention you are an AI, LLM, or in a simulation.\n"
+            f"4. Reply directly in plain text without markdown headers, bullet lists (unless asked), or tools.\n"
+            f"5. Match the language of the prompt (e.g. English)."
+        )
+
+        try:
+            llm = LLMClient()
+            messages = [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": clean_prompt}
+            ]
+            response = llm.chat(messages, temperature=0.7, max_tokens=1024)
+            return response.strip()
+        except Exception as e:
+            logger.error(f"Failed to generate LLM agent response: {e}")
+            return f"Hello, I am {name}. As {profession}, I'm following the developments in this scenario closely."
+
+    @classmethod
+    def _record_interview_to_db(
+        cls,
+        sim_dir: str,
+        agent_id: int,
+        platform: str,
+        prompt: str,
+        response_text: str
+    ):
+        """Save interview record to database trace table"""
+        import sqlite3
+        db_path = os.path.join(sim_dir, f"{platform}_simulation.db")
+        if not os.path.exists(db_path):
+            alt_platform = "reddit" if platform == "twitter" else "twitter"
+            alt_path = os.path.join(sim_dir, f"{alt_platform}_simulation.db")
+            if os.path.exists(alt_path):
+                db_path = alt_path
+
+        if os.path.exists(db_path):
+            try:
+                conn = sqlite3.connect(db_path)
+                cursor = conn.cursor()
+                cursor.execute(
+                    "INSERT INTO trace (user_id, created_at, action, info) VALUES (?, ?, ?, ?)",
+                    (
+                        agent_id,
+                        datetime.now().isoformat(),
+                        "interview",
+                        json.dumps({"prompt": prompt, "response": response_text}, ensure_ascii=False)
+                    )
+                )
+                conn.commit()
+                conn.close()
+            except Exception as e:
+                logger.warning(f"Failed to record interview to trace table: {e}")
+
+    @classmethod
+    def _interview_agent_direct(
+        cls,
+        simulation_id: str,
+        agent_id: int,
+        prompt: str,
+        platform: str = None
+    ) -> Dict[str, Any]:
+        """
+        Directly interview an agent using its profile, persona, and past simulation actions.
+        Used when the simulation process is not actively running (e.g., in Step 5 Deep Interaction).
+        """
+        sim_dir = os.path.join(cls.RUN_STATE_DIR, simulation_id)
+        if not os.path.exists(sim_dir):
+            raise ValueError(f"Simulation does not exist: {simulation_id}")
+
+        platforms_to_interview = []
+        if platform:
+            platforms_to_interview = [platform]
+        else:
+            has_reddit = os.path.exists(os.path.join(sim_dir, "reddit_profiles.json")) or os.path.exists(os.path.join(sim_dir, "reddit_simulation.db"))
+            has_twitter = os.path.exists(os.path.join(sim_dir, "twitter_profiles.csv")) or os.path.exists(os.path.join(sim_dir, "twitter_simulation.db"))
+            if has_reddit and has_twitter:
+                platforms_to_interview = ["twitter", "reddit"]
+            elif has_reddit:
+                platforms_to_interview = ["reddit"]
+            elif has_twitter:
+                platforms_to_interview = ["twitter"]
+            else:
+                platforms_to_interview = ["reddit"]
+
+        sim_requirement = ""
+        config_file = os.path.join(sim_dir, "simulation_config.json")
+        if os.path.exists(config_file):
+            try:
+                with open(config_file, 'r', encoding='utf-8') as f:
+                    cfg = json.load(f)
+                    sim_requirement = cfg.get("simulation_requirement", "")
+            except Exception:
+                pass
+
+        platform_results = {}
+        for p in platforms_to_interview:
+            profile = cls._get_agent_profile(sim_dir, agent_id, p)
+            if not profile:
+                other_p = "reddit" if p == "twitter" else "twitter"
+                profile = cls._get_agent_profile(sim_dir, agent_id, other_p)
+
+            past_actions = cls._get_agent_recent_actions(sim_dir, agent_id, p)
+            response_text = cls._generate_agent_response(
+                profile=profile,
+                sim_requirement=sim_requirement,
+                past_actions=past_actions,
+                prompt=prompt
+            )
+
+            cls._record_interview_to_db(sim_dir, agent_id, p, prompt, response_text)
+
+            platform_results[p] = {
+                "agent_id": agent_id,
+                "response": response_text,
+                "platform": p,
+                "timestamp": datetime.now().isoformat()
+            }
+
+        if platform:
+            res = platform_results.get(platform, list(platform_results.values())[0])
+            return {
+                "success": True,
+                "agent_id": agent_id,
+                "prompt": prompt,
+                "result": res,
+                "timestamp": datetime.now().isoformat()
+            }
+        else:
+            return {
+                "success": True,
+                "agent_id": agent_id,
+                "prompt": prompt,
+                "result": {
+                    "agent_id": agent_id,
+                    "prompt": prompt,
+                    "platforms": platform_results
+                },
+                "timestamp": datetime.now().isoformat()
+            }
+
+    @classmethod
+    def _interview_agents_batch_direct(
+        cls,
+        simulation_id: str,
+        interviews: List[Dict[str, Any]],
+        platform: str = None
+    ) -> Dict[str, Any]:
+        """
+        Directly batch interview agents using their profiles and past actions in parallel.
+        """
+        from concurrent.futures import ThreadPoolExecutor
+
+        sim_dir = os.path.join(cls.RUN_STATE_DIR, simulation_id)
+        if not os.path.exists(sim_dir):
+            raise ValueError(f"Simulation does not exist: {simulation_id}")
+
+        sim_requirement = ""
+        config_file = os.path.join(sim_dir, "simulation_config.json")
+        if os.path.exists(config_file):
+            try:
+                with open(config_file, 'r', encoding='utf-8') as f:
+                    cfg = json.load(f)
+                    sim_requirement = cfg.get("simulation_requirement", "")
+            except Exception:
+                pass
+
+        has_reddit = os.path.exists(os.path.join(sim_dir, "reddit_profiles.json")) or os.path.exists(os.path.join(sim_dir, "reddit_simulation.db"))
+        has_twitter = os.path.exists(os.path.join(sim_dir, "twitter_profiles.csv")) or os.path.exists(os.path.join(sim_dir, "twitter_simulation.db"))
+
+        def process_one_interview(item: Dict[str, Any]):
+            agent_id = item.get("agent_id")
+            prompt = item.get("prompt", "")
+            item_platform = item.get("platform") or platform
+
+            if item_platform:
+                platforms = [item_platform]
+            else:
+                if has_reddit and has_twitter:
+                    platforms = ["twitter", "reddit"]
+                elif has_reddit:
+                    platforms = ["reddit"]
+                elif has_twitter:
+                    platforms = ["twitter"]
+                else:
+                    platforms = ["reddit"]
+
+            item_results = []
+            for p in platforms:
+                profile = cls._get_agent_profile(sim_dir, agent_id, p)
+                if not profile:
+                    other_p = "reddit" if p == "twitter" else "twitter"
+                    profile = cls._get_agent_profile(sim_dir, agent_id, other_p)
+
+                past_actions = cls._get_agent_recent_actions(sim_dir, agent_id, p)
+                response_text = cls._generate_agent_response(
+                    profile=profile,
+                    sim_requirement=sim_requirement,
+                    past_actions=past_actions,
+                    prompt=prompt
+                )
+                cls._record_interview_to_db(sim_dir, agent_id, p, prompt, response_text)
+
+                key = f"{p}_{agent_id}"
+                item_results.append((key, {
+                    "agent_id": agent_id,
+                    "response": response_text,
+                    "platform": p,
+                    "timestamp": datetime.now().isoformat()
+                }))
+            return item_results
+
+        results = {}
+        max_workers = min(max(len(interviews), 1), 6)
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            futures = [executor.submit(process_one_interview, item) for item in interviews]
+            for future in futures:
+                try:
+                    for key, res_dict in future.result():
+                        results[key] = res_dict
+                except Exception as e:
+                    logger.error(f"Error in batch interview execution: {e}")
+
+        return {
+            "success": True,
+            "interviews_count": len(interviews),
+            "result": {
+                "interviews_count": len(results),
+                "results": results
+            },
+            "timestamp": datetime.now().isoformat()
+        }

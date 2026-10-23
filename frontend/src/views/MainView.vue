@@ -2,33 +2,14 @@
   <div class="main-view venom-theme">
     <!-- Ambient Venom Tendril / Atmosphere Overlay -->
     <div class="venom-ambient-bg pointer-events-none fixed inset-0 z-0 overflow-hidden">
-      <div class="ambient-glow-center"></div>
       <div class="ambient-vignette"></div>
-
-      <!-- Animated Ambient Bio-Symbiote Tendril Strands -->
-      <svg class="venom-tendrils-svg w-full h-full" viewBox="0 0 1920 1080" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
-        <defs>
-          <linearGradient id="tendrilGlow" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stop-color="#ffffff" stop-opacity="0.18" />
-            <stop offset="45%" stop-color="#ffffff" stop-opacity="0.10" />
-            <stop offset="100%" stop-color="#ffffff" stop-opacity="0.03" />
-          </linearGradient>
-        </defs>
-        <g fill="none" stroke="url(#tendrilGlow)" stroke-width="1.8" class="tendrils-group">
-          <path d="M 0,40 Q 420,180 960,110 T 1920,30" class="tendril-breathe-1" />
-          <path d="M 0,280 Q 560,420 1140,320 T 1920,240" class="tendril-breathe-2" />
-          <path d="M 0,780 Q 480,620 1020,740 T 1920,820" class="tendril-breathe-3" />
-          <path d="M 240,0 Q 480,540 280,1080" stroke-width="1.2" opacity="0.35" />
-          <path d="M 1680,0 Q 1480,540 1720,1080" stroke-width="1.2" opacity="0.35" />
-        </g>
-      </svg>
     </div>
 
     <!-- Header -->
     <header class="app-header relative z-10">
       <div class="header-left">
         <div class="brand" @click="router.push('/home')">
-          <img src="../assets/logo/lokantra_wordmark.png" alt="LOKĀNTRA" class="brand-wordmark" />
+          <img src="../assets/logo/lokantra_chrome_wordmark.png" alt="LOKĀNTRA" class="brand-wordmark" />
         </div>
       </div>
 
@@ -538,51 +519,11 @@ onUnmounted(() => {
   z-index: 0;
 }
 
-.ambient-glow-center {
-  position: absolute;
-  top: 15%;
-  left: 30%;
-  width: 50vw;
-  height: 50vh;
-  background: radial-gradient(circle, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.02) 40%, transparent 70%);
-  filter: blur(60px);
-  pointer-events: none;
-}
-
 .ambient-vignette {
   position: absolute;
   inset: 0;
   background: radial-gradient(circle at 50% 50%, transparent 60%, rgba(0, 0, 0, 0.85) 100%);
   pointer-events: none;
-}
-
-.venom-tendrils-svg {
-  opacity: 0.35;
-}
-
-.tendril-breathe-1 {
-  animation: tendril-sway-1 12s ease-in-out infinite alternate;
-  transform-origin: 50% 10%;
-}
-.tendril-breathe-2 {
-  animation: tendril-sway-2 15s ease-in-out infinite alternate;
-  transform-origin: 50% 30%;
-}
-.tendril-breathe-3 {
-  animation: tendril-sway-1 14s ease-in-out infinite alternate-reverse;
-  transform-origin: 50% 70%;
-}
-
-@keyframes tendril-sway-1 {
-  0% { transform: scaleY(1) translateY(0); }
-  50% { transform: scaleY(1.03) translateY(3px); }
-  100% { transform: scaleY(0.97) translateY(-3px); }
-}
-
-@keyframes tendril-sway-2 {
-  0% { transform: scaleX(1) translateX(0); }
-  50% { transform: scaleX(1.02) translateX(4px); }
-  100% { transform: scaleX(0.98) translateX(-4px); }
 }
 
 /* Header */
@@ -592,9 +533,7 @@ onUnmounted(() => {
   align-items: center;
   justify-content: space-between;
   padding: 0 24px;
-  background: rgba(8, 8, 12, 0.85);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
+  background: #08080c;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   z-index: 100;
   position: relative;
@@ -732,6 +671,11 @@ onUnmounted(() => {
 .content-area.dragging .splitter {
   user-select: none;
   -webkit-user-select: none;
+}
+
+.content-area.dragging .panel-wrapper {
+  transition: none !important;
+  pointer-events: none;
 }
 
 .panel-wrapper {

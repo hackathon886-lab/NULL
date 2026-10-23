@@ -2381,12 +2381,14 @@ def interview_agent():
                 "error": t('api.invalidInterviewPlatform')
             }), 400
         
-        # Check environment status
+        # Check environment status; if live IPC is closed, verify simulation exists for direct interview
         if not SimulationRunner.check_env_alive(simulation_id):
-            return jsonify({
-                "success": False,
-                "error": t('api.envNotRunning')
-            }), 400
+            sim_dir = os.path.join(SimulationRunner.RUN_STATE_DIR, simulation_id)
+            if not os.path.exists(sim_dir):
+                return jsonify({
+                    "success": False,
+                    "error": t('api.simulationNotFound')
+                }), 404
         
         # Optimize prompt with prefix to prevent tool calling
         optimized_prompt = optimize_interview_prompt(prompt)
@@ -2516,12 +2518,14 @@ def interview_agents_batch():
                     "error": t('api.interviewListInvalidPlatform', index=i+1)
                 }), 400
 
-        # Check environment status
+        # Check environment status; if live IPC is closed, verify simulation exists for direct interview
         if not SimulationRunner.check_env_alive(simulation_id):
-            return jsonify({
-                "success": False,
-                "error": t('api.envNotRunning')
-            }), 400
+            sim_dir = os.path.join(SimulationRunner.RUN_STATE_DIR, simulation_id)
+            if not os.path.exists(sim_dir):
+                return jsonify({
+                    "success": False,
+                    "error": t('api.simulationNotFound')
+                }), 404
 
         # Optimize interview prompts with tool-prevention prefix
         optimized_interviews = []
@@ -2623,12 +2627,14 @@ def interview_all_agents():
                 "error": t('api.invalidInterviewPlatform')
             }), 400
 
-        # Check environment status
+        # Check environment status; if live IPC is closed, verify simulation exists for direct interview
         if not SimulationRunner.check_env_alive(simulation_id):
-            return jsonify({
-                "success": False,
-                "error": t('api.envNotRunning')
-            }), 400
+            sim_dir = os.path.join(SimulationRunner.RUN_STATE_DIR, simulation_id)
+            if not os.path.exists(sim_dir):
+                return jsonify({
+                    "success": False,
+                    "error": t('api.simulationNotFound')
+                }), 404
 
         # Optimize prompt with prefix to prevent tool calling
         optimized_prompt = optimize_interview_prompt(prompt)

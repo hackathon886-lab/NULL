@@ -1,6 +1,185 @@
 <template>
-  <div class="env-setup-panel">
-    <div class="scroll-container">
+  <div class="env-setup-panel relative overflow-hidden">
+    <!-- Venom Cyber Grid & Web Strings Background Patterns Layer (Pure Glass Backing) -->
+    <div class="workbench-venom-bg pointer-events-none select-none absolute inset-0 z-0 overflow-hidden">
+      <!-- 1. Cyber Perspective Ceiling & Floor Plane Grid Lines -->
+      <svg class="cyber-grid-svg absolute inset-0 w-full h-full" viewBox="0 0 800 1200" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="gridLineFade" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stop-color="#ffffff" stop-opacity="0.4" />
+            <stop offset="30%" stop-color="#ffffff" stop-opacity="0.2" />
+            <stop offset="70%" stop-color="#ffffff" stop-opacity="0.15" />
+            <stop offset="100%" stop-color="#ffffff" stop-opacity="0.3" />
+          </linearGradient>
+        </defs>
+        <!-- Horizontal grid lines across all card zones -->
+        <line x1="0" y1="40" x2="800" y2="40" stroke="url(#gridLineFade)" stroke-width="1" />
+        <line x1="0" y1="120" x2="800" y2="120" stroke="url(#gridLineFade)" stroke-width="1.2" />
+        <line x1="0" y1="220" x2="800" y2="220" stroke="url(#gridLineFade)" stroke-width="1" />
+        <line x1="0" y1="360" x2="800" y2="360" stroke="url(#gridLineFade)" stroke-width="1.2" />
+        <line x1="0" y1="520" x2="800" y2="520" stroke="url(#gridLineFade)" stroke-width="1" />
+        <line x1="0" y1="680" x2="800" y2="680" stroke="url(#gridLineFade)" stroke-width="1.2" />
+        <line x1="0" y1="840" x2="800" y2="840" stroke="url(#gridLineFade)" stroke-width="1" />
+        <line x1="0" y1="1020" x2="800" y2="1020" stroke="url(#gridLineFade)" stroke-width="1.2" />
+        <line x1="0" y1="1160" x2="800" y2="1160" stroke="url(#gridLineFade)" stroke-width="1" />
+        <!-- Vertical grid lines -->
+        <line x1="40" y1="0" x2="40" y2="1200" stroke="url(#gridLineFade)" stroke-width="1.2" />
+        <line x1="160" y1="0" x2="160" y2="1200" stroke="url(#gridLineFade)" stroke-width="1" />
+        <line x1="320" y1="0" x2="320" y2="1200" stroke="url(#gridLineFade)" stroke-width="1.2" />
+        <line x1="480" y1="0" x2="480" y2="1200" stroke="url(#gridLineFade)" stroke-width="1" />
+        <line x1="640" y1="0" x2="640" y2="1200" stroke="url(#gridLineFade)" stroke-width="1.2" />
+        <line x1="760" y1="0" x2="760" y2="1200" stroke="url(#gridLineFade)" stroke-width="1" />
+        <!-- Perspective converging lines -->
+        <line x1="0" y1="0" x2="400" y2="600" stroke="url(#gridLineFade)" stroke-width="0.8" />
+        <line x1="800" y1="0" x2="400" y2="600" stroke="url(#gridLineFade)" stroke-width="0.8" />
+        <line x1="0" y1="1200" x2="400" y2="600" stroke="url(#gridLineFade)" stroke-width="0.8" />
+        <line x1="800" y1="1200" x2="400" y2="600" stroke="url(#gridLineFade)" stroke-width="0.8" />
+      </svg>
+
+      <!-- 2. Venomous Web Strands, Fissure Cracks & Suspension Cables -->
+      <svg class="venom-webs-svg absolute inset-0 w-full h-full" viewBox="0 0 800 1200" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="wbSheen" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#ffffff" stop-opacity="0.95" />
+            <stop offset="25%" stop-color="#d4d4d8" stop-opacity="0.75" />
+            <stop offset="60%" stop-color="#71717a" stop-opacity="0.5" />
+            <stop offset="100%" stop-color="#ffffff" stop-opacity="0.9" />
+          </linearGradient>
+          <linearGradient id="fisGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#ffffff" stop-opacity="1" />
+            <stop offset="50%" stop-color="#e4e4e7" stop-opacity="0.75" />
+            <stop offset="100%" stop-color="#a1a1aa" stop-opacity="0.45" />
+          </linearGradient>
+          <radialGradient id="dropGrad" cx="35%" cy="30%" r="65%">
+            <stop offset="0%" stop-color="#ffffff" stop-opacity="1" />
+            <stop offset="30%" stop-color="#a1a1aa" stop-opacity="0.85" />
+            <stop offset="75%" stop-color="#27272a" stop-opacity="0.95" />
+            <stop offset="100%" stop-color="#09090b" stop-opacity="1" />
+          </radialGradient>
+        </defs>
+
+        <!-- SPREADING FRACTURE CRACKS (running through Step cards) -->
+        <g class="fissure-cracks-group">
+          <g stroke="url(#fisGrad)" stroke-linecap="round" stroke-linejoin="bevel">
+            <!-- Crack 1: Top-left down through cards -->
+            <path d="M 0,40 L 90,95 L 140,80 L 210,175 L 270,230 L 350,265 L 430,360 L 390,440 L 460,520 L 520,610 L 490,700 L 570,810 L 630,920 L 720,1050 L 800,1110" stroke-width="2.2" fill="none" />
+            <path d="M 140,80 L 190,35 L 250,20" stroke-width="1.3" fill="none" />
+            <path d="M 270,230 L 330,205 L 400,210" stroke-width="1.3" fill="none" />
+            <path d="M 430,360 L 490,410 L 530,475" stroke-width="1.4" fill="none" />
+            <path d="M 520,610 L 580,570 L 640,560" stroke-width="1.3" fill="none" />
+            <path d="M 570,810 L 640,830 L 700,790" stroke-width="1.4" fill="none" />
+            <!-- Crack 2: Right edge through cards -->
+            <path d="M 800,320 L 710,380 L 660,360 L 580,450 L 530,520 L 440,550 L 370,640 L 320,720 L 250,760 L 180,870 L 110,910 L 0,980" stroke-width="2" fill="none" />
+            <path d="M 660,360 L 620,310 L 580,290" stroke-width="1.2" fill="none" />
+            <path d="M 440,550 L 390,520 L 340,530" stroke-width="1.2" fill="none" />
+            <path d="M 320,720 L 270,690 L 220,700" stroke-width="1.2" fill="none" />
+          </g>
+        </g>
+
+        <!-- CORNER & EDGE SPIDERWEBS -->
+        <g class="corner-webs-group">
+          <!-- Top-Left Radial Web Spokes & Drooping Arcs -->
+          <g stroke="rgba(255,255,255,0.6)" stroke-width="1.2" fill="none">
+            <line x1="0" y1="0" x2="320" y2="70" />
+            <line x1="0" y1="0" x2="260" y2="190" />
+            <line x1="0" y1="0" x2="160" y2="300" />
+            <line x1="0" y1="0" x2="50" y2="380" />
+          </g>
+          <g stroke="url(#wbSheen)" stroke-width="1.8" fill="none">
+            <path d="M 85,0 Q 68,32 50,74 Q 34,100 0,116" />
+            <path d="M 180,0 Q 152,70 114,152 Q 70,212 0,238" />
+            <path d="M 295,0 Q 250,108 188,232 Q 108,328 0,382" />
+            <path d="M 425,0 Q 355,158 272,334 Q 158,464 0,538" />
+          </g>
+
+          <!-- Top-Right Radial Web Spokes & Drooping Arcs -->
+          <g stroke="rgba(255,255,255,0.6)" stroke-width="1.2" fill="none">
+            <line x1="800" y1="0" x2="480" y2="70" />
+            <line x1="800" y1="0" x2="540" y2="190" />
+            <line x1="800" y1="0" x2="640" y2="300" />
+            <line x1="800" y1="0" x2="750" y2="380" />
+          </g>
+          <g stroke="url(#wbSheen)" stroke-width="1.8" fill="none">
+            <path d="M 715,0 Q 732,32 750,74 Q 766,100 800,116" />
+            <path d="M 620,0 Q 648,70 686,152 Q 730,212 800,238" />
+            <path d="M 505,0 Q 550,108 612,232 Q 692,328 800,382" />
+            <path d="M 375,0 Q 445,158 528,334 Q 642,464 800,538" />
+          </g>
+
+          <!-- Bottom-Left Radial Web Spokes & Arcs -->
+          <g stroke="rgba(255,255,255,0.5)" stroke-width="1.2" fill="none">
+            <line x1="0" y1="1200" x2="280" y2="1080" />
+            <line x1="0" y1="1200" x2="220" y2="970" />
+            <line x1="0" y1="1200" x2="130" y2="880" />
+          </g>
+          <g stroke="url(#wbSheen)" stroke-width="1.6" fill="none">
+            <path d="M 0,1050 Q 80,1060 150,1200" />
+            <path d="M 0,920 Q 150,960 270,1200" />
+            <path d="M 0,780 Q 220,840 390,1200" />
+          </g>
+
+          <!-- Bottom-Right Radial Web Spokes & Arcs -->
+          <g stroke="rgba(255,255,255,0.5)" stroke-width="1.2" fill="none">
+            <line x1="800" y1="1200" x2="520" y2="1080" />
+            <line x1="800" y1="1200" x2="580" y2="970" />
+            <line x1="800" y1="1200" x2="670" y2="880" />
+          </g>
+          <g stroke="url(#wbSheen)" stroke-width="1.6" fill="none">
+            <path d="M 800,1050 Q 720,1060 650,1200" />
+            <path d="M 800,920 Q 650,960 530,1200" />
+            <path d="M 800,780 Q 580,840 410,1200" />
+          </g>
+        </g>
+
+        <!-- HANGING CATENARY SUSPENSION WEB STRINGS -->
+        <g class="hanging-cables-group">
+          <g stroke="url(#wbSheen)" stroke-width="2" fill="none">
+            <path d="M 0,80 Q 400,240 800,90" />
+            <path d="M 0,180 Q 420,380 800,190" />
+            <path d="M 0,310 Q 380,510 800,320" />
+            <path d="M 0,460 Q 440,680 800,470" />
+            <path d="M 0,610 Q 400,810 800,620" />
+            <path d="M 0,760 Q 420,960 800,770" />
+            <path d="M 0,920 Q 390,1100 800,930" />
+
+            <!-- Diagonal cross-bracing web filaments connecting cables -->
+            <path d="M 160,110 Q 240,210 320,290" />
+            <path d="M 640,110 Q 560,210 480,290" />
+            <path d="M 220,340 Q 300,460 380,570" />
+            <path d="M 580,340 Q 500,460 420,570" />
+            <path d="M 180,630 Q 280,750 360,860" />
+            <path d="M 620,630 Q 520,750 440,860" />
+          </g>
+        </g>
+
+        <!-- DANGLING VERTICAL DRIP FILAMENTS & PEARL DROPLETS -->
+        <g class="hanging-droplets-group">
+          <g stroke="rgba(255,255,255,0.5)" stroke-width="1.2" fill="none">
+            <line x1="180" y1="0" x2="180" y2="210" />
+            <line x1="310" y1="0" x2="310" y2="330" />
+            <line x1="490" y1="0" x2="490" y2="280" />
+            <line x1="620" y1="0" x2="620" y2="200" />
+            <line x1="240" y1="360" x2="240" y2="520" />
+            <line x1="560" y1="360" x2="560" y2="540" />
+            <line x1="380" y1="580" x2="380" y2="760" />
+            <line x1="450" y1="780" x2="450" y2="980" />
+          </g>
+          <!-- Glossy Hanging Venom Pearls -->
+          <g>
+            <circle cx="180" cy="214" r="5.5" fill="url(#dropGrad)" stroke="#ffffff" stroke-width="1" />
+            <circle cx="310" cy="335" r="6.5" fill="url(#dropGrad)" stroke="#ffffff" stroke-width="1" />
+            <circle cx="490" cy="284" r="6" fill="url(#dropGrad)" stroke="#ffffff" stroke-width="1" />
+            <circle cx="620" cy="204" r="5" fill="url(#dropGrad)" stroke="#ffffff" stroke-width="1" />
+            <circle cx="240" cy="525" r="6" fill="url(#dropGrad)" stroke="#ffffff" stroke-width="1" />
+            <circle cx="560" cy="545" r="6" fill="url(#dropGrad)" stroke="#ffffff" stroke-width="1" />
+            <circle cx="380" cy="765" r="6.5" fill="url(#dropGrad)" stroke="#ffffff" stroke-width="1" />
+            <circle cx="450" cy="985" r="7" fill="url(#dropGrad)" stroke="#ffffff" stroke-width="1" />
+          </g>
+        </g>
+      </svg>
+    </div>
+
+    <div class="scroll-container relative z-10">
       <!-- Step 01: Simulation Instance -->
       <div class="step-card" :class="{ 'active': phase === 0, 'completed': phase > 0 }">
         <div class="card-header">
@@ -375,8 +554,8 @@
                   <path d="M16.24 7.76L14.12 14.12L7.76 16.24L9.88 9.88L16.24 7.76Z" fill="url(#paint0_linear)" stroke="url(#paint0_linear)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
                   <defs>
                     <linearGradient id="paint0_linear" x1="2" y1="2" x2="22" y2="22" gradientUnits="userSpaceOnUse">
-                      <stop stop-color="#FF5722"/>
-                      <stop offset="1" stop-color="#FF9800"/>
+                      <stop stop-color="#ffffff"/>
+                      <stop offset="1" stop-color="#71717a"/>
                     </linearGradient>
                   </defs>
                 </svg>
@@ -618,7 +797,9 @@
     <!-- Floating Windows Terminal Component -->
     <FloatingTerminal
       title="SYSTEM DASHBOARD"
+      :sub-id="simulationId || 'ENV_SETUP'"
       :logs="systemLogs"
+      :is-active="phase === 1 || phase === 2"
     />
   </div>
 </template>
@@ -626,6 +807,7 @@
 <script setup>
 import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
+import FloatingTerminal from './FloatingTerminal.vue'
 import {
   prepareSimulation,
   getPrepareStatus,
@@ -1096,11 +1278,43 @@ onUnmounted(() => {
 <style scoped>
 .env-setup-panel {
   height: 100%;
-  display: flex;
-  flex-direction: column;
   background: radial-gradient(circle at 85% 15%, #0e0e14 0%, #060608 60%, #020203 100%);
   color: #f5f5f7;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
   font-family: var(--font-body, system-ui, sans-serif);
+}
+
+.workbench-venom-bg {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.cyber-grid-svg {
+  opacity: 0.18;
+}
+
+.venom-webs-svg {
+  opacity: 0.35;
+}
+
+.hanging-cables-group { animation: none; }
+
+.hanging-droplets-group { animation: none; }
+
+@keyframes web-breathe {
+  0% { transform: translateY(0px) scaleY(1); opacity: 0.85; }
+  100% { transform: translateY(4px) scaleY(1.015); opacity: 1; }
+}
+
+@keyframes web-drip-sway {
+  0% { transform: rotate(0deg); }
+  50% { transform: rotate(0.4deg); }
+  100% { transform: rotate(-0.35deg); }
 }
 
 .scroll-container {
@@ -1122,33 +1336,30 @@ onUnmounted(() => {
 
 /* Step Card */
 .step-card {
-  background: linear-gradient(180deg, rgba(18, 18, 24, 0.82) 0%, rgba(9, 9, 13, 0.94) 100%);
+  background: rgba(12, 12, 16, 0.78);
   border-radius: 18px;
   padding: 24px;
-  box-shadow: 
-    0 12px 36px -8px rgba(0, 0, 0, 0.85),
-    inset 0 1px 0 rgba(255, 255, 255, 0.12);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  border: 1px solid rgba(255, 255, 255, 0.13);
+transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   position: relative;
   color: #f5f5f7;
+  z-index: 10;
+}
+
+.step-card:hover {
+  transform: translateX(4px);
+  border-color: rgba(255, 255, 255, 0.38);
+  background: rgba(18, 18, 24, 0.9);
 }
 
 .step-card.active {
-  border-color: rgba(255, 87, 34, 0.7);
-  box-shadow: 
-    0 0 35px rgba(255, 87, 34, 0.22),
-    0 20px 50px rgba(0, 0, 0, 0.9),
-    inset 0 1px 0 rgba(255, 255, 255, 0.22);
+  border-color: #FFFFFF;
+  background: rgba(16, 16, 22, 0.86);
 }
 
 .step-card.completed {
-  border-color: rgba(16, 185, 129, 0.45);
-  box-shadow: 
-    0 0 25px rgba(16, 185, 129, 0.14),
-    0 16px 40px rgba(0, 0, 0, 0.8);
+  border-color: rgba(255, 255, 255, 0.25);
+  background: rgba(12, 12, 16, 0.78);
 }
 
 .card-header {
@@ -1168,17 +1379,17 @@ onUnmounted(() => {
   font-family: 'JetBrains Mono', monospace;
   font-size: 22px;
   font-weight: 800;
-  color: #52525b;
+  color: #71717a;
+  letter-spacing: -0.5px;
+  transition: all 0.3s ease;
 }
 
 .step-card.active .step-num {
-  color: #ffffff;
-  text-shadow: 0 0 16px rgba(255, 255, 255, 0.6), 0 0 28px rgba(255, 87, 34, 0.45);
+  color: #FFFFFF;
 }
 
 .step-card.completed .step-num {
-  color: #10B981;
-  text-shadow: 0 0 14px rgba(16, 185, 129, 0.5);
+  color: #FFFFFF;
 }
 
 .step-title {
@@ -1197,27 +1408,41 @@ onUnmounted(() => {
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.6px;
+  transition: all 0.25s ease;
 }
 
-.badge.success { background: rgba(16, 185, 129, 0.16); border: 1px solid #10B981; color: #34D399; box-shadow: 0 0 14px rgba(16, 185, 129, 0.4); }
-.badge.processing { background: rgba(255, 87, 34, 0.18); border: 1px solid #FF5722; color: #ff7043; box-shadow: 0 0 14px rgba(255, 87, 34, 0.45); }
-.badge.pending { background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.12); color: #71717a; }
-.badge.accent { background: rgba(255, 87, 34, 0.18); border: 1px solid #FF5722; color: #ff7043; }
+.badge.success {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  color: #FFFFFF;
+}
+
+.badge.processing,
+.badge.accent {
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid #FFFFFF;
+  color: #FFFFFF;
+}
+
+.badge.pending {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #71717a;
+}
 
 .card-content {
-  /* No extra padding - uses step-card's padding */
 }
 
 .api-note {
   font-family: 'JetBrains Mono', monospace;
   font-size: 10px;
-  color: #999;
+  color: #71717a;
   margin-bottom: 8px;
 }
 
 .description {
   font-size: 12px;
-  color: #a1a1ad;
+  color: #a1a1aa;
   line-height: 1.5;
   margin-bottom: 16px;
 }
@@ -1230,37 +1455,54 @@ onUnmounted(() => {
 .action-btn {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
   padding: 12px 24px;
   font-size: 14px;
   font-weight: 600;
-  border: none;
-  border-radius: 6px;
+  border-radius: 999px;
   cursor: pointer;
   transition: all 0.2s ease;
+  user-select: none;
 }
 
 .action-btn.primary {
-  background: #000;
-  color: #FFF;
+  background: #FFFFFF;
+  border: 1px solid #FFFFFF;
+  color: #000000;
+  font-weight: 700;
 }
 
 .action-btn.primary:hover:not(:disabled) {
-  opacity: 0.8;
+  background: #000000;
+  color: #FFFFFF;
+  border-color: #FFFFFF;
+  transform: translateY(-1px);
+}
+
+.action-btn.primary:active:not(:disabled) {
+  transform: translateY(0);
 }
 
 .action-btn.secondary {
-  background: #F5F5F5;
-  color: #f4f4f5;
+  background: rgba(22, 22, 30, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #FFFFFF;
 }
 
 .action-btn.secondary:hover:not(:disabled) {
-  background: #E5E5E5;
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.4);
+  color: #FFFFFF;
+  transform: translateY(-1px);
 }
 
 .action-btn:disabled {
-  opacity: 0.5;
+  background: rgba(255, 255, 255, 0.04);
+  color: #52525b;
+  border: 1px solid rgba(255, 255, 255, 0.08);
   cursor: not-allowed;
+  opacity: 0.6;
 }
 
 .action-group {
@@ -1280,8 +1522,9 @@ onUnmounted(() => {
 
 /* Info Card */
 .info-card {
-  background: #F5F5F5;
-  border-radius: 6px;
+  background: rgba(8, 8, 12, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+border-radius: 12px;
   padding: 16px;
   margin-top: 16px;
 }
@@ -1291,7 +1534,7 @@ onUnmounted(() => {
   justify-content: space-between;
   align-items: center;
   padding: 8px 0;
-  border-bottom: 1px dashed #E0E0E0;
+  border-bottom: 1px dashed rgba(255, 255, 255, 0.1);
 }
 
 .info-row:last-child {
@@ -1299,54 +1542,73 @@ onUnmounted(() => {
 }
 
 .info-label {
-  font-size: 12px;
-  color: #a1a1ad;
+  font-size: 11px;
+  color: #71717a;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-family: 'JetBrains Mono', monospace;
 }
 
 .info-value {
   font-size: 13px;
   font-weight: 500;
+  color: #FFFFFF;
 }
 
 .info-value.mono {
   font-family: 'JetBrains Mono', monospace;
   font-size: 12px;
+  color: #FFFFFF;
 }
 
 /* Stats Grid */
 .stats-grid {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
-  gap: 12px;
-  background: #F9F9F9;
-  padding: 16px;
-  border-radius: 6px;
+  gap: 14px;
+  background: rgba(8, 8, 12, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+padding: 18px;
+  border-radius: 14px;
 }
 
 .stat-card {
   text-align: center;
+  background: rgba(20, 20, 26, 0.78);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+border-radius: 12px;
+  padding: 16px 10px;
+  transition: all 0.2s ease;
+}
+
+.stat-card:hover {
+  background: rgba(28, 28, 36, 0.9);
+  border-color: rgba(255, 255, 255, 0.35);
+  transform: translateY(-2px);
 }
 
 .stat-value {
   display: block;
-  font-size: 20px;
-  font-weight: 700;
-  color: #000;
+  font-size: 26px;
+  font-weight: 800;
+  color: #ffffff;
   font-family: 'JetBrains Mono', monospace;
 }
 
 .stat-label {
-  font-size: 9px;
-  color: #999;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: #71717a;
   text-transform: uppercase;
-  margin-top: 4px;
+  margin-top: 6px;
   display: block;
+  letter-spacing: 0.8px;
 }
 
 /* Profiles Preview */
 .profiles-preview {
   margin-top: 20px;
-  border-top: 1px solid #E5E5E5;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
   padding-top: 16px;
 }
 
@@ -1360,7 +1622,7 @@ onUnmounted(() => {
 .preview-title {
   font-size: 12px;
   font-weight: 600;
-  color: #a1a1ad;
+  color: #a1a1aa;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
@@ -1379,26 +1641,27 @@ onUnmounted(() => {
 }
 
 .profiles-list::-webkit-scrollbar-thumb {
-  background: #DDD;
+  background: rgba(255, 255, 255, 0.15);
   border-radius: 2px;
 }
 
 .profiles-list::-webkit-scrollbar-thumb:hover {
-  background: #CCC;
+  background: rgba(255, 255, 255, 0.3);
 }
 
 .profile-card {
   background: rgba(14, 14, 18, 0.85);
-  border: 1px solid #E5E5E5;
-  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
   padding: 14px;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .profile-card:hover {
-  border-color: #999;
-  background: rgba(20, 20, 26, 0.85);
+  border-color: rgba(255, 255, 255, 0.35);
+  background: rgba(22, 22, 30, 0.95);
+  transform: translateY(-2px);
 }
 
 .profile-header {
@@ -1411,13 +1674,13 @@ onUnmounted(() => {
 .profile-realname {
   font-size: 14px;
   font-weight: 700;
-  color: #000;
+  color: #FFFFFF;
 }
 
 .profile-username {
   font-family: 'JetBrains Mono', monospace;
   font-size: 11px;
-  color: #999;
+  color: #71717a;
 }
 
 .profile-meta {
@@ -1426,20 +1689,21 @@ onUnmounted(() => {
 
 .profile-profession {
   font-size: 11px;
-  color: #a1a1ad;
-  background: #F0F0F0;
+  color: #e4e4e7;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   padding: 2px 8px;
-  border-radius: 3px;
+  border-radius: 4px;
 }
 
 .profile-bio {
   font-size: 12px;
-  color: #444;
+  color: #a1a1aa;
   line-height: 1.6;
   margin: 0 0 10px 0;
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
+  display:box;
+line-clamp: 3;
+box-orient: vertical;
   overflow: hidden;
 }
 
@@ -1451,19 +1715,19 @@ onUnmounted(() => {
 
 .topic-tag {
   font-size: 10px;
-  color: #1565C0;
-  background: #E3F2FD;
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
   padding: 2px 8px;
-  border-radius: 10px;
+  border-radius: 999px;
 }
 
 .topic-more {
   font-size: 10px;
-  color: #999;
+  color: #71717a;
   padding: 2px 6px;
 }
 
-/* Config Preview */
 /* Config Detail Panel */
 .config-detail-panel {
   margin-top: 16px;
@@ -1471,7 +1735,7 @@ onUnmounted(() => {
 
 .config-block {
   margin-top: 16px;
-  border-top: 1px solid #E5E5E5;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
   padding-top: 12px;
 }
 
@@ -1491,7 +1755,7 @@ onUnmounted(() => {
 .config-block-title {
   font-size: 12px;
   font-weight: 600;
-  color: #a1a1ad;
+  color: #a1a1aa;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
@@ -1499,8 +1763,9 @@ onUnmounted(() => {
 .config-block-badge {
   font-family: 'JetBrains Mono', monospace;
   font-size: 11px;
-  background: #F1F5F9;
-  color: #475569;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #e4e4e7;
   padding: 2px 8px;
   border-radius: 10px;
 }
@@ -1513,9 +1778,10 @@ onUnmounted(() => {
 }
 
 .config-item {
-  background: #F9F9F9;
+  background: rgba(14, 14, 18, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   padding: 12px 14px;
-  border-radius: 6px;
+  border-radius: 10px;
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -1523,14 +1789,16 @@ onUnmounted(() => {
 
 .config-item-label {
   font-size: 11px;
-  color: #94A3B8;
+  color: #71717a;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .config-item-value {
   font-family: 'JetBrains Mono', monospace;
   font-size: 16px;
-  font-weight: 600;
-  color: #1E293B;
+  font-weight: 700;
+  color: #FFFFFF;
 }
 
 /* Time Periods */
@@ -1546,21 +1814,22 @@ onUnmounted(() => {
   align-items: center;
   gap: 12px;
   padding: 8px 12px;
-  background: #F9F9F9;
-  border-radius: 6px;
+  background: rgba(14, 14, 18, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
 }
 
 .period-label {
   font-size: 12px;
   font-weight: 500;
-  color: #64748B;
+  color: #a1a1aa;
   min-width: 70px;
 }
 
 .period-hours {
   font-family: 'JetBrains Mono', monospace;
   font-size: 11px;
-  color: #475569;
+  color: #ffffff;
   flex: 1;
 }
 
@@ -1568,8 +1837,9 @@ onUnmounted(() => {
   font-family: 'JetBrains Mono', monospace;
   font-size: 11px;
   font-weight: 600;
-  color: #6366F1;
-  background: #EEF2FF;
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   padding: 2px 6px;
   border-radius: 4px;
 }
@@ -1589,25 +1859,25 @@ onUnmounted(() => {
 }
 
 .agents-cards::-webkit-scrollbar-thumb {
-  background: #DDD;
+  background: rgba(255, 255, 255, 0.15);
   border-radius: 2px;
 }
 
 .agents-cards::-webkit-scrollbar-thumb:hover {
-  background: #CCC;
+  background: rgba(255, 255, 255, 0.3);
 }
 
 .agent-card {
-  background: #F9F9F9;
-  border: 1px solid #E5E5E5;
-  border-radius: 6px;
+  background: rgba(14, 14, 18, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
   padding: 14px;
   transition: all 0.2s ease;
 }
 
 .agent-card:hover {
-  border-color: #999;
-  background: rgba(20, 20, 26, 0.85);
+  border-color: rgba(255, 255, 255, 0.35);
+  background: rgba(22, 22, 30, 0.95);
 }
 
 /* Agent Card Header */
@@ -1617,7 +1887,7 @@ onUnmounted(() => {
   align-items: flex-start;
   margin-bottom: 14px;
   padding-bottom: 12px;
-  border-bottom: 1px solid #F1F5F9;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .agent-identity {
@@ -1629,13 +1899,13 @@ onUnmounted(() => {
 .agent-id {
   font-family: 'JetBrains Mono', monospace;
   font-size: 10px;
-  color: #94A3B8;
+  color: #71717a;
 }
 
 .agent-name {
   font-size: 14px;
   font-weight: 600;
-  color: #1E293B;
+  color: #FFFFFF;
 }
 
 .agent-tags {
@@ -1645,8 +1915,9 @@ onUnmounted(() => {
 
 .agent-type {
   font-size: 10px;
-  color: #64748B;
-  background: #F1F5F9;
+  color: #a1a1aa;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   padding: 2px 8px;
   border-radius: 4px;
 }
@@ -1660,23 +1931,28 @@ onUnmounted(() => {
 }
 
 .stance-neutral {
-  background: #F1F5F9;
-  color: #64748B;
+  background: rgba(255, 255, 255, 0.05);
+  color: #a1a1aa;
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .stance-supportive {
-  background: #DCFCE7;
-  color: #16A34A;
+  background: rgba(255, 255, 255, 0.15);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  font-weight: 700;
 }
 
 .stance-opposing {
-  background: #FEE2E2;
-  color: #DC2626;
+  background: rgba(255, 255, 255, 0.08);
+  color: #d4d4d8;
+  border: 1px dashed rgba(255, 255, 255, 0.25);
 }
 
 .stance-observer {
-  background: #FEF3C7;
-  color: #D97706;
+  background: rgba(255, 255, 255, 0.04);
+  color: #71717a;
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 /* Agent Timeline */
@@ -1687,7 +1963,7 @@ onUnmounted(() => {
 .timeline-label {
   display: block;
   font-size: 10px;
-  color: #94A3B8;
+  color: #71717a;
   margin-bottom: 6px;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -1697,20 +1973,21 @@ onUnmounted(() => {
   display: flex;
   gap: 2px;
   height: 16px;
-  background: #F8FAFC;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 4px;
   padding: 3px;
 }
 
 .timeline-hour {
   flex: 1;
-  background: #E2E8F0;
+  background: rgba(255, 255, 255, 0.1);
   border-radius: 2px;
   transition: all 0.2s;
 }
 
 .timeline-hour.active {
-  background: linear-gradient(180deg, #6366F1, #818CF8);
+  background: #ffffff;
 }
 
 .timeline-marks {
@@ -1719,7 +1996,7 @@ onUnmounted(() => {
   margin-top: 4px;
   font-family: 'JetBrains Mono', monospace;
   font-size: 9px;
-  color: #94A3B8;
+  color: #71717a;
 }
 
 /* Agent Params */
@@ -1743,14 +2020,14 @@ onUnmounted(() => {
 
 .param-item .param-label {
   font-size: 10px;
-  color: #94A3B8;
+  color: #71717a;
 }
 
 .param-item .param-value {
   font-family: 'JetBrains Mono', monospace;
   font-size: 12px;
   font-weight: 600;
-  color: #475569;
+  color: #ffffff;
 }
 
 .param-value.with-bar {
@@ -1761,26 +2038,27 @@ onUnmounted(() => {
 
 .mini-bar {
   height: 4px;
-  background: linear-gradient(90deg, #6366F1, #A855F7);
+  background: linear-gradient(90deg, #ffffff, #71717a);
   border-radius: 2px;
   min-width: 4px;
   max-width: 40px;
 }
 
 .param-value.positive {
-  color: #16A34A;
+  color: #ffffff;
 }
 
 .param-value.negative {
-  color: #DC2626;
+  color: #a1a1aa;
 }
 
 .param-value.neutral {
-  color: #64748B;
+  color: #71717a;
 }
 
 .param-value.highlight {
-  color: #6366F1;
+  color: #ffffff;
+  font-weight: 700;
 }
 
 /* Platforms Grid */
@@ -1791,21 +2069,22 @@ onUnmounted(() => {
 }
 
 .platform-card {
-  background: #F9F9F9;
+  background: rgba(14, 14, 18, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   padding: 14px;
-  border-radius: 6px;
+  border-radius: 12px;
 }
 
 .platform-card-header {
   margin-bottom: 10px;
   padding-bottom: 8px;
-  border-bottom: 1px solid #E5E5E5;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .platform-name {
   font-size: 13px;
   font-weight: 600;
-  color: #f4f4f5;
+  color: #ffffff;
 }
 
 .platform-params {
@@ -1822,14 +2101,14 @@ onUnmounted(() => {
 
 .param-label {
   font-size: 12px;
-  color: #64748B;
+  color: #71717a;
 }
 
 .param-value {
   font-family: 'JetBrains Mono', monospace;
   font-size: 12px;
   font-weight: 600;
-  color: #1E293B;
+  color: #ffffff;
 }
 
 /* Reasoning Content */
@@ -1841,13 +2120,14 @@ onUnmounted(() => {
 
 .reasoning-item {
   padding: 12px 14px;
-  background: #F9F9F9;
-  border-radius: 6px;
+  background: rgba(14, 14, 18, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
 }
 
 .reasoning-text {
   font-size: 13px;
-  color: #555;
+  color: #d4d4d8;
   line-height: 1.7;
   margin: 0;
 }
@@ -1859,16 +2139,16 @@ onUnmounted(() => {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(0, 0, 0, 0.8);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1000;
-  backdrop-filter: blur(4px);
-}
+  }
 
 .profile-modal {
-  background: rgba(20, 20, 26, 0.85);
+  background: #0c0c10;
+  border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 16px;
   width: 90%;
   max-width: 600px;
@@ -1876,7 +2156,6 @@ onUnmounted(() => {
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
 }
 
 .modal-header {
@@ -1884,8 +2163,8 @@ onUnmounted(() => {
   justify-content: space-between;
   align-items: flex-start;
   padding: 24px;
-  background: rgba(20, 20, 26, 0.85);
-  border-bottom: 1px solid #F0F0F0;
+  background: rgba(18, 18, 24, 0.95);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .modal-header-info {
@@ -1902,19 +2181,20 @@ onUnmounted(() => {
 .modal-realname {
   font-size: 20px;
   font-weight: 700;
-  color: #000;
+  color: #FFFFFF;
 }
 
 .modal-username {
   font-family: 'JetBrains Mono', monospace;
   font-size: 13px;
-  color: #999;
+  color: #71717a;
 }
 
 .modal-profession {
   font-size: 12px;
-  color: #a1a1ad;
-  background: #F5F5F5;
+  color: #e4e4e7;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
   padding: 4px 10px;
   border-radius: 4px;
   display: inline-block;
@@ -1926,7 +2206,7 @@ onUnmounted(() => {
   height: 32px;
   border: none;
   background: none;
-  color: #999;
+  color: #71717a;
   border-radius: 50%;
   font-size: 24px;
   cursor: pointer;
@@ -1939,7 +2219,7 @@ onUnmounted(() => {
 }
 
 .close-btn:hover {
-  color: #f4f4f5;
+  color: #ffffff;
 }
 
 .modal-body {
@@ -1967,7 +2247,7 @@ onUnmounted(() => {
 
 .info-label {
   font-size: 11px;
-  color: #999;
+  color: #71717a;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   font-weight: 600;
@@ -1976,12 +2256,12 @@ onUnmounted(() => {
 .info-value {
   font-size: 15px;
   font-weight: 600;
-  color: #f4f4f5;
+  color: #ffffff;
 }
 
 .info-value.mbti {
   font-family: 'JetBrains Mono', monospace;
-  color: #FF5722;
+  color: #ffffff;
 }
 
 /* Module area */
@@ -1993,7 +2273,7 @@ onUnmounted(() => {
   display: block;
   font-size: 11px;
   font-weight: 600;
-  color: #999;
+  color: #71717a;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   margin-bottom: 12px;
@@ -2001,13 +2281,14 @@ onUnmounted(() => {
 
 .section-bio {
   font-size: 14px;
-  color: #f4f4f5;
+  color: #d4d4d8;
   line-height: 1.6;
   margin: 0;
   padding: 16px;
-  background: #F9F9F9;
-  border-radius: 6px;
-  border-left: 3px solid #E0E0E0;
+  background: rgba(14, 14, 18, 0.85);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-left: 3px solid #ffffff;
 }
 
 /* Topic tags */
@@ -2019,17 +2300,17 @@ onUnmounted(() => {
 
 .topic-item {
   font-size: 11px;
-  color: #1565C0;
-  background: #E3F2FD;
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
   padding: 4px 10px;
   border-radius: 12px;
   transition: all 0.2s;
-  border: none;
 }
 
 .topic-item:hover {
-  background: #BBDEFB;
-  color: #0D47A1;
+  background: rgba(255, 255, 255, 0.18);
+  border-color: #ffffff;
 }
 
 /* Detailed persona */
@@ -2041,30 +2322,31 @@ onUnmounted(() => {
 }
 
 .dimension-card {
-  background: #F8F9FA;
+  background: rgba(14, 14, 18, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   padding: 12px;
-  border-radius: 6px;
-  border-left: 3px solid #DDD;
+  border-radius: 8px;
+  border-left: 3px solid rgba(255, 255, 255, 0.4);
   transition: all 0.2s;
 }
 
 .dimension-card:hover {
-  background: #F0F0F0;
-  border-left-color: #999;
+  background: rgba(22, 22, 30, 0.95);
+  border-left-color: #ffffff;
 }
 
 .dim-title {
   display: block;
   font-size: 12px;
   font-weight: 700;
-  color: #f4f4f5;
+  color: #ffffff;
   margin-bottom: 4px;
 }
 
 .dim-desc {
   display: block;
   font-size: 10px;
-  color: #888;
+  color: #a1a1aa;
   line-height: 1.4;
 }
 
@@ -2082,13 +2364,13 @@ onUnmounted(() => {
 }
 
 .persona-content::-webkit-scrollbar-thumb {
-  background: #DDD;
+  background: rgba(255, 255, 255, 0.15);
   border-radius: 2px;
 }
 
 .section-persona {
   font-size: 13px;
-  color: #555;
+  color: #d4d4d8;
   line-height: 1.8;
   margin: 0;
   text-align: justify;
@@ -2100,25 +2382,25 @@ onUnmounted(() => {
   color: #DDD;
   padding: 16px;
   font-family: 'JetBrains Mono', monospace;
-  border-top: 1px solid #222;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
   flex-shrink: 0;
 }
 
 .log-header {
   display: flex;
   justify-content: space-between;
-  border-bottom: 1px solid #333;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   padding-bottom: 8px;
   margin-bottom: 8px;
   font-size: 10px;
-  color: #888;
+  color: #71717a;
 }
 
 .log-content {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  height: 80px; /* Approx 4 lines visible */
+  height: 80px;
   overflow-y: auto;
   padding-right: 4px;
 }
@@ -2140,7 +2422,7 @@ onUnmounted(() => {
 }
 
 .log-time {
-  color: #a1a1ad;
+  color: #71717a;
   min-width: 75px;
 }
 
@@ -2153,8 +2435,8 @@ onUnmounted(() => {
 .spinner-sm {
   width: 16px;
   height: 16px;
-  border: 2px solid #E5E5E5;
-  border-top-color: #FF5722;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-top-color: #FFFFFF;
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
@@ -2162,6 +2444,7 @@ onUnmounted(() => {
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
+
 /* Orchestration Content */
 .orchestration-content {
   display: flex;
@@ -2174,18 +2457,17 @@ onUnmounted(() => {
   display: block;
   font-size: 12px;
   font-weight: 600;
-  color: #a1a1ad;
+  color: #a1a1aa;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   margin-bottom: 12px;
 }
 
 .narrative-box {
-  background: #FFFFFF;
+  background: rgba(14, 14, 18, 0.85);
   padding: 20px 24px;
-  border-radius: 12px;
-  border: 1px solid #EEF2F6;
-  box-shadow: 0 4px 24px rgba(0,0,0,0.03);
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
   transition: all 0.3s ease;
 }
 
@@ -2193,7 +2475,7 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   gap: 8px;
-  color: #a1a1ad;
+  color: #ffffff;
   font-size: 13px;
   letter-spacing: 0.5px;
   margin-bottom: 12px;
@@ -2201,7 +2483,6 @@ onUnmounted(() => {
 }
 
 .special-icon {
-  filter: drop-shadow(0 2px 4px rgba(255, 87, 34, 0.2));
   transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
@@ -2212,7 +2493,7 @@ onUnmounted(() => {
 .narrative-text {
   font-family: 'Inter', 'Noto Sans SC', system-ui, sans-serif;
   font-size: 14px;
-  color: #334155;
+  color: #d4d4d8;
   line-height: 1.8;
   margin: 0;
   text-align: justify;
@@ -2220,7 +2501,7 @@ onUnmounted(() => {
 }
 
 .topics-section {
-  background: rgba(20, 20, 26, 0.85);
+  background: transparent;
 }
 
 .hot-topics-grid {
@@ -2231,8 +2512,9 @@ onUnmounted(() => {
 
 .hot-topic-tag {
   font-size: 12px;
-  color:rgba(255, 86, 34, 0.88);
-  background: #FFF3E0;
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
   padding: 4px 10px;
   border-radius: 12px;
   font-weight: 500;
@@ -2240,7 +2522,7 @@ onUnmounted(() => {
 
 .hot-topic-more {
   font-size: 11px;
-  color: #999;
+  color: #71717a;
   padding: 4px 6px;
 }
 
@@ -2254,7 +2536,7 @@ onUnmounted(() => {
   flex-direction: column;
   gap: 16px;
   padding-left: 8px;
-  border-left: 2px solid #F0F0F0;
+  border-left: 2px solid rgba(255, 255, 255, 0.15);
   margin-top: 12px;
 }
 
@@ -2269,14 +2551,14 @@ onUnmounted(() => {
   top: 14px;
   width: 12px;
   height: 2px;
-  background: #DDD;
+  background: #ffffff;
 }
 
 .timeline-content {
-  background: #F9F9F9;
+  background: rgba(14, 14, 18, 0.85);
   padding: 12px;
-  border-radius: 6px;
-  border: 1px solid #EEE;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .post-header {
@@ -2288,7 +2570,7 @@ onUnmounted(() => {
 .post-role {
   font-size: 11px;
   font-weight: 700;
-  color: #f4f4f5;
+  color: #ffffff;
   text-transform: uppercase;
 }
 
@@ -2302,7 +2584,7 @@ onUnmounted(() => {
 .post-username {
   font-family: 'JetBrains Mono', monospace;
   font-size: 10px;
-  color: #a1a1ad;
+  color: #71717a;
   line-height: 1;
   vertical-align: baseline;
 }
@@ -2313,7 +2595,7 @@ onUnmounted(() => {
 
 .post-text {
   font-size: 12px;
-  color: #555;
+  color: #d4d4d8;
   line-height: 1.5;
   margin: 0;
 }
@@ -2341,25 +2623,26 @@ onUnmounted(() => {
 .section-title {
   font-size: 14px;
   font-weight: 600;
-  color: #1E293B;
+  color: #ffffff;
 }
 
 .section-desc {
   font-size: 12px;
-  color: #94A3B8;
+  color: #71717a;
 }
 
 .desc-highlight {
   font-family: 'JetBrains Mono', monospace;
   font-weight: 600;
-  color: #1E293B;
-  background: #F1F5F9;
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.15);
   padding: 1px 6px;
   border-radius: 4px;
   margin: 0 2px;
 }
 
-/* Switch Control */
+/* Switch Control - Minimal, monochrome, understated Slate grey (Accent: #94A3B8) */
 .switch-control {
   display: flex;
   align-items: center;
@@ -2367,11 +2650,11 @@ onUnmounted(() => {
   cursor: pointer;
   padding: 4px 8px 4px 4px;
   border-radius: 20px;
-  transition: background 0.2s;
+  transition: background 0.2s ease;
 }
 
 .switch-control:hover {
-  background: #F8FAFC;
+  background: rgba(148, 163, 184, 0.08);
 }
 
 .switch-control input {
@@ -2381,10 +2664,11 @@ onUnmounted(() => {
 .switch-track {
   width: 36px;
   height: 20px;
-  background: #E2E8F0;
+  background: #1e293b;
+  border: 1px solid #334155;
   border-radius: 10px;
   position: relative;
-  transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+  transition: all 0.25s ease;
 }
 
 .switch-track::after {
@@ -2392,30 +2676,32 @@ onUnmounted(() => {
   position: absolute;
   left: 2px;
   top: 2px;
-  width: 16px;
-  height: 16px;
-  background: rgba(20, 20, 26, 0.85);
+  width: 14px;
+  height: 14px;
+  background: #64748b;
   border-radius: 50%;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-  transition: transform 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+  transition: transform 0.25s ease, background-color 0.25s ease;
 }
 
 .switch-control input:checked + .switch-track {
-  background: #000;
+  background: #94A3B8;
+  border-color: #94A3B8;
 }
 
 .switch-control input:checked + .switch-track::after {
   transform: translateX(16px);
+  background: #0f172a;
 }
 
 .switch-label {
   font-size: 12px;
   font-weight: 500;
-  color: #64748B;
+  color: #64748b;
+  transition: color 0.2s ease;
 }
 
 .switch-control input:checked ~ .switch-label {
-  color: #1E293B;
+  color: #94A3B8;
 }
 
 /* Slider Content */
@@ -2440,20 +2726,21 @@ onUnmounted(() => {
   font-family: 'JetBrains Mono', monospace;
   font-size: 24px;
   font-weight: 700;
-  color: #000;
+  color: #ffffff;
 }
 
 .val-unit {
   font-size: 12px;
-  color: #a1a1ad;
+  color: #71717a;
   font-weight: 500;
 }
 
 .slider-meta-info {
   font-family: 'JetBrains Mono', monospace;
   font-size: 11px;
-  color: #64748B;
-  background: #F1F5F9;
+  color: #a1a1aa;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   padding: 4px 8px;
   border-radius: 4px;
 }
@@ -2464,36 +2751,37 @@ onUnmounted(() => {
 }
 
 .minimal-slider {
-  -webkit-appearance: none;
+appearance: none;
   width: 100%;
   height: 4px;
-  background: #E2E8F0;
+  background: rgba(255, 255, 255, 0.15);
   border-radius: 2px;
   outline: none;
-  background-image: linear-gradient(#000, #000);
+  background-image: linear-gradient(#ffffff, #ffffff);
   background-size: var(--percent, 0%) 100%;
   background-repeat: no-repeat;
   cursor: pointer;
 }
 
-.minimal-slider::-webkit-slider-thumb {
-  -webkit-appearance: none;
+.minimal-slider::slider-thumb {
+appearance: none;
   width: 16px;
   height: 16px;
   border-radius: 50%;
-  background: rgba(20, 20, 26, 0.85);
-  border: 2px solid #000;
+  background: #000000;
+  border: 2px solid #ffffff;
   cursor: pointer;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
   transition: transform 0.1s;
-  margin-top: -6px; /* Center thumb */
+  margin-top: -6px;
 }
 
-.minimal-slider::-webkit-slider-thumb:hover {
-  transform: scale(1.1);
+.minimal-slider::slider-thumb:hover {
+  transform: scale(1.15);
+  background: #ffffff;
+  border-color: #000000;
 }
 
-.minimal-slider::-webkit-slider-runnable-track {
+.minimal-slider::slider-runnable-track {
   height: 4px;
   border-radius: 2px;
 }
@@ -2504,7 +2792,7 @@ onUnmounted(() => {
   margin-top: 8px;
   font-family: 'JetBrains Mono', monospace;
   font-size: 10px;
-  color: #94A3B8;
+  color: #71717a;
   position: relative;
 }
 
@@ -2515,11 +2803,11 @@ onUnmounted(() => {
 }
 
 .mark-recommend:hover {
-  color: #000;
+  color: #ffffff;
 }
 
 .mark-recommend.active {
-  color: #000;
+  color: #ffffff;
   font-weight: 600;
 }
 
@@ -2531,7 +2819,7 @@ onUnmounted(() => {
   transform: translateX(-50%);
   width: 1px;
   height: 4px;
-  background: #CBD5E1;
+  background: rgba(255, 255, 255, 0.3);
 }
 
 /* Auto Info */
@@ -2539,9 +2827,10 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   gap: 24px;
-  background: #F8FAFC;
+  background: rgba(14, 14, 18, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   padding: 16px 20px;
-  border-radius: 8px;
+  border-radius: 12px;
 }
 
 .auto-value {
@@ -2550,7 +2839,7 @@ onUnmounted(() => {
   align-items: baseline;
   gap: 4px;
   padding-right: 24px;
-  border-right: 1px solid #E2E8F0;
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .auto-content {
@@ -2573,12 +2862,11 @@ onUnmounted(() => {
   font-family: 'JetBrains Mono', monospace;
   font-size: 11px;
   font-weight: 500;
-  color: #64748B;
-  background: #FFFFFF;
-  border: 1px solid #E2E8F0;
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
   padding: 3px 8px;
   border-radius: 6px;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.02);
 }
 
 .auto-desc {
@@ -2590,20 +2878,21 @@ onUnmounted(() => {
 .auto-desc p {
   margin: 0;
   font-size: 13px;
-  color: #64748B;
+  color: #a1a1aa;
   line-height: 1.5;
 }
 
 .highlight-tip {
   margin-top: 4px !important;
   font-size: 12px !important;
-  color: #000 !important;
+  color: #ffffff !important;
   font-weight: 500;
   cursor: pointer;
+  text-decoration: underline;
 }
 
 .highlight-tip:hover {
-  text-decoration: underline;
+  color: #e4e4e7 !important;
 }
 
 @keyframes fadeIn {

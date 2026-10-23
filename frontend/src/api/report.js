@@ -49,3 +49,11 @@ export const getReport = (reportId) => {
 export const chatWithReport = (data) => {
   return service.post('/api/report/chat', data)
 }
+
+/**
+ * Get download URL for report PDF
+ * @param {string} reportId
+ */
+export const downloadReportPdfUrl = (reportId) => {
+  return `/api/report/${encodeURIComponent(reportId)}/download?format=pdf`
+}

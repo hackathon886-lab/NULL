@@ -1,5 +1,103 @@
 <template>
-  <div class="simulation-panel">
+    <div class="simulation-panel relative overflow-hidden">
+    <!-- Venom Cyber Grid & Web Strings Background Patterns Layer (Pure Glass Backing) -->
+    <div class="workbench-venom-bg pointer-events-none select-none absolute inset-0 z-0 overflow-hidden">
+      <!-- 1. Cyber Perspective Ceiling & Floor Plane Grid Lines -->
+      <svg class="cyber-grid-svg absolute inset-0 w-full h-full" viewBox="0 0 800 1200" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="gridLineFade3" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stop-color="#ffffff" stop-opacity="0.4" />
+            <stop offset="30%" stop-color="#ffffff" stop-opacity="0.2" />
+            <stop offset="70%" stop-color="#ffffff" stop-opacity="0.15" />
+            <stop offset="100%" stop-color="#ffffff" stop-opacity="0.3" />
+          </linearGradient>
+        </defs>
+        <!-- Horizontal grid lines across all card zones -->
+        <line x1="0" y1="40" x2="800" y2="40" stroke="url(#gridLineFade3)" stroke-width="1" />
+        <line x1="0" y1="120" x2="800" y2="120" stroke="url(#gridLineFade3)" stroke-width="1.2" />
+        <line x1="0" y1="220" x2="800" y2="220" stroke="url(#gridLineFade3)" stroke-width="1" />
+        <line x1="0" y1="360" x2="800" y2="360" stroke="url(#gridLineFade3)" stroke-width="1.2" />
+        <line x1="0" y1="520" x2="800" y2="520" stroke="url(#gridLineFade3)" stroke-width="1" />
+        <line x1="0" y1="680" x2="800" y2="680" stroke="url(#gridLineFade3)" stroke-width="1.2" />
+        <line x1="0" y1="840" x2="800" y2="840" stroke="url(#gridLineFade3)" stroke-width="1" />
+        <line x1="0" y1="1020" x2="800" y2="1020" stroke="url(#gridLineFade3)" stroke-width="1.2" />
+        <line x1="0" y1="1160" x2="800" y2="1160" stroke="url(#gridLineFade3)" stroke-width="1" />
+        <!-- Vertical grid lines -->
+        <line x1="40" y1="0" x2="40" y2="1200" stroke="url(#gridLineFade3)" stroke-width="1.2" />
+        <line x1="160" y1="0" x2="160" y2="1200" stroke="url(#gridLineFade3)" stroke-width="1" />
+        <line x1="320" y1="0" x2="320" y2="1200" stroke="url(#gridLineFade3)" stroke-width="1.2" />
+        <line x1="480" y1="0" x2="480" y2="1200" stroke="url(#gridLineFade3)" stroke-width="1" />
+        <line x1="640" y1="0" x2="640" y2="1200" stroke="url(#gridLineFade3)" stroke-width="1.2" />
+        <line x1="760" y1="0" x2="760" y2="1200" stroke="url(#gridLineFade3)" stroke-width="1" />
+        <!-- Perspective converging lines -->
+        <line x1="0" y1="0" x2="400" y2="600" stroke="url(#gridLineFade3)" stroke-width="0.8" />
+        <line x1="800" y1="0" x2="400" y2="600" stroke="url(#gridLineFade3)" stroke-width="0.8" />
+        <line x1="0" y1="1200" x2="400" y2="600" stroke="url(#gridLineFade3)" stroke-width="0.8" />
+        <line x1="800" y1="1200" x2="400" y2="600" stroke="url(#gridLineFade3)" stroke-width="0.8" />
+      </svg>
+
+      <!-- 2. Venomous Web Strands, Fissure Cracks & Suspension Cables -->
+      <svg class="venom-webs-svg absolute inset-0 w-full h-full" viewBox="0 0 800 1200" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="wbSheen3" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#ffffff" stop-opacity="0.95" />
+            <stop offset="25%" stop-color="#d4d4d8" stop-opacity="0.75" />
+            <stop offset="60%" stop-color="#71717a" stop-opacity="0.5" />
+            <stop offset="100%" stop-color="#ffffff" stop-opacity="0.9" />
+          </linearGradient>
+          <linearGradient id="fisGrad3" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#ffffff" stop-opacity="1" />
+            <stop offset="50%" stop-color="#e4e4e7" stop-opacity="0.75" />
+            <stop offset="100%" stop-color="#a1a1aa" stop-opacity="0.45" />
+          </linearGradient>
+        </defs>
+
+        <!-- SPREADING FRACTURE CRACKS -->
+        <g class="fissure-cracks-group">
+          <g stroke="url(#fisGrad3)" stroke-linecap="round" stroke-linejoin="bevel">
+            <path d="M 0,40 L 90,95 L 140,80 L 210,175 L 270,230 L 350,265 L 430,360 L 390,440 L 460,520 L 520,610 L 490,700 L 570,810 L 630,920 L 720,1050 L 800,1110" stroke-width="2.2" fill="none" />
+            <path d="M 140,80 L 190,35 L 250,20" stroke-width="1.3" fill="none" />
+            <path d="M 270,230 L 330,205 L 400,210" stroke-width="1.3" fill="none" />
+            <path d="M 430,360 L 490,410 L 530,475" stroke-width="1.4" fill="none" />
+            <path d="M 520,610 L 580,570 L 640,560" stroke-width="1.3" fill="none" />
+            <path d="M 570,810 L 640,830 L 700,790" stroke-width="1.4" fill="none" />
+            <path d="M 800,320 L 710,380 L 660,360 L 580,450 L 530,520 L 440,550 L 370,640 L 320,720 L 250,760 L 180,870 L 110,910 L 0,980" stroke-width="2" fill="none" />
+            <path d="M 660,360 L 620,310 L 580,290" stroke-width="1.2" fill="none" />
+            <path d="M 440,550 L 390,520 L 340,530" stroke-width="1.2" fill="none" />
+            <path d="M 320,720 L 270,690 L 220,700" stroke-width="1.2" fill="none" />
+          </g>
+        </g>
+
+        <!-- CORNER & EDGE SPIDERWEBS -->
+        <g class="corner-webs-group">
+          <g stroke="rgba(255,255,255,0.6)" stroke-width="1.2" fill="none">
+            <line x1="0" y1="0" x2="320" y2="70" />
+            <line x1="0" y1="0" x2="260" y2="190" />
+            <line x1="0" y1="0" x2="160" y2="300" />
+            <line x1="0" y1="0" x2="50" y2="380" />
+          </g>
+          <g stroke="url(#wbSheen3)" stroke-width="1.8" fill="none">
+            <path d="M 85,0 Q 68,32 50,74 Q 34,100 0,116" />
+            <path d="M 180,0 Q 152,70 114,152 Q 70,212 0,238" />
+            <path d="M 295,0 Q 250,108 188,232 Q 108,328 0,382" />
+            <path d="M 425,0 Q 355,158 272,334 Q 158,464 0,538" />
+          </g>
+
+          <g stroke="rgba(255,255,255,0.6)" stroke-width="1.2" fill="none">
+            <line x1="800" y1="0" x2="480" y2="70" />
+            <line x1="800" y1="0" x2="540" y2="190" />
+            <line x1="800" y1="0" x2="640" y2="300" />
+            <line x1="800" y1="0" x2="750" y2="380" />
+          </g>
+          <g stroke="url(#wbSheen3)" stroke-width="1.8" fill="none">
+            <path d="M 715,0 Q 732,32 750,74 Q 766,100 800,116" />
+            <path d="M 620,0 Q 648,70 686,152 Q 730,212 800,238" />
+            <path d="M 505,0 Q 550,108 612,232 Q 692,328 800,382" />
+            <path d="M 375,0 Q 445,158 528,334 Q 642,464 800,538" />
+          </g>
+        </g>
+      </svg>
+    </div>
     <!-- Top Control Bar -->
     <div class="control-bar">
       <div class="status-group">
@@ -91,6 +189,16 @@
       </div>
 
       <div class="action-controls">
+        <button 
+          v-if="phase === 1"
+          class="action-btn secondary stop-btn"
+          :disabled="isStopping"
+          @click="handleStopSimulation"
+        >
+          <span v-if="isStopping" class="loading-spinner-small"></span>
+          {{ isStopping ? 'STOPPING...' : 'STOP' }}
+        </button>
+
         <button 
           class="action-btn primary"
           :disabled="phase !== 2 || isGeneratingReport"
@@ -700,19 +808,38 @@ onUnmounted(() => {
   height: 100%;
   display: flex;
   flex-direction: column;
-  background: #FFFFFF;
-  font-family: 'Space Grotesk', 'Noto Sans SC', system-ui, sans-serif;
+  background: radial-gradient(circle at 85% 15%, #0e0e14 0%, #060608 60%, #020203 100%);
+  color: #f5f5f7;
+  font-family: var(--font-body, system-ui, sans-serif);
+  position: relative;
   overflow: hidden;
+}
+
+/* Background Cyber Patterns */
+.workbench-venom-bg {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.cyber-grid-svg {
+  opacity: 0.18;
+}
+
+.venom-webs-svg {
+  opacity: 0.35;
 }
 
 /* --- Control Bar --- */
 .control-bar {
-  background: #FFF;
+  background: rgba(12, 12, 16, 0.85);
+  backdrop-filter: blur(12px);
   padding: 12px 24px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-bottom: 1px solid #EAEAEA;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   z-index: 10;
   height: 64px;
 }
@@ -727,27 +854,29 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  padding: 6px 12px;
-  border-radius: 4px;
-  background: #FAFAFA;
-  border: 1px solid #EAEAEA;
-  opacity: 0.7;
-  transition: all 0.3s;
+  padding: 6px 14px;
+  border-radius: 8px;
+  background: rgba(18, 18, 24, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  transition: all 0.25s ease;
   min-width: 140px;
   position: relative;
   cursor: pointer;
 }
 
+.platform-status:hover {
+  border-color: rgba(255, 255, 255, 0.35);
+  background: rgba(24, 24, 32, 0.9);
+}
+
 .platform-status.active {
-  opacity: 1;
-  border-color: #333;
-  background: #FFF;
+  border-color: #FFFFFF;
+  background: rgba(24, 24, 32, 0.95);
 }
 
 .platform-status.completed {
-  opacity: 1;
-  border-color: #1A936F;
-  background: #F2FAF6;
+  border-color: #94A3B8;
+  background: rgba(20, 20, 26, 0.9);
 }
 
 /* Actions Tooltip */
@@ -758,10 +887,10 @@ onUnmounted(() => {
   transform: translateX(-50%);
   margin-top: 8px;
   padding: 10px 14px;
-  background: #000;
+  background: rgba(10, 10, 14, 0.96);
   color: #FFF;
-  border-radius: 4px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
   opacity: 0;
   visibility: hidden;
   transition: all 0.2s ease;
@@ -778,7 +907,7 @@ onUnmounted(() => {
   transform: translateX(-50%);
   border-left: 6px solid transparent;
   border-right: 6px solid transparent;
-  border-bottom: 6px solid #000;
+  border-bottom: 6px solid rgba(255, 255, 255, 0.18);
 }
 
 .platform-status:hover .actions-tooltip {
@@ -787,9 +916,10 @@ onUnmounted(() => {
 }
 
 .tooltip-title {
+  font-family: 'JetBrains Mono', monospace;
   font-size: 10px;
-  font-weight: 600;
-  color: #999;
+  font-weight: 700;
+  color: #94A3B8;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   margin-bottom: 8px;
@@ -802,12 +932,14 @@ onUnmounted(() => {
 }
 
 .tooltip-action {
-  font-size: 10px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
   font-weight: 600;
   padding: 3px 8px;
-  background: rgba(255, 255, 255, 0.15);
-  border-radius: 2px;
-  color: #FFF;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 4px;
+  color: #e4e4e7;
   letter-spacing: 0.03em;
 }
 
@@ -819,15 +951,21 @@ onUnmounted(() => {
 }
 
 .platform-name {
+  font-family: 'JetBrains Mono', monospace;
   font-size: 11px;
   font-weight: 700;
-  color: #000;
+  color: #FFFFFF;
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
 
-.platform-status.twitter .platform-icon { color: #000; }
-.platform-status.reddit .platform-icon { color: #000; }
+.platform-icon {
+  color: #94A3B8;
+}
+
+.platform-status.active .platform-icon {
+  color: #FFFFFF;
+}
 
 .platform-stats {
   display: flex;
@@ -841,60 +979,87 @@ onUnmounted(() => {
 }
 
 .stat-label {
+  font-family: 'JetBrains Mono', monospace;
   font-size: 8px;
-  color: #999;
-  font-weight: 600;
+  color: #71717a;
+  font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
 
 .stat-value {
+  font-family: 'JetBrains Mono', monospace;
   font-size: 11px;
-  font-weight: 600;
-  color: #333;
+  font-weight: 700;
+  color: #FFFFFF;
 }
 
 .stat-total, .stat-unit {
   font-size: 9px;
-  color: #999;
+  color: #71717a;
   font-weight: 400;
 }
 
 .status-badge {
   margin-left: auto;
-  color: #1A936F;
+  color: #94A3B8;
   display: flex;
   align-items: center;
 }
 
-/* Action Button */
+/* Action Controls & Buttons */
+.action-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 .action-btn {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 10px 20px;
-  font-size: 13px;
-  font-weight: 600;
-  border: none;
-  border-radius: 4px;
+  padding: 10px 22px;
+  font-size: 12px;
+  font-weight: 700;
+  border-radius: 999px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   text-transform: uppercase;
   letter-spacing: 0.05em;
+  font-family: 'JetBrains Mono', monospace;
 }
 
 .action-btn.primary {
-  background: #000;
-  color: #FFF;
+  background: #FFFFFF;
+  color: #000000;
+  border: 1px solid #FFFFFF;
 }
 
 .action-btn.primary:hover:not(:disabled) {
-  background: #333;
+  background: #000000;
+  color: #FFFFFF;
+  border-color: #FFFFFF;
+  transform: translateY(-1px);
+}
+
+.action-btn.secondary {
+  background: rgba(22, 22, 30, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #FFFFFF;
+}
+
+.action-btn.secondary:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.4);
+  transform: translateY(-1px);
 }
 
 .action-btn:disabled {
-  opacity: 0.3;
+  background: rgba(255, 255, 255, 0.04);
+  color: #52525b;
+  border: 1px solid rgba(255, 255, 255, 0.08);
   cursor: not-allowed;
+  opacity: 0.6;
 }
 
 /* --- Main Content Area --- */
@@ -902,17 +1067,35 @@ onUnmounted(() => {
   flex: 1;
   overflow-y: auto;
   position: relative;
-  background: #FFF;
+  background: transparent;
+  z-index: 1;
+}
+
+.main-content-area::-webkit-scrollbar {
+  width: 6px;
+}
+
+.main-content-area::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.main-content-area::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+}
+
+.main-content-area::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.25);
 }
 
 /* Timeline Header */
 .timeline-header {
   position: sticky;
   top: 0;
-  background: rgba(255, 255, 255, 0.9);
-  backdrop-filter: blur(8px);
+  background: rgba(12, 12, 16, 0.85);
+  backdrop-filter: blur(12px);
   padding: 12px 24px;
-  border-bottom: 1px solid #EAEAEA;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   z-index: 5;
   display: flex;
   justify-content: center;
@@ -923,15 +1106,17 @@ onUnmounted(() => {
   align-items: center;
   gap: 16px;
   font-size: 11px;
-  color: #666;
-  background: #F5F5F5;
-  padding: 4px 12px;
+  color: #a1a1aa;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 5px 16px;
   border-radius: 20px;
 }
 
 .total-count {
-  font-weight: 600;
-  color: #333;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 700;
+  color: #FFFFFF;
 }
 
 .platform-breakdown {
@@ -944,11 +1129,14 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   gap: 4px;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 600;
+  color: #94A3B8;
 }
 
-.breakdown-divider { color: #DDD; }
-.breakdown-item.twitter { color: #000; }
-.breakdown-item.reddit { color: #000; }
+.breakdown-divider {
+  color: rgba(255, 255, 255, 0.2);
+}
 
 /* --- Timeline Feed --- */
 .timeline-feed {
@@ -965,7 +1153,7 @@ onUnmounted(() => {
   top: 0;
   bottom: 0;
   width: 1px;
-  background: #EAEAEA; /* Cleaner line */
+  background: rgba(255, 255, 255, 0.12);
   transform: translateX(-50%);
 }
 
@@ -983,43 +1171,44 @@ onUnmounted(() => {
   top: 24px;
   width: 10px;
   height: 10px;
-  background: #FFF;
-  border: 1px solid #CCC;
+  background: #08080c;
+  border: 1px solid rgba(255, 255, 255, 0.4);
   border-radius: 50%;
   transform: translateX(-50%);
   z-index: 2;
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: all 0.2s ease;
 }
 
 .marker-dot {
   width: 4px;
   height: 4px;
-  background: #CCC;
+  background: #FFFFFF;
   border-radius: 50%;
 }
 
-.timeline-item.twitter .marker-dot { background: #000; }
-.timeline-item.reddit .marker-dot { background: #000; }
-.timeline-item.twitter .timeline-marker { border-color: #000; }
-.timeline-item.reddit .timeline-marker { border-color: #000; }
+.timeline-item:hover .timeline-marker {
+  border-color: #FFFFFF;
+  transform: translateX(-50%) scale(1.2);
+}
 
 /* Card Layout */
 .timeline-card {
   width: calc(100% - 48px);
-  background: #FFF;
-  border-radius: 2px;
+  background: rgba(14, 14, 18, 0.85);
+  border-radius: 12px;
   padding: 16px 20px;
-  border: 1px solid #EAEAEA;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.02);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   position: relative;
-  transition: all 0.2s;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .timeline-card:hover {
-  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-  border-color: #DDD;
+  border-color: rgba(255, 255, 255, 0.38);
+  background: rgba(20, 20, 26, 0.95);
+  transform: translateY(-1px);
 }
 
 /* Left side (Twitter) */
@@ -1029,7 +1218,7 @@ onUnmounted(() => {
 }
 .timeline-item.twitter .timeline-card {
   margin-left: auto;
-  margin-right: 32px; /* Gap from axis */
+  margin-right: 32px;
 }
 
 /* Right side (Reddit) */
@@ -1039,17 +1228,17 @@ onUnmounted(() => {
 }
 .timeline-item.reddit .timeline-card {
   margin-right: auto;
-  margin-left: 32px; /* Gap from axis */
+  margin-left: 32px;
 }
 
 /* Card Content Styles */
 .card-header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: center;
   margin-bottom: 12px;
   padding-bottom: 12px;
-  border-bottom: 1px solid #F5F5F5;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .agent-info {
@@ -1061,21 +1250,22 @@ onUnmounted(() => {
 .avatar-placeholder {
   width: 24px;
   height: 24px;
-  background: #000;
-  color: #FFF;
+  background: #FFFFFF;
+  color: #000000;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 12px;
-  font-weight: 700;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 800;
   text-transform: uppercase;
 }
 
 .agent-name {
   font-size: 13px;
-  font-weight: 600;
-  color: #000;
+  font-weight: 700;
+  color: #FFFFFF;
 }
 
 .header-meta {
@@ -1085,49 +1275,75 @@ onUnmounted(() => {
 }
 
 .platform-indicator {
-  color: #999;
+  color: #94A3B8;
   display: flex;
   align-items: center;
 }
 
 .action-badge {
+  font-family: 'JetBrains Mono', monospace;
   font-size: 9px;
-  padding: 2px 6px;
-  border-radius: 2px;
-  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   border: 1px solid transparent;
 }
 
 /* Monochromatic Badges */
-.badge-post { background: #F0F0F0; color: #333; border-color: #E0E0E0; }
-.badge-comment { background: #F0F0F0; color: #666; border-color: #E0E0E0; }
-.badge-action { background: #FFF; color: #666; border: 1px solid #E0E0E0; }
-.badge-meta { background: #FAFAFA; color: #999; border: 1px dashed #DDD; }
-.badge-idle { opacity: 0.5; }
+.badge-post {
+  background: rgba(255, 255, 255, 0.12);
+  color: #FFFFFF;
+  border: 1px solid #FFFFFF;
+}
+
+.badge-comment {
+  background: rgba(255, 255, 255, 0.08);
+  color: #e4e4e7;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.badge-action {
+  background: rgba(255, 255, 255, 0.05);
+  color: #94A3B8;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.badge-meta {
+  background: rgba(255, 255, 255, 0.03);
+  color: #71717a;
+  border: 1px dashed rgba(255, 255, 255, 0.15);
+}
+
+.badge-idle {
+  background: transparent;
+  color: #52525b;
+  border: 1px dashed rgba(255, 255, 255, 0.08);
+  opacity: 0.6;
+}
 
 .content-text {
   font-size: 13px;
   line-height: 1.6;
-  color: #333;
+  color: #d4d4d8;
   margin-bottom: 10px;
 }
 
 .content-text.main-text {
   font-size: 14px;
-  color: #000;
+  color: #FFFFFF;
 }
 
 /* Info Blocks (Quote, Repost, etc) */
 .quoted-block, .repost-content {
-  background: #F9F9F9;
-  border: 1px solid #EEE;
-  padding: 10px 12px;
-  border-radius: 2px;
+  background: rgba(24, 24, 32, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 10px 14px;
+  border-radius: 8px;
   margin-top: 8px;
   font-size: 12px;
-  color: #555;
+  color: #d4d4d8;
 }
 
 .quote-header, .repost-info, .like-info, .search-info, .follow-info, .vote-info, .idle-info, .comment-context {
@@ -1136,21 +1352,22 @@ onUnmounted(() => {
   gap: 6px;
   margin-bottom: 6px;
   font-size: 11px;
-  color: #666;
+  color: #a1a1aa;
 }
 
 .icon-small {
-  color: #999;
+  color: #94A3B8;
 }
 .icon-small.filled {
-  color: #999; /* Keep icons neutral unless highlighted */
+  color: #FFFFFF;
 }
 
 .search-query {
   font-family: 'JetBrains Mono', monospace;
-  background: #F0F0F0;
-  padding: 0 4px;
-  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.08);
+  padding: 1px 6px;
+  border-radius: 4px;
+  color: #FFFFFF;
 }
 
 .card-footer {
@@ -1158,7 +1375,7 @@ onUnmounted(() => {
   display: flex;
   justify-content: flex-end;
   font-size: 10px;
-  color: #BBB;
+  color: #71717a;
   font-family: 'JetBrains Mono', monospace;
 }
 
@@ -1172,23 +1389,24 @@ onUnmounted(() => {
   flex-direction: column;
   align-items: center;
   gap: 16px;
-  color: #CCC;
+  color: #71717a;
+  font-family: 'JetBrains Mono', monospace;
   font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0.1em;
 }
 
 .pulse-ring {
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
-  border: 1px solid #EAEAEA;
+  border: 1px solid rgba(255, 255, 255, 0.25);
   animation: ripple 2s infinite;
 }
 
 @keyframes ripple {
-  0% { transform: scale(0.8); opacity: 1; border-color: #CCC; }
-  100% { transform: scale(2.5); opacity: 0; border-color: #EAEAEA; }
+  0% { transform: scale(0.8); opacity: 1; border-color: #FFFFFF; }
+  100% { transform: scale(2.5); opacity: 0; border-color: rgba(255, 255, 255, 0.1); }
 }
 
 /* Animation */
@@ -1212,18 +1430,18 @@ onUnmounted(() => {
   color: #DDD;
   padding: 16px;
   font-family: 'JetBrains Mono', monospace;
-  border-top: 1px solid #222;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
   flex-shrink: 0;
 }
 
 .log-header {
   display: flex;
   justify-content: space-between;
-  border-bottom: 1px solid #333;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   padding-bottom: 8px;
   margin-bottom: 8px;
   font-size: 10px;
-  color: #666;
+  color: #71717a;
 }
 
 .log-content {
@@ -1236,7 +1454,7 @@ onUnmounted(() => {
 }
 
 .log-content::-webkit-scrollbar { width: 4px; }
-.log-content::-webkit-scrollbar-thumb { background: #333; border-radius: 2px; }
+.log-content::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.15); border-radius: 2px; }
 
 .log-line {
   font-size: 11px;
@@ -1245,8 +1463,8 @@ onUnmounted(() => {
   line-height: 1.5;
 }
 
-.log-time { color: #555; min-width: 75px; }
-.log-msg { color: #BBB; word-break: break-all; }
+.log-time { color: #71717a; min-width: 75px; }
+.log-msg { color: #e4e4e7; word-break: break-all; }
 .mono { font-family: 'JetBrains Mono', monospace; }
 
 /* Loading spinner for button */

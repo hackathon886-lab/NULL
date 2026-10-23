@@ -433,9 +433,16 @@ class ZepGraphMemoryUpdater:
                     if batch:
                         self._send_batch_activities(batch, platform)
                         time.sleep(self.SEND_INTERVAL)
-                    
+
                 except Empty:
-                    pass
+                    # Periodically check and clean up finished episodes while worker is idling
+                    if self._pending_episode_uuids:
+                        try:
+                            pending_set = set(self._pending_episode_uuids)
+                            self._poll_pending_batch(pending_set)
+                            self._pending_episode_uuids = [u for u in self._pending_episode_uuids if u in pending_set]
+                        except Exception:
+                            pass
                     
             except Exception as e:
                 logger.error(f"Worker loop exception: {e}")
@@ -596,6 +603,35 @@ class ZepGraphMemoryUpdater:
                 with self._buffer_lock:
                     del self._platform_buffers[platform][:processed_count]
 
+    def _poll_pending_batch(self, pending: set) -> None:
+        """Poll pending episodes using efficient batch status retrieval where possible."""
+        try:
+            res = self.client.graph.episode.get_by_graph_id(
+                graph_id=self.graph_id,
+                lastn=min(100, max(len(pending) * 2, 20)),
+            )
+            episodes = getattr(res, "episodes", []) or []
+            if episodes:
+                uuid_map = {}
+                for ep in episodes:
+                    ep_id = getattr(ep, "uuid_", getattr(ep, "uuid", None))
+                    if ep_id:
+                        uuid_map[str(ep_id)] = getattr(ep, "processed", False)
+                for episode_uuid in list(pending):
+                    if uuid_map.get(str(episode_uuid)) is True:
+                        pending.remove(episode_uuid)
+                return
+        except Exception as e:
+            logger.debug(f"Batch episode status check fallback: {e}")
+
+        for episode_uuid in list(pending):
+            episode = call_zep_read_with_retry(
+                lambda: self.client.graph.episode.get(uuid_=episode_uuid),
+                operation_name=f"poll simulation episode {episode_uuid}",
+            )
+            if getattr(episode, "processed", False):
+                pending.remove(episode_uuid)
+
     def _wait_for_pending_episodes(self, *, deadline: float | None = None) -> None:
         pending = set(self._pending_episode_uuids)
         if not pending:
@@ -609,17 +645,16 @@ class ZepGraphMemoryUpdater:
                     f"Zep simulation ingestion timed out with {len(pending)} "
                     "episode(s) pending"
                 )
-            for episode_uuid in list(pending):
-                episode = call_zep_read_with_retry(
-                    lambda: self.client.graph.episode.get(uuid_=episode_uuid),
-                    operation_name=f"poll simulation episode {episode_uuid}",
-                )
-                if getattr(episode, "processed", False):
-                    pending.remove(episode_uuid)
+            self._poll_pending_batch(pending)
             if pending:
                 time.sleep(3)
         self._pending_episode_uuids = []
     
+    def is_active(self) -> bool:
+        """Check if updater is actively processing or worker is alive"""
+        worker_alive = bool(self._worker_thread and self._worker_thread.is_alive())
+        return self._running or worker_alive or not self._activity_queue.empty()
+
     def get_stats(self) -> Dict[str, Any]:
         """Get statistics"""
         with self._buffer_lock:
@@ -649,6 +684,15 @@ class ZepGraphMemoryManager:
     
     _updaters: Dict[str, ZepGraphMemoryUpdater] = {}
     _lock = threading.Lock()
+
+    @classmethod
+    def force_remove_updater(cls, simulation_id: str) -> Optional["ZepGraphMemoryUpdater"]:
+        """Forcefully remove updater from registry (e.g. after worker stopped or during recovery)"""
+        with cls._lock:
+            updater = cls._updaters.pop(simulation_id, None)
+            if updater:
+                logger.info(f"Force removed graph memory updater: simulation_id={simulation_id}")
+            return updater
     
     @classmethod
     def create_updater(cls, simulation_id: str, graph_id: str) -> ZepGraphMemoryUpdater:

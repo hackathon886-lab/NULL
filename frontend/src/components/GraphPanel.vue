@@ -4,12 +4,26 @@
       <span class="panel-title">{{ $t('graph.panelTitle') }}</span>
       <!-- Top Toolbar (Internal Top Right) -->
       <div class="header-tools">
+        <button class="tool-btn" @click="downloadGraphSvg" :disabled="loading || !graphData" title="Download Full Graph (SVG)">
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon-download">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="7 10 12 15 17 10"></polyline>
+            <line x1="12" y1="15" x2="12" y2="3"></line>
+          </svg>
+          <span class="btn-text">Download SVG</span>
+        </button>
+        <button class="tool-btn" @click="fitGraphToView(500)" :disabled="loading || !graphData" title="Fit Entire Graph to View">
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="15 3 21 3 21 9"></polyline>
+            <polyline points="9 21 3 21 3 15"></polyline>
+            <line x1="21" y1="3" x2="14" y2="10"></line>
+            <line x1="3" y1="21" x2="10" y2="14"></line>
+          </svg>
+          <span class="btn-text">Fit View</span>
+        </button>
         <button class="tool-btn" @click="$emit('refresh')" :disabled="loading" :title="$t('graph.refreshGraph')">
           <span class="icon-refresh" :class="{ 'spinning': loading }">↻</span>
           <span class="btn-text">Refresh</span>
-        </button>
-        <button class="tool-btn" @click="$emit('toggle-maximize')" :title="$t('graph.toggleMaximize')">
-          <span class="icon-maximize">⛶</span>
         </button>
       </div>
     </div>
@@ -18,6 +32,14 @@
       <!-- Graph Visualization -->
       <div v-if="graphData" class="graph-view">
         <svg ref="graphSvg" class="graph-svg"></svg>
+        
+        <!-- Live refresh overlay indicator inside graph-view -->
+        <transition name="fade">
+          <div v-if="loading" class="graph-refreshing-badge">
+            <span class="refresh-spinner-dot"></span>
+            <span>Syncing Graph...</span>
+          </div>
+        </transition>
         
         <!-- Building/Simulating Hint -->
         <div v-if="currentPhase === 1 || isSimulating" class="graph-building-hint">
@@ -200,19 +222,16 @@
         </div>
       </div>
       
-      <!-- Loading State -->
-      <div v-else-if="loading" class="graph-state">
-        <div class="loading-spinner"></div>
-        <p>{{ $t('graph.graphDataLoading') }}</p>
-      </div>
-      
-      <!-- Waiting/Empty State - Venom Symbiote Core -->
-      <div v-else class="graph-state venom-symbiote-empty">
+      <!-- Waiting/Empty & Ingestion State - Venom Symbiote Core -->
+      <div v-else class="graph-state venom-symbiote-empty" :class="{ 'is-loading': loading }">
         <div class="symbiote-core-wrapper">
           <div class="symbiote-pulse-ring ring-1"></div>
           <div class="symbiote-pulse-ring ring-2"></div>
           <div class="symbiote-pulse-ring ring-3"></div>
           
+          <!-- Cybernetic scan beam active during data loading -->
+          <div v-if="loading" class="symbiote-scan-beam"></div>
+
           <div class="symbiote-orbit-tracker orbit-cw">
             <div class="orbital-node node-1"></div>
             <div class="orbital-node node-2"></div>
@@ -228,14 +247,14 @@
         </div>
 
         <div class="empty-status-wrap">
-          <h3 class="empty-title">{{ $t('graph.waitingOntology') || 'Waiting for ontology generation...' }}</h3>
+          <h3 class="empty-title">{{ emptyStateTitle }}</h3>
           <p class="empty-subtitle">
-            <span class="pulse-spark"></span>
-            AI Symbiote Neural Link Connecting Dots...
+            <span class="pulse-spark" :class="{ 'active': loading }"></span>
+            {{ emptyStateSubtitle }}
           </p>
           <div class="empty-endpoint-pill">
-            <span class="pill-dot"></span>
-            <code>POST /api/graph/ontology/generate</code>
+            <span class="pill-dot" :class="{ 'active': loading }"></span>
+            <code>{{ emptyStateEndpoint }}</code>
           </div>
         </div>
       </div>
@@ -260,11 +279,32 @@
       </label>
       <span class="toggle-label">Show Edge Labels</span>
     </div>
+
+    <!-- Floating Zoom & Fit Controls (Bottom Right) -->
+    <div v-if="graphData" class="graph-zoom-controls">
+      <button class="zoom-btn" @click="zoomIn" title="Zoom In (+)">
+        <span>+</span>
+      </button>
+      <button class="zoom-btn" @click="zoomOut" title="Zoom Out (−)">
+        <span>−</span>
+      </button>
+      <button class="zoom-btn fit-btn" @click="fitGraphToView(500)" title="Fit Entire Graph into View">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="15 3 21 3 21 9"></polyline>
+          <polyline points="9 21 3 21 3 15"></polyline>
+          <line x1="21" y1="3" x2="14" y2="10"></line>
+          <line x1="3" y1="21" x2="10" y2="14"></line>
+        </svg>
+      </button>
+    </div>
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted, onUnmounted, watch, nextTick, computed } from 'vue'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 import * as d3 from 'd3'
 
 const props = defineProps({
@@ -272,6 +312,39 @@ const props = defineProps({
   loading: Boolean,
   currentPhase: Number,
   isSimulating: Boolean
+})
+
+const emptyStateTitle = computed(() => {
+  if (props.loading) {
+    return t('graph.graphDataLoading') || 'Loading graph data...'
+  }
+  if (props.currentPhase === 1) {
+    return 'Knowledge Graph Ingestion In Progress...'
+  }
+  if (props.currentPhase === 0) {
+    return 'Analyzing Reality Seed & Generating Ontology...'
+  }
+  return t('graph.waitingOntology') || 'Waiting for ontology generation...'
+})
+
+const emptyStateSubtitle = computed(() => {
+  if (props.loading) {
+    return 'AI Symbiote Ingesting Nodes & Neural Synthesizing...'
+  }
+  if (props.currentPhase === 1) {
+    return 'Extracting Entities, Constraints & Graph Relations...'
+  }
+  return 'AI Symbiote Neural Link Connecting Dots...'
+})
+
+const emptyStateEndpoint = computed(() => {
+  if (props.loading) {
+    return 'GET /api/graph/data'
+  }
+  if (props.currentPhase === 1) {
+    return 'POST /api/graph/build'
+  }
+  return 'POST /api/graph/ontology/generate'
 })
 
 const emit = defineEmits(['refresh', 'toggle-maximize'])
@@ -352,6 +425,163 @@ const closeDetailPanel = () => {
 let currentSimulation = null
 let linkLabelsRef = null
 let linkLabelBgRef = null
+let lastRenderedNodes = []
+let currentZoomBehavior = null
+
+const downloadGraphSvg = () => {
+  if (!graphSvg.value || !lastRenderedNodes.length) return
+
+  try {
+    const svgEl = graphSvg.value
+
+    // Clone SVG to isolate export from active canvas mutations
+    const clone = svgEl.cloneNode(true)
+    clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg')
+    clone.setAttribute('xmlns:xlink', 'http://www.w3.org/1999/xlink')
+
+    // Remove zoom/pan transform on the cloned <g> so all nodes are in natural uncropped space
+    const cloneG = clone.querySelector('g')
+    if (cloneG) {
+      cloneG.removeAttribute('transform')
+    }
+
+    // Determine the full bounding box enclosing EVERY node and label
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity
+    lastRenderedNodes.forEach(n => {
+      if (typeof n.x === 'number' && typeof n.y === 'number' && isFinite(n.x) && isFinite(n.y)) {
+        minX = Math.min(minX, n.x - 35)
+        maxX = Math.max(maxX, n.x + 110) // text label padding to the right
+        minY = Math.min(minY, n.y - 35)
+        maxY = Math.max(maxY, n.y + 35)
+      }
+    })
+
+    // Also check live group getBBox as an extra bounds safety check
+    try {
+      const liveG = svgEl.querySelector('g')
+      if (liveG && typeof liveG.getBBox === 'function') {
+        const bbox = liveG.getBBox()
+        if (bbox && bbox.width > 0 && bbox.height > 0 && isFinite(bbox.width) && isFinite(bbox.height)) {
+          minX = Math.min(minX, bbox.x)
+          maxX = Math.max(maxX, bbox.x + bbox.width)
+          minY = Math.min(minY, bbox.y)
+          maxY = Math.max(maxY, bbox.y + bbox.height)
+        }
+      }
+    } catch (e) {}
+
+    // Fallback if no valid points
+    if (!isFinite(minX) || !isFinite(maxX) || maxX <= minX) {
+      minX = 0; minY = 0; maxX = 1200; maxY = 800;
+    }
+
+    // Generous padding around the full perimeter so no node or label is near the edge
+    const padding = 100
+    const vx = Math.round(minX - padding)
+    const vy = Math.round(minY - padding)
+    const vw = Math.round(maxX - minX + padding * 2)
+    const vh = Math.round(maxY - minY + padding * 2)
+
+    clone.setAttribute('viewBox', `${vx} ${vy} ${vw} ${vh}`)
+    clone.setAttribute('width', vw)
+    clone.setAttribute('height', vh)
+
+    // Create dark background rect as first child in SVG clone covering the entire viewBox
+    const bgRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect')
+    bgRect.setAttribute('x', vx)
+    bgRect.setAttribute('y', vy)
+    bgRect.setAttribute('width', vw)
+    bgRect.setAttribute('height', vh)
+    bgRect.setAttribute('fill', '#08080c')
+    clone.insertBefore(bgRect, clone.firstChild)
+
+    // Ensure all typography renders cleanly in the exported vector SVG
+    const styleEl = document.createElementNS('http://www.w3.org/2000/svg', 'style')
+    styleEl.textContent = `
+      text {
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      }
+    `
+    clone.insertBefore(styleEl, clone.firstChild)
+
+    const serializer = new XMLSerializer()
+    let svgString = serializer.serializeToString(clone)
+
+    // Add standalone XML header
+    if (!svgString.startsWith('<?xml')) {
+      svgString = '<?xml version="1.0" encoding="UTF-8" standalone="no"?>\n' + svgString
+    }
+
+    const svgBlob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' })
+    const URLObject = window.URL || window.webkitURL || window
+    const svgUrl = URLObject.createObjectURL(svgBlob)
+
+    const downloadLink = document.createElement('a')
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19)
+    downloadLink.download = `knowledge-graph-full-${timestamp}.svg`
+    downloadLink.href = svgUrl
+    document.body.appendChild(downloadLink)
+    downloadLink.click()
+    document.body.removeChild(downloadLink)
+    setTimeout(() => URLObject.revokeObjectURL(svgUrl), 1000)
+  } catch (err) {
+    console.error('downloadGraphSvg error:', err)
+  }
+}
+
+const fitGraphToView = (duration = 600) => {
+  if (!graphSvg.value || !graphContainer.value || !lastRenderedNodes.length) return
+
+  const container = graphContainer.value
+  const width = (container && container.clientWidth > 0) ? container.clientWidth : 900
+  const height = (container && container.clientHeight > 0) ? container.clientHeight : 650
+
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity
+  lastRenderedNodes.forEach(n => {
+    if (typeof n.x === 'number' && typeof n.y === 'number' && isFinite(n.x) && isFinite(n.y)) {
+      minX = Math.min(minX, n.x - 30)
+      maxX = Math.max(maxX, n.x + 80)
+      minY = Math.min(minY, n.y - 30)
+      maxY = Math.max(maxY, n.y + 30)
+    }
+  })
+
+  if (!isFinite(minX) || !isFinite(maxX) || maxX <= minX) return
+
+  const graphWidth = maxX - minX
+  const graphHeight = maxY - minY
+  const midX = (minX + maxX) / 2
+  const midY = (minY + maxY) / 2
+
+  const padding = 70
+  const scaleX = (width - padding * 2) / graphWidth
+  const scaleY = (height - padding * 2) / graphHeight
+  const targetScale = Math.min(Math.max(Math.min(scaleX, scaleY), 0.08), 1.6)
+
+  const targetTranslateX = width / 2 - midX * targetScale
+  const targetTranslateY = height / 2 - midY * targetScale
+
+  const svg = d3.select(graphSvg.value)
+  const transform = d3.zoomIdentity.translate(targetTranslateX, targetTranslateY).scale(targetScale)
+
+  if (currentZoomBehavior) {
+    if (duration > 0) {
+      svg.transition().duration(duration).call(currentZoomBehavior.transform, transform)
+    } else {
+      svg.call(currentZoomBehavior.transform, transform)
+    }
+  }
+}
+
+const zoomIn = () => {
+  if (!graphSvg.value || !currentZoomBehavior) return
+  d3.select(graphSvg.value).transition().duration(250).call(currentZoomBehavior.scaleBy, 1.35)
+}
+
+const zoomOut = () => {
+  if (!graphSvg.value || !currentZoomBehavior) return
+  d3.select(graphSvg.value).transition().duration(250).call(currentZoomBehavior.scaleBy, 0.72)
+}
 
 const renderGraph = () => {
   if (!graphSvg.value || !props.graphData) return
@@ -362,8 +592,8 @@ const renderGraph = () => {
   }
   
   const container = graphContainer.value
-  const width = container.clientWidth
-  const height = container.clientHeight
+  const width = (container && container.clientWidth > 0) ? container.clientWidth : 900
+  const height = (container && container.clientHeight > 0) ? container.clientHeight : 650
   
   const svg = d3.select(graphSvg.value)
     .attr('width', width)
@@ -377,116 +607,122 @@ const renderGraph = () => {
   
   if (nodesData.length === 0) return
 
-  // Prep data
+  // Prep data supporting both uuid and id
   const nodeMap = {}
-  nodesData.forEach(n => nodeMap[n.uuid] = n)
+  nodesData.forEach(n => {
+    const id = n.uuid || n.id
+    if (id) nodeMap[id] = n
+  })
   
   const nodes = nodesData.map(n => ({
-    id: n.uuid,
+    id: n.uuid || n.id,
     name: n.name || 'Unnamed',
-    type: n.labels?.find(l => l !== 'Entity') || 'Entity',
+    type: n.labels?.find(l => l !== 'Entity') || n.entity_type || 'Entity',
     rawData: n
   }))
   
   const nodeIds = new Set(nodes.map(n => n.id))
+
+  const getEdgeSource = (e) => e.source_node_uuid || e.source?.id || e.source
+  const getEdgeTarget = (e) => e.target_node_uuid || e.target?.id || e.target
   
   // Process edge data, compute edge counts and indices between pairs of nodes
   const edgePairCount = {}
   const selfLoopEdges = {} // Self-loop edges grouped by node
   const tempEdges = edgesData
-    .filter(e => nodeIds.has(e.source_node_uuid) && nodeIds.has(e.target_node_uuid))
+    .filter(e => {
+      const s = getEdgeSource(e)
+      const t = getEdgeTarget(e)
+      return s && t && nodeIds.has(s) && nodeIds.has(t)
+    })
   
   // Count edges between each pair of nodes, collect self-loops
   tempEdges.forEach(e => {
-    if (e.source_node_uuid === e.target_node_uuid) {
-      // Self-loop - collect into array
-      if (!selfLoopEdges[e.source_node_uuid]) {
-        selfLoopEdges[e.source_node_uuid] = []
+    const s = getEdgeSource(e)
+    const t = getEdgeTarget(e)
+    if (s === t) {
+      if (!selfLoopEdges[s]) {
+        selfLoopEdges[s] = []
       }
-      selfLoopEdges[e.source_node_uuid].push({
+      selfLoopEdges[s].push({
         ...e,
-        source_name: nodeMap[e.source_node_uuid]?.name,
-        target_name: nodeMap[e.target_node_uuid]?.name
+        source_name: nodeMap[s]?.name,
+        target_name: nodeMap[t]?.name
       })
     } else {
-      const pairKey = [e.source_node_uuid, e.target_node_uuid].sort().join('_')
+      const pairKey = [s, t].sort().join('_')
       edgePairCount[pairKey] = (edgePairCount[pairKey] || 0) + 1
     }
   })
   
   // Track current edge index for each node pair
   const edgePairIndex = {}
-  const processedSelfLoopNodes = new Set() // Processed self-loop nodes
-  
+  const processedSelfLoopNodes = new Set()
   const edges = []
   
   tempEdges.forEach(e => {
-    const isSelfLoop = e.source_node_uuid === e.target_node_uuid
+    const s = getEdgeSource(e)
+    const t = getEdgeTarget(e)
+    const isSelfLoop = s === t
     
     if (isSelfLoop) {
-      // Self-loop edge - add only one merged self-loop per node
-      if (processedSelfLoopNodes.has(e.source_node_uuid)) {
-        return // Already processed, skip
-      }
-      processedSelfLoopNodes.add(e.source_node_uuid)
+      if (processedSelfLoopNodes.has(s)) return
+      processedSelfLoopNodes.add(s)
       
-      const allSelfLoops = selfLoopEdges[e.source_node_uuid]
-      const nodeName = nodeMap[e.source_node_uuid]?.name || 'Unknown'
-      
+      const allSelfLoops = selfLoopEdges[s] || []
+      const nodeName = nodeMap[s]?.name || 'Unknown'
+      const labelText = `Self Relations (${allSelfLoops.length})`
       edges.push({
-        source: e.source_node_uuid,
-        target: e.target_node_uuid,
+        source: s,
+        target: t,
         type: 'SELF_LOOP',
-        name: `Self Relations (${allSelfLoops.length})`,
+        name: labelText,
         curvature: 0,
         isSelfLoop: true,
+        _labelW: Math.max(labelText.length * 6.5 + 10, 24),
+        _labelH: 15,
         rawData: {
           isSelfLoopGroup: true,
           source_name: nodeName,
           target_name: nodeName,
           selfLoopCount: allSelfLoops.length,
-          selfLoopEdges: allSelfLoops // Store detailed info of all self-loop edges
+          selfLoopEdges: allSelfLoops
         }
       })
       return
     }
     
-    const pairKey = [e.source_node_uuid, e.target_node_uuid].sort().join('_')
-    const totalCount = edgePairCount[pairKey]
+    const pairKey = [s, t].sort().join('_')
+    const totalCount = edgePairCount[pairKey] || 1
     const currentIndex = edgePairIndex[pairKey] || 0
     edgePairIndex[pairKey] = currentIndex + 1
     
-    // Determine if edge direction matches normalized direction (sourceUUID < targetUUID)
-    const isReversed = e.source_node_uuid > e.target_node_uuid
-    
-    // Calculate curvature: fan out for multiple edges, straight line for single edge
+    const isReversed = s > t
     let curvature = 0
     if (totalCount > 1) {
-      // Evenly distribute curvature to ensure distinct separation
-      // Curvature range expands with edge count
       const curvatureRange = Math.min(1.2, 0.6 + totalCount * 0.15)
       curvature = ((currentIndex / (totalCount - 1)) - 0.5) * curvatureRange * 2
-      
-      // If edge direction is opposite of normalized direction, flip curvature
-      // Ensures all edges distribute in the same frame of reference without overlapping
       if (isReversed) {
         curvature = -curvature
       }
     }
     
+    const edgeName = e.name || e.fact_type || e.type || 'RELATED'
     edges.push({
-      source: e.source_node_uuid,
-      target: e.target_node_uuid,
-      type: e.fact_type || e.name || 'RELATED',
-      name: e.name || e.fact_type || 'RELATED',
+      source: s,
+      target: t,
+      type: e.fact_type || e.type || e.name || 'RELATED',
+      name: edgeName,
       curvature,
       isSelfLoop: false,
       pairIndex: currentIndex,
       pairTotal: totalCount,
+      _labelW: Math.max(edgeName.length * 6.5 + 10, 24),
+      _labelH: 15,
       rawData: {
         ...e,
-        source_name: nodeMap[e.source_node_uuid]?.name,
-        target_name: nodeMap[e.target_node_uuid]?.name
+        source_name: nodeMap[s]?.name,
+        target_name: nodeMap[t]?.name
       }
     })
   })
@@ -498,9 +734,9 @@ const renderGraph = () => {
 
   // Simulation - dynamically adjust node distance based on edge count
   const simulation = d3.forceSimulation(nodes)
+    .alphaDecay(0.04)
+    .velocityDecay(0.4)
     .force('link', d3.forceLink(edges).id(d => d.id).distance(d => {
-      // Dynamically adjust distance based on number of edges between node pair
-      // Base distance 150, +40 per additional edge
       const baseDistance = 150
       const edgeCount = d.pairTotal || 1
       return baseDistance + (edgeCount - 1) * 50
@@ -508,18 +744,34 @@ const renderGraph = () => {
     .force('charge', d3.forceManyBody().strength(-400))
     .force('center', d3.forceCenter(width / 2, height / 2))
     .force('collide', d3.forceCollide(50))
-    // Add gravity toward center, gathering isolated clusters into central area
     .force('x', d3.forceX(width / 2).strength(0.04))
     .force('y', d3.forceY(height / 2).strength(0.04))
   
   currentSimulation = simulation
 
+  simulation.on('end', () => {
+    fitGraphToView(600)
+  })
+
+  // Settle frame check
+  setTimeout(() => {
+    fitGraphToView(450)
+  }, 1200)
+
   const g = svg.append('g')
   
-  // Zoom
-  svg.call(d3.zoom().extent([[0, 0], [width, height]]).scaleExtent([0.1, 4]).on('zoom', (event) => {
-    g.attr('transform', event.transform)
-  }))
+  lastRenderedNodes = nodes
+
+  // Zoom and smooth scroll navigation
+  const zoomBehavior = d3.zoom()
+    .extent([[0, 0], [width, height]])
+    .scaleExtent([0.05, 5])
+    .on('zoom', (event) => {
+      g.attr('transform', event.transform)
+    })
+
+  svg.call(zoomBehavior)
+  currentZoomBehavior = zoomBehavior
 
   // Links - use path to support curved lines
   const linkGroup = g.append('g').attr('class', 'links')
@@ -531,29 +783,22 @@ const renderGraph = () => {
     
     // Detect self-loop
     if (d.isSelfLoop) {
-      // Self-loop: draw arc starting from node and returning
       const loopRadius = 30
-      // Start from right side of node, loop around and return
-      const x1 = sx + 8  // Start offset
+      const x1 = sx + 8
       const y1 = sy - 4
-      const x2 = sx + 8  // End offset
+      const x2 = sx + 8
       const y2 = sy + 4
-      // Draw self-loop using arc (sweep-flag=1 clockwise)
       return `M${x1},${y1} A${loopRadius},${loopRadius} 0 1,1 ${x2},${y2}`
     }
     
     if (d.curvature === 0) {
-      // Straight line
       return `M${sx},${sy} L${tx},${ty}`
     }
     
-    // Calculate curve control points - dynamically adjusted based on edge count and distance
     const dx = tx - sx, dy = ty - sy
     const dist = Math.sqrt(dx * dx + dy * dy)
-    // Perpendicular offset relative to connection line, ensuring clear curvature
-    // The more edges, the larger the offset proportion to distance
     const pairTotal = d.pairTotal || 1
-    const offsetRatio = 0.25 + pairTotal * 0.05 // Base 25%, +5% per additional edge
+    const offsetRatio = 0.25 + pairTotal * 0.05
     const baseOffset = Math.max(35, dist * offsetRatio)
     const offsetX = -dy / dist * d.curvature * baseOffset
     const offsetY = dx / dist * d.curvature * baseOffset
@@ -568,9 +813,7 @@ const renderGraph = () => {
     const sx = d.source.x, sy = d.source.y
     const tx = d.target.x, ty = d.target.y
     
-    // Detect self-loop
     if (d.isSelfLoop) {
-      // Self-loop label position: right of node
       return { x: sx + 70, y: sy }
     }
     
@@ -578,7 +821,6 @@ const renderGraph = () => {
       return { x: (sx + tx) / 2, y: (sy + ty) / 2 }
     }
     
-    // Quadratic bezier midpoint t=0.5
     const dx = tx - sx, dy = ty - sy
     const dist = Math.sqrt(dx * dx + dy * dy)
     const pairTotal = d.pairTotal || 1
@@ -589,7 +831,6 @@ const renderGraph = () => {
     const cx = (sx + tx) / 2 + offsetX
     const cy = (sy + ty) / 2 + offsetY
     
-    // Quadratic bezier formula B(t) = (1-t)²P0 + 2(1-t)tP1 + t²P2, t=0.5
     const midX = 0.25 * sx + 0.5 * cx + 0.25 * tx
     const midY = 0.25 * sy + 0.5 * cy + 0.25 * ty
     
@@ -605,11 +846,9 @@ const renderGraph = () => {
     .style('cursor', 'pointer')
     .on('click', (event, d) => {
       event.stopPropagation()
-      // Reset previously selected edge style
       linkGroup.selectAll('path').attr('stroke', 'rgba(255, 255, 255, 0.22)').attr('stroke-width', 1.5)
       linkLabelBg.attr('fill', 'rgba(12, 12, 16, 0.92)')
       linkLabels.attr('fill', '#d4d4d8')
-      // Highlight currently selected edge
       d3.select(event.target).attr('stroke', '#ffffff').attr('stroke-width', 3)
       
       selectedItem.value = {
@@ -618,13 +857,15 @@ const renderGraph = () => {
       }
     })
 
-  // Link labels background (white background for clarity)
+  // Link labels background
   const linkLabelBg = linkGroup.selectAll('rect')
     .data(edges)
     .enter().append('rect')
     .attr('fill', 'rgba(12, 12, 16, 0.92)')
     .attr('rx', 3)
     .attr('ry', 3)
+    .attr('width', d => d._labelW)
+    .attr('height', d => d._labelH)
     .style('cursor', 'pointer')
     .style('pointer-events', 'all')
     .style('display', showEdgeLabels.value ? 'block' : 'none')
@@ -633,7 +874,6 @@ const renderGraph = () => {
       linkGroup.selectAll('path').attr('stroke', 'rgba(255, 255, 255, 0.22)').attr('stroke-width', 1.5)
       linkLabelBg.attr('fill', 'rgba(12, 12, 16, 0.92)')
       linkLabels.attr('fill', '#d4d4d8')
-      // Highlight corresponding edge
       link.filter(l => l === d).attr('stroke', '#ffffff').attr('stroke-width', 3)
       d3.select(event.target).attr('fill', 'rgba(52, 152, 219, 0.1)')
       
@@ -661,7 +901,6 @@ const renderGraph = () => {
       linkGroup.selectAll('path').attr('stroke', 'rgba(255, 255, 255, 0.22)').attr('stroke-width', 1.5)
       linkLabelBg.attr('fill', 'rgba(12, 12, 16, 0.92)')
       linkLabels.attr('fill', '#d4d4d8')
-      // Highlight corresponding edge
       link.filter(l => l === d).attr('stroke', '#ffffff').attr('stroke-width', 3)
       d3.select(event.target).attr('fill', '#3498db')
       
@@ -689,7 +928,6 @@ const renderGraph = () => {
     .style('cursor', 'pointer')
     .call(d3.drag()
       .on('start', (event, d) => {
-        // Record position only, do not restart simulation (distinguish click vs drag)
         d.fx = d.x
         d.fy = d.y
         d._dragStartX = event.x
@@ -697,13 +935,11 @@ const renderGraph = () => {
         d._isDragging = false
       })
       .on('drag', (event, d) => {
-        // Detect if drag actually started (moved past threshold)
         const dx = event.x - d._dragStartX
         const dy = event.y - d._dragStartY
         const distance = Math.sqrt(dx * dx + dy * dy)
         
         if (!d._isDragging && distance > 3) {
-          // Restart simulation only upon genuine drag detection
           d._isDragging = true
           simulation.alphaTarget(0.3).restart()
         }
@@ -714,7 +950,6 @@ const renderGraph = () => {
         }
       })
       .on('end', (event, d) => {
-        // Allow simulation to settle only if dragged
         if (d._isDragging) {
           simulation.alphaTarget(0)
         }
@@ -725,12 +960,9 @@ const renderGraph = () => {
     )
     .on('click', (event, d) => {
       event.stopPropagation()
-      // Reset all node styles
       node.attr('stroke', 'rgba(255, 255, 255, 0.85)').attr('stroke-width', 2.5)
       linkGroup.selectAll('path').attr('stroke', 'rgba(255, 255, 255, 0.22)').attr('stroke-width', 1.5)
-      // Highlight selected node
       d3.select(event.target).attr('stroke', '#ffffff').attr('stroke-width', 4)
-      // Highlight edges connected to this node
       link.filter(l => l.source.id === d.id || l.target.id === d.id)
         .attr('stroke', '#ffffff')
         .attr('stroke-width', 2.5)
@@ -767,30 +999,17 @@ const renderGraph = () => {
     .style('font-family', 'system-ui, sans-serif')
 
   simulation.on('tick', () => {
-    // Update curve path
     link.attr('d', d => getLinkPath(d))
     
-    // Update edge label positions (no rotation, horizontal for legibility)
-    linkLabels.each(function(d) {
-      const mid = getLinkMidpoint(d)
-      d3.select(this)
-        .attr('x', mid.x)
-        .attr('y', mid.y)
-        .attr('transform', '') // Remove rotation, keep horizontal
-    })
-    
-    // Update edge label background
-    linkLabelBg.each(function(d, i) {
-      const mid = getLinkMidpoint(d)
-      const textEl = linkLabels.nodes()[i]
-      const bbox = textEl.getBBox()
-      d3.select(this)
-        .attr('x', mid.x - bbox.width / 2 - 4)
-        .attr('y', mid.y - bbox.height / 2 - 2)
-        .attr('width', bbox.width + 8)
-        .attr('height', bbox.height + 4)
-        .attr('transform', '') // Remove rotation
-    })
+    if (showEdgeLabels.value) {
+      linkLabels
+        .attr('x', d => getLinkMidpoint(d).x)
+        .attr('y', d => getLinkMidpoint(d).y)
+      
+      linkLabelBg
+        .attr('x', d => getLinkMidpoint(d).x - d._labelW / 2)
+        .attr('y', d => getLinkMidpoint(d).y - d._labelH / 2)
+    }
 
     node
       .attr('cx', d => d.x)
@@ -801,7 +1020,6 @@ const renderGraph = () => {
       .attr('y', d => d.y)
   })
   
-  // Click empty area to close details panel
   svg.on('click', () => {
     selectedItem.value = null
     node.attr('stroke', 'rgba(255, 255, 255, 0.85)').attr('stroke-width', 2.5)
@@ -811,9 +1029,11 @@ const renderGraph = () => {
   })
 }
 
-watch(() => props.graphData, () => {
-  nextTick(renderGraph)
-}, { deep: true })
+watch(() => props.graphData, (newData) => {
+  if (newData) {
+    nextTick(renderGraph)
+  }
+}, { deep: true, immediate: true })
 
 // Watch edge labels visibility toggle
 watch(showEdgeLabels, (newVal) => {
@@ -823,6 +1043,14 @@ watch(showEdgeLabels, (newVal) => {
   if (linkLabelBgRef) {
     linkLabelBgRef.style('display', newVal ? 'block' : 'none')
   }
+  if (newVal && linkLabelsRef && linkLabelBgRef) {
+    linkLabelsRef
+      .attr('x', d => getLinkMidpoint(d).x)
+      .attr('y', d => getLinkMidpoint(d).y)
+    linkLabelBgRef
+      .attr('x', d => getLinkMidpoint(d).x - d._labelW / 2)
+      .attr('y', d => getLinkMidpoint(d).y - d._labelH / 2)
+  }
 })
 
 const handleResize = () => {
@@ -831,6 +1059,9 @@ const handleResize = () => {
 
 onMounted(() => {
   window.addEventListener('resize', handleResize)
+  if (props.graphData) {
+    nextTick(renderGraph)
+  }
 })
 
 onUnmounted(() => {
@@ -846,11 +1077,7 @@ onUnmounted(() => {
   position: relative;
   width: 100%;
   height: 100%;
-  background-color: #060608;
-  background-image: 
-    radial-gradient(circle at 50% 50%, rgba(25, 25, 35, 0.45) 0%, rgba(6, 6, 8, 0.95) 75%),
-    radial-gradient(rgba(255, 255, 255, 0.12) 1.5px, transparent 1.5px);
-  background-size: 100% 100%, 26px 26px;
+  background: #08080c;
   overflow: hidden;
 }
 
@@ -890,8 +1117,7 @@ onUnmounted(() => {
   padding: 0 14px;
   border: 1px solid rgba(255, 255, 255, 0.14);
   background: rgba(18, 18, 24, 0.8);
-  backdrop-filter: blur(12px);
-  border-radius: 999px;
+    border-radius: 999px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -941,6 +1167,103 @@ onUnmounted(() => {
 }
 
 /* ===== Venom Symbiote Neural Nexus (Empty/Waiting State) ===== */
+.graph-state {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  pointer-events: none;
+  z-index: 5;
+  width: 100%;
+}
+
+/* Active Loading / Ingestion State Enhancements */
+.graph-state.venom-symbiote-empty.is-loading .symbiote-orbit-tracker.orbit-cw {
+  animation: orbit-rotate 7s linear infinite;
+}
+
+.graph-state.venom-symbiote-empty.is-loading .symbiote-orbit-tracker.orbit-ccw {
+  animation: orbit-rotate 9s linear infinite reverse;
+}
+
+.graph-state.venom-symbiote-empty.is-loading .symbiote-pulse-ring.ring-1 {
+  border-color: rgba(255, 255, 255, 0.65);
+  animation: symbiote-ring-pulse 1.8s ease-out infinite;
+}
+
+.graph-state.venom-symbiote-empty.is-loading .symbiote-pulse-ring.ring-2 {
+  border-color: rgba(255, 255, 255, 0.45);
+  animation: symbiote-ring-pulse 1.8s ease-out infinite 0.6s;
+}
+
+.graph-state.venom-symbiote-empty.is-loading .symbiote-pulse-ring.ring-3 {
+  border-color: rgba(255, 255, 255, 0.28);
+  animation: symbiote-ring-pulse 1.8s ease-out infinite 1.2s;
+}
+
+.symbiote-scan-beam {
+  position: absolute;
+  left: 10%;
+  width: 80%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.9), transparent);
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.6);
+  animation: symbiote-scan 2.2s ease-in-out infinite alternate;
+  pointer-events: none;
+  z-index: 4;
+}
+
+@keyframes symbiote-scan {
+  0% { top: 15%; opacity: 0.2; }
+  50% { opacity: 1; }
+  100% { top: 85%; opacity: 0.2; }
+}
+
+.pulse-spark.active {
+  background: #ffffff;
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.85);
+  animation: spark-blink 0.8s infinite;
+}
+
+.pill-dot.active {
+  background: #ffffff;
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.85);
+  animation: spark-blink 1s infinite;
+}
+
+.graph-refreshing-badge {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: rgba(14, 14, 18, 0.88);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: #ffffff;
+  backdrop-filter: blur(8px);
+  z-index: 15;
+  pointer-events: none;
+}
+
+.refresh-spinner-dot {
+  width: 10px;
+  height: 10px;
+  border: 2px solid rgba(255, 255, 255, 0.25);
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
 .graph-state.venom-symbiote-empty {
   position: absolute;
   top: 50%;
@@ -1145,8 +1468,7 @@ onUnmounted(() => {
   border-radius: 14px;
   border: 1px solid rgba(255, 255, 255, 0.12);
   /* no box shadow */
-  backdrop-filter: blur(16px);
-  z-index: 10;
+    z-index: 10;
 }
 
 .legend-title {
@@ -1199,9 +1521,7 @@ onUnmounted(() => {
   padding: 8px 14px;
   border-radius: 999px;
   border: 1px solid rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  z-index: 10;
+    z-index: 10;
   transition: all 0.25s ease;
   user-select: none;
 }
@@ -1287,8 +1607,7 @@ input:checked + .slider:before {
   border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: 16px;
   /* no box shadow */
-  backdrop-filter: blur(20px);
-  overflow: hidden;
+    overflow: hidden;
   font-family: var(--font-body, system-ui, sans-serif);
   font-size: 13px;
   z-index: 25;
@@ -1445,8 +1764,7 @@ input:checked + .slider:before {
   left: 50%;
   transform: translateX(-50%);
   background: rgba(12, 12, 16, 0.88);
-  backdrop-filter: blur(12px);
-  color: #ffffff;
+    color: #ffffff;
   padding: 10px 22px;
   border-radius: 999px;
   font-size: 13px;
@@ -1559,13 +1877,57 @@ input:checked + .slider:before {
 }
 
 /* Loading spinner */
-.loading-spinner {
-  width: 40px;
-  height: 40px;
-  border: 3px solid rgba(255, 255, 255, 0.1);
-  border-top-color: #ffffff;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-  margin: 0 auto 16px;
+
+
+.graph-view, .graph-svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  cursor: grab;
 }
+
+.graph-svg:active {
+  cursor: grabbing;
+}
+
+.graph-zoom-controls {
+  position: absolute;
+  bottom: 24px;
+  right: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: #0e0e14;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 10px;
+  padding: 6px;
+  z-index: 20;
+}
+
+.zoom-btn {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  color: #ffffff;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.zoom-btn:hover {
+  background: rgba(255, 255, 255, 0.18);
+  border-color: rgba(255, 255, 255, 0.25);
+  transform: scale(1.05);
+}
+
+.zoom-btn:active {
+  transform: scale(0.95);
+}
+
 </style>

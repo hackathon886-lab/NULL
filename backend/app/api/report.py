@@ -11,6 +11,9 @@ from flask import request, jsonify, send_file
 from . import report_bp
 from ..config import Config
 from ..services.report_agent import ReportAgent, ReportManager, ReportStatus
+from ..services.report_pdf_generator import ReportPDFGenerator
+import io
+import re
 from ..services.simulation_manager import SimulationManager
 from ..services.simulation_runner import SimulationRunner, RunnerStatus
 from ..services.zep_graph_memory_updater import ZepGraphMemoryManager
@@ -83,6 +86,27 @@ def generate_report():
 
         run_state = SimulationRunner.get_run_state(simulation_id)
         updater = ZepGraphMemoryManager.get_updater(simulation_id)
+
+        # 1. Clean up inactive zombie updaters
+        if updater is not None and hasattr(updater, "is_active") and not updater.is_active():
+            logger.info(f"Cleaning up inactive Zep updater for simulation {simulation_id} before report generation")
+            ZepGraphMemoryManager.force_remove_updater(simulation_id)
+            updater = None
+
+        # 2. Recover simulation status if it completed all rounds but was tripped by Zep indexing timeout
+        if (
+            run_state is not None
+            and run_state.runner_status == RunnerStatus.FAILED
+            and getattr(run_state, "twitter_completed", False)
+            and getattr(run_state, "reddit_completed", False)
+            and "timed out" in (getattr(run_state, "error", "") or "").lower()
+        ):
+            logger.info(f"Auto-recovering simulation {simulation_id} status from Zep timeout to completed")
+            run_state.runner_status = RunnerStatus.COMPLETED
+            run_state.error = None
+            SimulationRunner._save_run_state(run_state)
+            SimulationRunner._sync_simulation_status(simulation_id, RunnerStatus.COMPLETED, None)
+
         active_statuses = {
             RunnerStatus.STARTING,
             RunnerStatus.RUNNING,
@@ -169,6 +193,9 @@ def generate_report():
             )
             refreshed_run_state = SimulationRunner.get_run_state(simulation_id)
             refreshed_updater = ZepGraphMemoryManager.get_updater(simulation_id)
+            if refreshed_updater is not None and hasattr(refreshed_updater, "is_active") and not refreshed_updater.is_active():
+                ZepGraphMemoryManager.force_remove_updater(simulation_id)
+                refreshed_updater = None
             if (
                 refreshed_state is None
                 or refreshed_project is None
@@ -514,12 +541,46 @@ def list_reports():
         }), 500
 
 
+def _serve_report_pdf(report, report_id: str):
+    """Helper to generate and serve PDF for a report"""
+    outline_dict = report.outline.to_dict() if report.outline else {}
+    sections_content = {}
+    for idx in range(1, len(outline_dict.get('sections', [])) + 1):
+        sec_path = ReportManager._get_section_path(report_id, idx)
+        if os.path.exists(sec_path):
+            try:
+                with open(sec_path, 'r', encoding='utf-8') as sf:
+                    sections_content[idx] = sf.read()
+            except Exception:
+                pass
+        if idx not in sections_content and idx <= len(outline_dict.get('sections', [])):
+            sections_content[idx] = outline_dict['sections'][idx - 1].get('content', '')
+
+    report_data = {
+        'report_id': report_id,
+        'outline': outline_dict,
+        'sections_content': sections_content,
+        'markdown_content': report.markdown_content,
+        'created_at': report.created_at.isoformat() if hasattr(report.created_at, 'isoformat') else str(report.created_at)
+    }
+    pdf_bytes = ReportPDFGenerator.generate_pdf(report_data)
+    safe_title = re.sub(r'[^\w\-_.]', '_', outline_dict.get('title', report_id))[:60].strip('_')
+    if not safe_title:
+        safe_title = f"report_{report_id}"
+
+    return send_file(
+        io.BytesIO(pdf_bytes),
+        mimetype='application/pdf',
+        as_attachment=True,
+        download_name=f"{safe_title}.pdf"
+    )
+
+
 @report_bp.route('/<report_id>/download', methods=['GET'])
 def download_report(report_id: str):
     """
-    Download report (Markdown format)
-    
-    Returns Markdown file
+    Download report (supports PDF and Markdown formats)
+    Query parameter: format=pdf (default) or format=md
     """
     try:
         report = ReportManager.get_report(report_id)
@@ -530,10 +591,15 @@ def download_report(report_id: str):
                 "error": t('api.reportNotFound', id=report_id)
             }), 404
         
+        requested_format = request.args.get('format', 'pdf').lower()
+
+        if requested_format == 'pdf':
+            return _serve_report_pdf(report, report_id)
+
+        # Markdown download
         md_path = ReportManager._get_report_markdown_path(report_id)
         
         if not os.path.exists(md_path):
-            # If MD file does not exist, generate temporary file
             import tempfile
             with tempfile.NamedTemporaryFile(mode='w', suffix='.md', delete=False) as f:
                 f.write(report.markdown_content)
@@ -553,6 +619,49 @@ def download_report(report_id: str):
         
     except Exception as e:
         logger.error(f"Download report failed: {str(e)}")
+        return jsonify({
+            "success": False,
+            "error": str(e),
+            "traceback": traceback.format_exc()
+        }), 500
+
+
+@report_bp.route('/<report_id>/download/pdf', methods=['GET'])
+def download_report_pdf(report_id: str):
+    """Explicit PDF download endpoint"""
+    try:
+        report = ReportManager.get_report(report_id)
+        if not report:
+            return jsonify({
+                "success": False,
+                "error": t('api.reportNotFound', id=report_id)
+            }), 404
+        return _serve_report_pdf(report, report_id)
+    except Exception as e:
+        logger.error(f"Download report PDF failed: {str(e)}")
+        return jsonify({
+            "success": False,
+            "error": str(e),
+            "traceback": traceback.format_exc()
+        }), 500
+
+
+@report_bp.route('/export-pdf', methods=['POST'])
+def export_report_pdf():
+    """Generate and download PDF from arbitrary client report payload"""
+    try:
+        data = request.get_json() or {}
+        pdf_bytes = ReportPDFGenerator.generate_pdf(data)
+        title = (data.get('outline') or {}).get('title') or data.get('title') or 'Prediction_Report'
+        safe_title = re.sub(r'[^\w\-_.]', '_', title)[:60].strip('_')
+        return send_file(
+            io.BytesIO(pdf_bytes),
+            mimetype='application/pdf',
+            as_attachment=True,
+            download_name=f"{safe_title}.pdf"
+        )
+    except Exception as e:
+        logger.error(f"Export report PDF failed: {str(e)}")
         return jsonify({
             "success": False,
             "error": str(e),

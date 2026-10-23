@@ -1,24 +1,12 @@
 <template>
-  <div class="main-view">
+  <div class="main-view venom-theme">
     <!-- Header -->
     <header class="app-header">
       <div class="header-left">
-        <div class="brand" @click="router.push('/home')"><img src="../assets/logo/lokantra_wordmark.png" alt="LOKĀNTRA" class="brand-wordmark" /></div>
+        <div class="brand" @click="router.push('/home')"><img src="../assets/logo/lokantra_chrome_wordmark.png" alt="LOKĀNTRA" class="brand-wordmark" /></div>
       </div>
       
-      <div class="header-center">
-        <div class="view-switcher">
-          <button 
-            v-for="mode in ['graph', 'split', 'workbench']" 
-            :key="mode"
-            class="switch-btn"
-            :class="{ active: viewMode === mode }"
-            @click="viewMode = mode"
-          >
-            {{ { graph: $t('main.layoutGraph'), split: $t('main.layoutSplit'), workbench: $t('main.layoutWorkbench') }[mode] }}
-          </button>
-        </div>
-      </div>
+
 
       <div class="header-right">
         
@@ -35,9 +23,9 @@
     </header>
 
     <!-- Main Content Area -->
-    <main class="content-area">
+    <main class="content-area" ref="contentAreaRef" :class="{ dragging: isDragging }">
       <!-- Left Panel: Graph -->
-      <div class="panel-wrapper left" :style="leftPanelStyle">
+      <div class="panel-wrapper left" :style="{ width: `${leftPanelWidth}%` }">
         <GraphPanel 
           :graphData="graphData"
           :loading="graphLoading"
@@ -48,8 +36,13 @@
         />
       </div>
 
+      <!-- Middle Splitter -->
+      <div class="splitter" @pointerdown.prevent="startDragging" aria-label="Resize panels" title="Drag to resize panels">
+        <div class="splitter-grip"></div>
+      </div>
+
       <!-- Right Panel: Step 3 Start Simulation -->
-      <div class="panel-wrapper right" :style="rightPanelStyle">
+      <div class="panel-wrapper right" :style="{ width: `${100 - leftPanelWidth}%` }">
         <Step3Simulation
           :simulationId="currentSimulationId"
           :maxRounds="maxRounds"
@@ -85,8 +78,53 @@ const props = defineProps({
   simulationId: String
 })
 
-// Layout State
-const viewMode = ref('split')
+const MIN_PANEL_WIDTH = 25
+const MAX_PANEL_WIDTH = 75
+const contentAreaRef = ref(null)
+const leftPanelWidth = ref(50)
+const isDragging = ref(false)
+const dragStartX = ref(0)
+const dragStartWidth = ref(50)
+const animationFrame = ref(null)
+
+const clampPanelWidth = (value) => Math.min(MAX_PANEL_WIDTH, Math.max(MIN_PANEL_WIDTH, value))
+
+const applyPanelWidth = (nextWidth) => {
+  if (animationFrame.value) cancelAnimationFrame(animationFrame.value)
+  animationFrame.value = requestAnimationFrame(() => {
+    leftPanelWidth.value = clampPanelWidth(nextWidth)
+    animationFrame.value = null
+  })
+}
+
+const startDragging = (event) => {
+  if (!contentAreaRef.value) return
+  isDragging.value = true
+  dragStartX.value = event.clientX
+  dragStartWidth.value = leftPanelWidth.value
+
+  window.addEventListener('pointermove', handleDrag)
+  window.addEventListener('pointerup', stopDragging)
+  window.addEventListener('pointercancel', stopDragging)
+}
+
+const handleDrag = (event) => {
+  if (!isDragging.value || !contentAreaRef.value) return
+  const rect = contentAreaRef.value.getBoundingClientRect()
+  const deltaPercent = ((event.clientX - dragStartX.value) / rect.width) * 100
+  applyPanelWidth(dragStartWidth.value + deltaPercent)
+}
+
+const stopDragging = () => {
+  isDragging.value = false
+  if (animationFrame.value) {
+    cancelAnimationFrame(animationFrame.value)
+    animationFrame.value = null
+  }
+  window.removeEventListener('pointermove', handleDrag)
+  window.removeEventListener('pointerup', stopDragging)
+  window.removeEventListener('pointercancel', stopDragging)
+}
 
 // Data State
 const currentSimulationId = ref(route.params.simulationId)
@@ -99,18 +137,7 @@ const graphLoading = ref(false)
 const systemLogs = ref([])
 const currentStatus = ref('processing') // processing | completed | error
 
-// --- Computed Layout Styles ---
-const leftPanelStyle = computed(() => {
-  if (viewMode.value === 'graph') return { width: '100%', opacity: 1, transform: 'translateX(0)' }
-  if (viewMode.value === 'workbench') return { width: '0%', opacity: 0, transform: 'translateX(-20px)' }
-  return { width: '50%', opacity: 1, transform: 'translateX(0)' }
-})
 
-const rightPanelStyle = computed(() => {
-  if (viewMode.value === 'workbench') return { width: '100%', opacity: 1, transform: 'translateX(0)' }
-  if (viewMode.value === 'graph') return { width: '0%', opacity: 0, transform: 'translateX(20px)' }
-  return { width: '50%', opacity: 1, transform: 'translateX(0)' }
-})
 
 // --- Status Computed ---
 const statusClass = computed(() => {
@@ -140,10 +167,8 @@ const updateStatus = (status) => {
 
 // --- Layout Methods ---
 const toggleMaximize = (target) => {
-  if (viewMode.value === target) {
-    viewMode.value = 'split'
-  } else {
-    viewMode.value = target
+  if (target === 'graph') {
+    leftPanelWidth.value = 68
   }
 }
 
@@ -318,33 +343,24 @@ onUnmounted(() => {
   height: 100vh;
   display: flex;
   flex-direction: column;
-  background: #FFF;
+  background: radial-gradient(circle at 50% 0%, #0d0d12 0%, #050507 50%, #000000 100%);
+  color: #f5f5f7;
   overflow: hidden;
-  font-family: 'Space Grotesk', 'Noto Sans SC', system-ui, sans-serif;
+  font-family: var(--font-body, system-ui, sans-serif);
 }
 
 /* Header */
 .app-header {
   height: 64px;
-  border-bottom: 1px solid #EAEAEA;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 24px;
-  background: #FFF;
+  background: #08080c;
   z-index: 100;
   position: relative;
 }
-
-.header-center {
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-}
-
-
-
-
 
 .brand-wordmark {
   height: 44px;
@@ -362,39 +378,11 @@ onUnmounted(() => {
 .brand {
   display: flex;
   align-items: center;
-  display: flex;
-  align-items: center;
   font-family: 'JetBrains Mono', monospace;
   font-weight: 800;
   font-size: 18px;
   letter-spacing: 1px;
   cursor: pointer;
-}
-
-.view-switcher {
-  display: flex;
-  background: #F5F5F5;
-  padding: 4px;
-  border-radius: 6px;
-  gap: 4px;
-}
-
-.switch-btn {
-  border: none;
-  background: transparent;
-  padding: 6px 16px;
-  font-size: 12px;
-  font-weight: 600;
-  color: #666;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.switch-btn.active {
-  background: #FFF;
-  color: #000;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
 
 .header-right {
@@ -413,18 +401,19 @@ onUnmounted(() => {
 .step-num {
   font-family: 'JetBrains Mono', monospace;
   font-weight: 700;
-  color: #999;
+  color: #a1a1aa;
 }
 
 .step-name {
-  font-weight: 700;
-  color: #000;
+  font-family: var(--font-display, 'Syne', sans-serif);
+  font-weight: 800;
+  color: #ffffff;
 }
 
 .step-divider {
   width: 1px;
   height: 14px;
-  background-color: #E0E0E0;
+  background-color: rgba(255, 255, 255, 0.15);
 }
 
 .status-indicator {
@@ -432,7 +421,7 @@ onUnmounted(() => {
   align-items: center;
   gap: 8px;
   font-size: 12px;
-  color: #666;
+  color: #a1a1aa;
   font-weight: 500;
 }
 
@@ -443,8 +432,8 @@ onUnmounted(() => {
   background: #CCC;
 }
 
-.status-indicator.processing .dot { background: #FF5722; animation: pulse 1s infinite; }
-.status-indicator.completed .dot { background: #4CAF50; }
+.status-indicator.processing .dot { background: #ffffff; animation: pulse 1s infinite; }
+.status-indicator.completed .dot { background: #ffffff; }
 .status-indicator.error .dot { background: #F44336; }
 
 @keyframes pulse { 50% { opacity: 0.5; } }
@@ -460,12 +449,63 @@ onUnmounted(() => {
 .panel-wrapper {
   height: 100%;
   overflow: hidden;
-  transition: width 0.4s cubic-bezier(0.25, 0.8, 0.25, 1), opacity 0.3s ease, transform 0.3s ease;
-  will-change: width, opacity, transform;
+  transition: width 0.08s ease;
 }
 
 .panel-wrapper.left {
-  border-right: 1px solid #EAEAEA;
+  min-width: 25%;
+  max-width: 75%;
+}
+
+.content-area.dragging .panel-wrapper,
+.content-area.dragging .splitter {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.content-area.dragging .panel-wrapper {
+  transition: none !important;
+  pointer-events: none;
+}
+
+.panel-wrapper.right {
+  min-width: 25%;
+  max-width: 75%;
+}
+
+/* Splitter */
+.splitter {
+  position: relative;
+  width: 12px;
+  min-width: 12px;
+  cursor: col-resize;
+  background: rgba(5, 5, 8, 0.6);
+  border-left: 1px solid rgba(255, 255, 255, 0.08);
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 20;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.splitter-grip {
+  width: 4px;
+  height: 44px;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.2);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.splitter:hover,
+.splitter:active {
+  background: rgba(20, 20, 28, 0.9);
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.splitter:hover .splitter-grip,
+.splitter:active .splitter-grip {
+  background: #ffffff;
+  transform: scaleY(1.15);
 }
 </style>
-

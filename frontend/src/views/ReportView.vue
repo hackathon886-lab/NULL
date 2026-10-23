@@ -1,13 +1,48 @@
 <template>
-  <div class="main-view">
+  <div class="main-view venom-theme">
     <!-- Header -->
     <header class="app-header">
       <div class="header-left">
-        <div class="brand" @click="router.push('/home')"><img src="../assets/logo/lokantra_wordmark.png" alt="LOKĀNTRA" class="brand-wordmark" /></div>
+        <div class="brand" @click="router.push('/home')"><img src="../assets/logo/lokantra_chrome_wordmark.png" alt="LOKĀNTRA" class="brand-wordmark" /></div>
+      </div>
+
+      <!-- Center: 2 View Mode Switcher Buttons -->
+      <div class="header-center">
+        <div class="view-switcher">
+          <button 
+            class="switch-btn" 
+            :class="{ active: viewMode === 'graph' }"
+            @click="setMode('graph')"
+            title="Switch to full Knowledge Graph view"
+          >
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="18" cy="5" r="3"></circle>
+              <circle cx="6" cy="12" r="3"></circle>
+              <circle cx="18" cy="19" r="3"></circle>
+              <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+              <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+            </svg>
+            <span>Graph</span>
+          </button>
+          <button 
+            class="switch-btn" 
+            :class="{ active: viewMode === 'report' }"
+            @click="setMode('report')"
+            title="Switch to full Prediction Report view"
+          >
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <line x1="16" y1="13" x2="8" y2="13"></line>
+              <line x1="16" y1="17" x2="8" y2="17"></line>
+              <polyline points="10 9 9 9 8 9"></polyline>
+            </svg>
+            <span>Prediction Report</span>
+          </button>
+        </div>
       </div>
 
       <div class="header-right">
-        
         <div class="workflow-step">
           <span class="step-num">Step 4/5</span>
           <span class="step-name">{{ $tm('main.stepNames')[3] }}</span>
@@ -20,8 +55,13 @@
       </div>
     </header>
 
-    <main class="content-area" ref="contentAreaRef" :class="{ dragging: isDragging }">
-      <div class="panel-wrapper left" :style="{ width: `${leftPanelWidth}%` }">
+    <main class="content-area" ref="contentAreaRef">
+      <!-- Left Panel: Graph (Full width when viewMode === 'graph') -->
+      <div 
+        class="panel-wrapper left" 
+        :class="{ 'is-hidden': viewMode !== 'graph' }"
+        :style="leftPanelStyle"
+      >
         <GraphPanel 
           :graphData="graphData"
           :loading="graphLoading"
@@ -32,9 +72,12 @@
         />
       </div>
 
-      <div class="splitter" @pointerdown.prevent="startDragging" aria-label="Resize panels" title="Drag to resize panels"></div>
-
-      <div class="panel-wrapper right" :style="{ width: `${100 - leftPanelWidth}%` }">
+      <!-- Right Panel: Step 4 Report (Full width when viewMode === 'report') -->
+      <div 
+        class="panel-wrapper right" 
+        :class="{ 'is-hidden': viewMode !== 'report' }"
+        :style="rightPanelStyle"
+      >
         <Step4Report
           :reportId="currentReportId"
           :simulationId="simulationId"
@@ -48,7 +91,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import GraphPanel from '../components/GraphPanel.vue'
@@ -65,14 +108,29 @@ const props = defineProps({
   reportId: String
 })
 
-const MIN_PANEL_WIDTH = 25
-const MAX_PANEL_WIDTH = 75
-const contentAreaRef = ref(null)
-const leftPanelWidth = ref(50)
-const isDragging = ref(false)
-const dragStartX = ref(0)
-const dragStartWidth = ref(50)
-const animationFrame = ref(null)
+// Layout State - Defaults to report view (the full content view)
+const viewMode = ref('report') // 'graph' | 'report'
+
+const setMode = (mode) => {
+  viewMode.value = mode
+  nextTick(() => {
+    window.dispatchEvent(new Event('resize'))
+  })
+}
+
+const leftPanelStyle = computed(() => {
+  if (viewMode.value === 'graph') {
+    return { width: '100%', display: 'block' }
+  }
+  return { width: '0%', display: 'none' }
+})
+
+const rightPanelStyle = computed(() => {
+  if (viewMode.value === 'report') {
+    return { width: '100%', display: 'block' }
+  }
+  return { width: '0%', display: 'none' }
+})
 
 // Data State
 const currentReportId = ref(route.params.reportId)
@@ -82,47 +140,6 @@ const graphData = ref(null)
 const graphLoading = ref(false)
 const systemLogs = ref([])
 const currentStatus = ref('processing') // processing | completed | error
-
-const clampPanelWidth = (value) => Math.min(MAX_PANEL_WIDTH, Math.max(MIN_PANEL_WIDTH, value))
-
-const applyPanelWidth = (nextWidth) => {
-  if (animationFrame.value) cancelAnimationFrame(animationFrame.value)
-
-  animationFrame.value = requestAnimationFrame(() => {
-    leftPanelWidth.value = clampPanelWidth(nextWidth)
-    animationFrame.value = null
-  })
-}
-
-const startDragging = (event) => {
-  if (!contentAreaRef.value) return
-  isDragging.value = true
-  dragStartX.value = event.clientX
-  dragStartWidth.value = leftPanelWidth.value
-
-  window.addEventListener('pointermove', handleDrag)
-  window.addEventListener('pointerup', stopDragging)
-  window.addEventListener('pointercancel', stopDragging)
-}
-
-const handleDrag = (event) => {
-  if (!isDragging.value || !contentAreaRef.value) return
-
-  const rect = contentAreaRef.value.getBoundingClientRect()
-  const deltaPercent = ((event.clientX - dragStartX.value) / rect.width) * 100
-  applyPanelWidth(dragStartWidth.value + deltaPercent)
-}
-
-const stopDragging = () => {
-  isDragging.value = false
-  if (animationFrame.value) {
-    cancelAnimationFrame(animationFrame.value)
-    animationFrame.value = null
-  }
-  window.removeEventListener('pointermove', handleDrag)
-  window.removeEventListener('pointerup', stopDragging)
-  window.removeEventListener('pointercancel', stopDragging)
-}
 
 // --- Status Computed ---
 const statusClass = computed(() => {
@@ -151,7 +168,11 @@ const updateStatus = (status) => {
 // --- Layout Methods ---
 const toggleMaximize = (target) => {
   if (target === 'graph') {
-    leftPanelWidth.value = 68
+    if (viewMode.value === 'graph') {
+      setMode('report')
+    } else {
+      setMode('graph')
+    }
   }
 }
 
@@ -229,10 +250,6 @@ onMounted(() => {
   addLog(t('log.reportViewInit'))
   loadReportData()
 })
-
-onUnmounted(() => {
-  stopDragging()
-})
 </script>
 
 <style scoped>
@@ -240,20 +257,21 @@ onUnmounted(() => {
   height: 100vh;
   display: flex;
   flex-direction: column;
-  background: #FFF;
+  background: radial-gradient(circle at 50% 0%, #0d0d12 0%, #050507 50%, #000000 100%);
+  color: #f5f5f7;
   overflow: hidden;
-  font-family: 'Space Grotesk', 'Noto Sans SC', system-ui, sans-serif;
+  font-family: var(--font-body, system-ui, sans-serif);
 }
 
 /* Header */
 .app-header {
   height: 64px;
-  border-bottom: 1px solid #EAEAEA;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 24px;
-  background: #FFF;
+  background: #08080c;
   z-index: 100;
   position: relative;
 }
@@ -281,6 +299,67 @@ onUnmounted(() => {
   cursor: pointer;
 }
 
+/* Header Center View Switcher */
+.header-center {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  z-index: 10;
+}
+
+.view-switcher {
+  display: flex;
+  align-items: center;
+  background: rgba(18, 18, 24, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 3px;
+  border-radius: 8px;
+  gap: 4px;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.switch-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid transparent;
+  background: transparent;
+  padding: 6px 16px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #94A3B8;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  letter-spacing: 0.03em;
+  font-family: var(--font-body, system-ui, sans-serif);
+}
+
+.switch-btn svg {
+  flex-shrink: 0;
+  transition: stroke 0.2s ease;
+}
+
+.switch-btn:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.switch-btn.active {
+  background: #ffffff;
+  color: #000000;
+  border-color: #ffffff;
+  font-weight: 800;
+  box-shadow: 0 2px 8px rgba(255, 255, 255, 0.15);
+}
+
+.switch-btn.active svg {
+  stroke: #000000;
+}
+
 .header-right {
   display: flex;
   align-items: center;
@@ -297,18 +376,19 @@ onUnmounted(() => {
 .step-num {
   font-family: 'JetBrains Mono', monospace;
   font-weight: 700;
-  color: #999;
+  color: #a1a1aa;
 }
 
 .step-name {
-  font-weight: 700;
-  color: #000;
+  font-family: var(--font-display, 'Syne', sans-serif);
+  font-weight: 800;
+  color: #ffffff;
 }
 
 .step-divider {
   width: 1px;
   height: 14px;
-  background-color: #E0E0E0;
+  background-color: rgba(255, 255, 255, 0.15);
 }
 
 .status-indicator {
@@ -316,7 +396,7 @@ onUnmounted(() => {
   align-items: center;
   gap: 8px;
   font-size: 12px;
-  color: #666;
+  color: #a1a1aa;
   font-weight: 500;
 }
 
@@ -327,66 +407,36 @@ onUnmounted(() => {
   background: #CCC;
 }
 
-.status-indicator.processing .dot { background: #FF9800; animation: pulse 1s infinite; }
-.status-indicator.completed .dot { background: #4CAF50; }
+.status-indicator.processing .dot { background: #ffffff; animation: pulse 1s infinite; }
+.status-indicator.completed .dot { background: #ffffff; }
 .status-indicator.error .dot { background: #F44336; }
 
 @keyframes pulse { 50% { opacity: 0.5; } }
 
-/* Content */
+/* Content Area */
 .content-area {
   flex: 1;
   display: flex;
   position: relative;
   overflow: hidden;
-}
-
-.content-area.dragging .panel-wrapper,
-.content-area.dragging .splitter {
-  user-select: none;
-  -webkit-user-select: none;
+  width: 100%;
 }
 
 .panel-wrapper {
   height: 100%;
   overflow: hidden;
-  transition: width 0.08s ease;
+  transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.panel-wrapper.is-hidden {
+  display: none !important;
 }
 
 .panel-wrapper.left {
-  min-width: 25%;
-  max-width: 75%;
-  border-right: 1px solid #EAEAEA;
+  width: 100%;
 }
 
-.splitter {
-  position: relative;
-  width: 12px;
-  min-width: 12px;
-  cursor: col-resize;
-  background: transparent;
-  border-left: 1px solid #EAEAEA;
-  border-right: 1px solid #EAEAEA;
-  z-index: 2;
-  transition: background-color 0.15s ease;
-}
-
-.splitter::before {
-  content: "";
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 4px;
-  height: 40px;
-  border-radius: 9999px;
-  background: rgba(0, 0, 0, 0.18);
-  transition: background 0.15s ease, transform 0.15s ease;
-}
-
-.splitter:hover::before,
-.splitter:active::before {
-  background: rgba(0, 0, 0, 0.35);
-  transform: translate(-50%, -50%) scaleY(1.08);
+.panel-wrapper.right {
+  width: 100%;
 }
 </style>

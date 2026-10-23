@@ -2,7 +2,7 @@
   <div class="process-page">
     <!-- Top Navigation Bar -->
     <nav class="navbar">
-      <div class="nav-brand" @click="goHome"><img src="../assets/logo/lokantra_wordmark.png" alt="LOKĀNTRA" class="brand-wordmark" /></div>
+      <div class="nav-brand" @click="goHome"><img src="../assets/logo/lokantra_chrome_wordmark.png" alt="LOKĀNTRA" class="brand-wordmark" /></div>
       
       <!-- Middle Step Indicator -->
       <div class="nav-center">
@@ -33,6 +33,13 @@
               <span class="stat-divider">|</span>
             </template>
             <div class="action-buttons">
+                <button class="action-btn" @click="downloadGraphSvg" :disabled="graphLoading || !graphData" title="Download Graph (SVG)">
+                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="7 10 12 15 17 10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                  </svg>
+                </button>
                 <button class="action-btn" @click="refreshGraph" :disabled="graphLoading" title="Refresh Graph">
                   <span class="icon-refresh" :class="{ 'spinning': graphLoading }">↻</span>
                 </button>
@@ -164,44 +171,40 @@
             </div>
           </div>
           
-          <!-- Loading State -->
-          <div v-else-if="graphLoading" class="graph-loading">
-            <div class="loading-animation">
-              <div class="loading-ring"></div>
-              <div class="loading-ring"></div>
-              <div class="loading-ring"></div>
+          <!-- Waiting/Empty & Ingestion State - Venom Symbiote Core -->
+          <div v-else-if="!graphData && !error" class="graph-state venom-symbiote-empty" :class="{ 'is-loading': graphLoading }">
+            <div class="symbiote-core-wrapper">
+              <div class="symbiote-pulse-ring ring-1"></div>
+              <div class="symbiote-pulse-ring ring-2"></div>
+              <div class="symbiote-pulse-ring ring-3"></div>
+              
+              <div v-if="graphLoading" class="symbiote-scan-beam"></div>
+
+              <div class="symbiote-orbit-tracker orbit-cw">
+                <div class="orbital-node node-1"></div>
+                <div class="orbital-node node-2"></div>
+              </div>
+              <div class="symbiote-orbit-tracker orbit-ccw">
+                <div class="orbital-node node-3"></div>
+                <div class="orbital-node node-4"></div>
+              </div>
+
+              <div class="symbiote-nexus-glyph">
+                <span class="nexus-symbol">❖</span>
+              </div>
             </div>
-            <p class="loading-text">Loading graph data...</p>
-          </div>
-          
-          <!-- Waiting to Build -->
-          <div v-else-if="currentPhase < 1" class="graph-waiting">
-            <div class="waiting-icon">
-              <svg viewBox="0 0 100 100" class="network-icon">
-                <circle cx="50" cy="20" r="8" fill="none" stroke="#000" stroke-width="1.5"/>
-                <circle cx="20" cy="60" r="8" fill="none" stroke="#000" stroke-width="1.5"/>
-                <circle cx="80" cy="60" r="8" fill="none" stroke="#000" stroke-width="1.5"/>
-                <circle cx="50" cy="80" r="8" fill="none" stroke="#000" stroke-width="1.5"/>
-                <line x1="50" y1="28" x2="25" y2="54" stroke="#000" stroke-width="1"/>
-                <line x1="50" y1="28" x2="75" y2="54" stroke="#000" stroke-width="1"/>
-                <line x1="28" y1="60" x2="72" y2="60" stroke="#000" stroke-width="1" stroke-dasharray="4"/>
-                <line x1="50" y1="72" x2="26" y2="66" stroke="#000" stroke-width="1"/>
-                <line x1="50" y1="72" x2="74" y2="66" stroke="#000" stroke-width="1"/>
-              </svg>
+
+            <div class="empty-status-wrap">
+              <h3 class="empty-title">{{ graphLoading ? 'Loading graph data...' : (currentPhase === 1 ? 'Knowledge Graph Ingestion In Progress...' : 'Waiting for ontology generation...') }}</h3>
+              <p class="empty-subtitle">
+                <span class="pulse-spark" :class="{ 'active': graphLoading }"></span>
+                {{ graphLoading ? 'AI Symbiote Ingesting Nodes & Neural Synthesizing...' : 'AI Symbiote Neural Link Connecting Dots...' }}
+              </p>
+              <div class="empty-endpoint-pill">
+                <span class="pill-dot" :class="{ 'active': graphLoading }"></span>
+                <code>{{ graphLoading ? 'GET /api/graph/data' : (currentPhase === 1 ? 'POST /api/graph/build' : 'POST /api/graph/ontology/generate') }}</code>
+              </div>
             </div>
-            <p class="waiting-text">Waiting for ontology generation</p>
-            <p class="waiting-hint">Graph construction will begin automatically once ontology is generated</p>
-          </div>
-          
-          <!-- Building but no data yet -->
-          <div v-else-if="currentPhase === 1 && !graphData" class="graph-waiting">
-            <div class="loading-animation">
-              <div class="loading-ring"></div>
-              <div class="loading-ring"></div>
-              <div class="loading-ring"></div>
-            </div>
-            <p class="waiting-text">Graph building in progress</p>
-            <p class="waiting-hint">Data will appear shortly...</p>
           </div>
           
           <!-- Error State -->
@@ -870,6 +873,135 @@ const loadGraph = async (graphId) => {
 }
 
 // Render graph (D3.js)
+const downloadGraphSvg = () => {
+  if (!graphSvg.value) return
+
+  try {
+    const svgEl = graphSvg.value
+
+    // Clone SVG to isolate export from active canvas mutations
+    const clone = svgEl.cloneNode(true)
+    clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg')
+    clone.setAttribute('xmlns:xlink', 'http://www.w3.org/1999/xlink')
+
+    // Find the main group containing all graph elements and remove zoom/pan transform
+    const cloneG = clone.querySelector('g')
+    if (cloneG) {
+      cloneG.removeAttribute('transform')
+    }
+
+    // Determine the complete bounding box of the entire graph
+    let boxX = 0, boxY = 0, boxWidth = 1200, boxHeight = 800
+    let hasValidBBox = false
+
+    try {
+      const liveG = svgEl.querySelector('g')
+      if (liveG && typeof liveG.getBBox === 'function') {
+        const bbox = liveG.getBBox()
+        if (bbox && bbox.width > 0 && bbox.height > 0 && isFinite(bbox.width) && isFinite(bbox.height)) {
+          boxX = bbox.x
+          boxY = bbox.y
+          boxWidth = bbox.width
+          boxHeight = bbox.height
+          hasValidBBox = true
+        }
+      }
+    } catch (e) {
+      console.warn('Could not read getBBox from live SVG group:', e)
+    }
+
+    // Also inspect all node circles to ensure bounding box fully encloses every node and label
+    try {
+      const circles = svgEl.querySelectorAll('circle')
+      if (circles && circles.length > 0) {
+        let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity
+        circles.forEach(c => {
+          const cx = parseFloat(c.getAttribute('cx'))
+          const cy = parseFloat(c.getAttribute('cy'))
+          const r = parseFloat(c.getAttribute('r')) || 12
+          if (!isNaN(cx) && !isNaN(cy)) {
+            minX = Math.min(minX, cx - r - 60)
+            maxX = Math.max(maxX, cx + r + 100) // account for text labels to the right
+            minY = Math.min(minY, cy - r - 25)
+            maxY = Math.max(maxY, cy + r + 25)
+          }
+        })
+        if (isFinite(minX) && isFinite(maxX) && maxX > minX) {
+          if (!hasValidBBox) {
+            boxX = minX
+            boxY = minY
+            boxWidth = maxX - minX
+            boxHeight = maxY - minY
+          } else {
+            const uX = Math.min(boxX, minX)
+            const uY = Math.min(boxY, minY)
+            const uMaxX = Math.max(boxX + boxWidth, maxX)
+            const uMaxY = Math.max(boxY + boxHeight, maxY)
+            boxX = uX
+            boxY = uY
+            boxWidth = uMaxX - uX
+            boxHeight = uMaxY - uY
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('Node bounds inspection error:', e)
+    }
+
+    // Add padding around the graph bounds so outer elements have generous breathing room
+    const padding = 80
+    const vx = Math.round(boxX - padding)
+    const vy = Math.round(boxY - padding)
+    const vw = Math.round(boxWidth + padding * 2)
+    const vh = Math.round(boxHeight + padding * 2)
+
+    clone.setAttribute('viewBox', `${vx} ${vy} ${vw} ${vh}`)
+    clone.setAttribute('width', vw)
+    clone.setAttribute('height', vh)
+
+    // Create dark background rect as first child in SVG clone covering the entire viewBox
+    const bgRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect')
+    bgRect.setAttribute('x', vx)
+    bgRect.setAttribute('y', vy)
+    bgRect.setAttribute('width', vw)
+    bgRect.setAttribute('height', vh)
+    bgRect.setAttribute('fill', '#08080c')
+    clone.insertBefore(bgRect, clone.firstChild)
+
+    // Ensure all typography renders cleanly in the exported vector SVG
+    const styleEl = document.createElementNS('http://www.w3.org/2000/svg', 'style')
+    styleEl.textContent = `
+      text {
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      }
+    `
+    clone.insertBefore(styleEl, clone.firstChild)
+
+    const serializer = new XMLSerializer()
+    let svgString = serializer.serializeToString(clone)
+
+    // Add standalone XML header
+    if (!svgString.startsWith('<?xml')) {
+      svgString = '<?xml version="1.0" encoding="UTF-8" standalone="no"?>\n' + svgString
+    }
+
+    const svgBlob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' })
+    const URLObject = window.URL || window.webkitURL || window
+    const svgUrl = URLObject.createObjectURL(svgBlob)
+
+    const downloadLink = document.createElement('a')
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19)
+    downloadLink.download = `knowledge-graph-${timestamp}.svg`
+    downloadLink.href = svgUrl
+    document.body.appendChild(downloadLink)
+    downloadLink.click()
+    document.body.removeChild(downloadLink)
+    setTimeout(() => URLObject.revokeObjectURL(svgUrl), 1000)
+  } catch (err) {
+    console.error('downloadGraphSvg error:', err)
+  }
+}
+
 const renderGraph = () => {
   if (!graphSvg.value || !graphData.value) {
     console.log('Cannot render: svg or data missing')
@@ -1338,6 +1470,231 @@ onUnmounted(() => {
 
 @keyframes spin {
   to { transform: rotate(360deg); }
+}
+
+/* ===== Venom Symbiote Neural Nexus for Process.vue ===== */
+.graph-state.venom-symbiote-empty {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  pointer-events: none;
+  z-index: 5;
+  width: 100%;
+}
+
+.symbiote-core-wrapper {
+  position: relative;
+  width: 140px;
+  height: 140px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 24px;
+}
+
+.symbiote-pulse-ring {
+  position: absolute;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  pointer-events: none;
+}
+
+.symbiote-pulse-ring.ring-1 {
+  width: 80px;
+  height: 80px;
+  border-color: rgba(255, 255, 255, 0.35);
+  animation: symbiote-ring-pulse 3s ease-out infinite;
+}
+
+.symbiote-pulse-ring.ring-2 {
+  width: 110px;
+  height: 110px;
+  border-color: rgba(255, 255, 255, 0.2);
+  animation: symbiote-ring-pulse 3s ease-out infinite 1s;
+}
+
+.symbiote-pulse-ring.ring-3 {
+  width: 140px;
+  height: 140px;
+  border-color: rgba(255, 255, 255, 0.15);
+  animation: symbiote-ring-pulse 3s ease-out infinite 2s;
+}
+
+@keyframes symbiote-ring-pulse {
+  0% { transform: scale(0.65); opacity: 0.8; }
+  50% { opacity: 0.4; }
+  100% { transform: scale(1.35); opacity: 0; }
+}
+
+.symbiote-orbit-tracker {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+}
+
+.symbiote-orbit-tracker.orbit-cw {
+  animation: orbit-rotate 12s linear infinite;
+}
+
+.symbiote-orbit-tracker.orbit-ccw {
+  animation: orbit-rotate 16s linear infinite reverse;
+}
+
+@keyframes orbit-rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.orbital-node {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #ffffff;
+}
+
+.node-1 { top: 6px; left: 50%; transform: translateX(-50%); }
+.node-2 { bottom: 6px; left: 50%; transform: translateX(-50%); }
+.node-3 { top: 50%; left: 6px; transform: translateY(-50%); background: #ffffff; }
+.node-4 { top: 50%; right: 6px; transform: translateY(-50%); background: #ffffff; }
+
+.symbiote-nexus-glyph {
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  background: radial-gradient(circle at 35% 35%, #2a2a34 0%, #101015 65%, #040406 100%);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  z-index: 2;
+  animation: nexus-float 3s ease-in-out infinite alternate;
+}
+
+@keyframes nexus-float {
+  0% { transform: translateY(-2px) scale(0.98); }
+  100% { transform: translateY(2px) scale(1.02); }
+}
+
+.nexus-symbol {
+  font-size: 26px;
+  color: #ffffff;
+  animation: nexus-spin-subtle 8s ease-in-out infinite alternate;
+}
+
+@keyframes nexus-spin-subtle {
+  0% { transform: rotate(-5deg) scale(0.95); }
+  100% { transform: rotate(5deg) scale(1.05); }
+}
+
+.empty-status-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.empty-title {
+  font-family: var(--font-display, 'Syne', sans-serif);
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: #ffffff;
+  margin: 0;
+}
+
+.empty-subtitle {
+  font-size: 13px;
+  color: #a1a1aa;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+}
+
+.pulse-spark {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #ffffff;
+  animation: spark-blink 1.5s infinite;
+}
+
+@keyframes spark-blink {
+  0%, 100% { opacity: 0.3; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.2); }
+}
+
+.empty-endpoint-pill {
+  margin-top: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: #71717a;
+}
+
+.empty-endpoint-pill .pill-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #52525b;
+}
+
+.graph-state.venom-symbiote-empty.is-loading .symbiote-orbit-tracker.orbit-cw {
+  animation: orbit-rotate 7s linear infinite;
+}
+
+.graph-state.venom-symbiote-empty.is-loading .symbiote-orbit-tracker.orbit-ccw {
+  animation: orbit-rotate 9s linear infinite reverse;
+}
+
+.graph-state.venom-symbiote-empty.is-loading .symbiote-pulse-ring.ring-1 {
+  border-color: rgba(255, 255, 255, 0.65);
+  animation: symbiote-ring-pulse 1.8s ease-out infinite;
+}
+
+.symbiote-scan-beam {
+  position: absolute;
+  left: 10%;
+  width: 80%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.9), transparent);
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.6);
+  animation: symbiote-scan 2.2s ease-in-out infinite alternate;
+  pointer-events: none;
+  z-index: 4;
+}
+
+@keyframes symbiote-scan {
+  0% { top: 15%; opacity: 0.2; }
+  50% { opacity: 1; }
+  100% { top: 85%; opacity: 0.2; }
+}
+
+.pulse-spark.active {
+  background: #ffffff;
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.85);
+  animation: spark-blink 0.8s infinite;
+}
+
+.pill-dot.active {
+  background: #ffffff;
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.85);
+  animation: spark-blink 1s infinite;
 }
 
 /* Graph Container */
