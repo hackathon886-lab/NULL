@@ -9,6 +9,11 @@ import InteractionView from '../views/InteractionView.vue'
 const routes = [
   {
     path: '/',
+    name: 'Opening',
+    component: Home
+  },
+  {
+    path: '/home',
     name: 'Home',
     component: Home
   },

@@ -36,16 +36,16 @@
               class="status-icon" 
               :class="{ available: project.project_id, unavailable: !project.project_id }"
               :title="$t('history.graphBuild')"
-            >◇</span>
+            >&#9671;</span>
             <span 
               class="status-icon available" 
               :title="$t('history.envSetup')"
-            >◈</span>
+            >&#9672;</span>
             <span 
               class="status-icon" 
               :class="{ available: project.report_id, unavailable: !project.report_id }"
               :title="$t('history.analysisReport')"
-            >◆</span>
+            >&#9670;</span>
           </div>
         </div>
 
@@ -71,7 +71,7 @@
           </div>
           <!-- Placeholder when no files exist -->
           <div class="files-empty" v-else>
-            <span class="empty-file-icon">◇</span>
+            <span class="empty-file-icon">&#9671;</span>
             <span class="empty-file-text">{{ $t('history.noFiles') }}</span>
           </div>
         </div>
@@ -89,7 +89,7 @@
             <span class="card-time">{{ formatTime(project.created_at) }}</span>
           </div>
           <span class="card-progress" :class="getProgressClass(project)">
-            <span class="status-dot">●</span> {{ formatRounds(project) }}
+            <span class="status-dot">&#9679;</span> {{ formatRounds(project) }}
           </span>
         </div>
         
@@ -114,11 +114,11 @@
               <div class="modal-title-section">
                 <span class="modal-id">{{ formatSimulationId(selectedProject.simulation_id) }}</span>
                 <span class="modal-progress" :class="getProgressClass(selectedProject)">
-                  <span class="status-dot">●</span> {{ formatRounds(selectedProject) }}
+                  <span class="status-dot">&#9679;</span> {{ formatRounds(selectedProject) }}
                 </span>
                 <span class="modal-create-time">{{ formatDate(selectedProject.created_at) }} {{ formatTime(selectedProject.created_at) }}</span>
               </div>
-              <button class="modal-close" @click="closeModal">×</button>
+              <button class="modal-close" @click="closeModal">&times;</button>
             </div>
 
             <!-- Modal Content -->
@@ -157,7 +157,7 @@
                 :disabled="!selectedProject.project_id"
               >
                 <span class="btn-step">Step1</span>
-                <span class="btn-icon">◇</span>
+                <span class="btn-icon">&#9671;</span>
                 <span class="btn-text">{{ $t('history.step1Button') }}</span>
               </button>
               <button 
@@ -165,7 +165,7 @@
                 @click="goToSimulation"
               >
                 <span class="btn-step">Step2</span>
-                <span class="btn-icon">◈</span>
+                <span class="btn-icon">&#9672;</span>
                 <span class="btn-text">{{ $t('history.step2Button') }}</span>
               </button>
               <button 
@@ -174,7 +174,7 @@
                 :disabled="!selectedProject.report_id"
               >
                 <span class="btn-step">Step4</span>
-                <span class="btn-icon">◆</span>
+                <span class="btn-icon">&#9670;</span>
                 <span class="btn-text">{{ $t('history.step4Button') }}</span>
               </button>
             </div>
@@ -442,10 +442,9 @@ onUnmounted(() => {
   right: 0;
   bottom: 0;
   background-image: 
-    linear-gradient(to right, rgba(0, 0, 0, 0.05) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(0, 0, 0, 0.05) 1px, transparent 1px);
+    linear-gradient(to right, rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
   background-size: 50px 50px;
-  /* Position from top-left; height changes only expand at bottom without shifting existing grid */
   background-position: top left;
 }
 
@@ -456,8 +455,8 @@ onUnmounted(() => {
   right: 0;
   bottom: 0;
   background: 
-    linear-gradient(to right, rgba(255, 255, 255, 0.9) 0%, transparent 15%, transparent 85%, rgba(255, 255, 255, 0.9) 100%),
-    linear-gradient(to bottom, rgba(255, 255, 255, 0.8) 0%, transparent 20%, transparent 80%, rgba(255, 255, 255, 0.8) 100%);
+    linear-gradient(to right, rgba(0, 0, 0, 0.95) 0%, transparent 15%, transparent 85%, rgba(0, 0, 0, 0.95) 100%),
+    linear-gradient(to bottom, rgba(0, 0, 0, 0.9) 0%, transparent 20%, transparent 80%, rgba(0, 0, 0, 0.9) 100%);
   pointer-events: none;
 }
 
@@ -477,7 +476,7 @@ onUnmounted(() => {
 .section-line {
   flex: 1;
   height: 1px;
-  background: linear-gradient(90deg, transparent, #E5E7EB, transparent);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15), transparent);
   max-width: 300px;
 }
 
@@ -515,21 +514,23 @@ onUnmounted(() => {
   position: relative;
   flex: 0 0 280px;
   width: 280px;
-  background: #FFFFFF;
-  border: 1px solid #E5E7EB;
-  border-radius: 0;
-  padding: 14px;
+  background: rgba(10, 10, 10, 0.75);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 14px;
+  padding: 16px;
   cursor: pointer;
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  transition: box-shadow 0.3s ease, border-color 0.3s ease, transform 200ms ease, opacity 200ms ease;
+  box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.8);
+  transition: box-shadow 0.3s ease, border-color 0.3s ease, transform 200ms ease, opacity 200ms ease, background 0.3s ease;
   scroll-snap-align: start;
   transform: translateY(5px) scale(0.985);
   opacity: 0.98;
 }
 
 .project-card:hover {
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-  border-color: rgba(0, 0, 0, 0.4);
+  box-shadow: 0 16px 36px -6px rgba(0, 0, 0, 0.95), 0 0 20px rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.35);
+  background: rgba(20, 20, 20, 0.92);
   transform: translateY(0) scale(1);
   z-index: 1000 !important;
 }
@@ -545,13 +546,13 @@ onUnmounted(() => {
   align-items: center;
   margin-bottom: 12px;
   padding-bottom: 12px;
-  border-bottom: 1px solid #F3F4F6;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   font-family: 'JetBrains Mono', 'SF Mono', monospace;
   font-size: 0.7rem;
 }
 
 .card-id {
-  color: #6B7280;
+  color: #94a3b8;
   letter-spacing: 0.5px;
   font-weight: 500;
 }
@@ -571,16 +572,13 @@ onUnmounted(() => {
 
 .status-icon.available {
   opacity: 1;
+  color: #ffffff;
+  text-shadow: 0 0 8px rgba(255, 255, 255, 0.4);
 }
 
-/* Colors for different features */
-.status-icon:nth-child(1).available { color: #3B82F6; } /* Graph Construction - Blue */
-.status-icon:nth-child(2).available { color: #F59E0B; } /* Environment Setup - Orange */
-.status-icon:nth-child(3).available { color: #10B981; } /* Analysis Report - Green */
-
 .status-icon.unavailable {
-  color: #D1D5DB;
-  opacity: 0.5;
+  color: #475569;
+  opacity: 0.4;
 }
 
 /* Round progress display */
@@ -598,10 +596,10 @@ onUnmounted(() => {
 }
 
 /* Progress status colors */
-.card-progress.completed { color: #10B981; }    /* Completed - Green */
-.card-progress.in-progress { color: #F59E0B; }  /* In Progress - Orange */
-.card-progress.not-started { color: #9CA3AF; }  /* Not Started - Gray */
-.card-status.pending { color: #9CA3AF; }
+.card-progress.completed { color: #ffffff; text-shadow: 0 0 8px rgba(255, 255, 255, 0.5); }
+.card-progress.in-progress { color: #cbd5e1; }
+.card-progress.not-started { color: #64748b; }
+.card-status.pending { color: #64748b; }
 
 /* File list area */
 .card-files-wrapper {
@@ -611,9 +609,9 @@ onUnmounted(() => {
   max-height: 110px;
   margin-bottom: 12px;
   padding: 8px 10px;
-  background: linear-gradient(135deg, #f8f9fa 0%, #f1f3f4 100%);
-  border-radius: 4px;
-  border: 1px solid #e8eaed;
+  background: rgba(8, 10, 16, 0.85);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
   overflow: hidden;
 }
 
@@ -631,8 +629,8 @@ onUnmounted(() => {
   padding: 3px 6px;
   font-family: 'JetBrains Mono', monospace;
   font-size: 0.6rem;
-  color: #6B7280;
-  background: rgba(255, 255, 255, 0.5);
+  color: #94a3b8;
+  background: rgba(255, 255, 255, 0.05);
   border-radius: 3px;
   letter-spacing: 0.3px;
 }
@@ -642,15 +640,15 @@ onUnmounted(() => {
   align-items: center;
   gap: 8px;
   padding: 4px 6px;
-  background: rgba(255, 255, 255, 0.7);
-  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 4px;
   transition: all 0.2s ease;
 }
 
 .file-item:hover {
-  background: rgba(255, 255, 255, 1);
+  background: rgba(255, 255, 255, 0.1);
   transform: translateX(2px);
-  border-color: #e5e7eb;
+  border-color: rgba(255, 255, 255, 0.2);
 }
 
 /* Minimal file tag style */
@@ -671,21 +669,21 @@ onUnmounted(() => {
   min-width: 28px;
 }
 
-/* Low-saturation color palette - Morandi tones */
-.file-tag.pdf { background: #f2e6e6; color: #a65a5a; }
-.file-tag.doc { background: #e6eff5; color: #5a7ea6; }
-.file-tag.xls { background: #e6f2e8; color: #5aa668; }
-.file-tag.ppt { background: #f5efe6; color: #a6815a; }
-.file-tag.txt { background: #f0f0f0; color: #757575; }
-.file-tag.code { background: #eae6f2; color: #815aa6; }
-.file-tag.img { background: #e6f2f2; color: #5aa6a6; }
-.file-tag.zip { background: #f2f0e6; color: #a69b5a; }
-.file-tag.other { background: #f3f4f6; color: #6b7280; }
+/* Dark metallic palette */
+.file-tag.pdf { background: rgba(255, 255, 255, 0.15); color: #ffffff; }
+.file-tag.doc { background: rgba(255, 255, 255, 0.12); color: #e2e8f0; }
+.file-tag.xls { background: rgba(255, 255, 255, 0.15); color: #ffffff; }
+.file-tag.ppt { background: rgba(255, 255, 255, 0.12); color: #e2e8f0; }
+.file-tag.txt { background: rgba(255, 255, 255, 0.08); color: #cbd5e1; }
+.file-tag.code { background: rgba(255, 255, 255, 0.15); color: #ffffff; }
+.file-tag.img { background: rgba(255, 255, 255, 0.12); color: #e2e8f0; }
+.file-tag.zip { background: rgba(255, 255, 255, 0.15); color: #ffffff; }
+.file-tag.other { background: rgba(255, 255, 255, 0.06); color: #94a3b8; }
 
 .file-name {
   font-family: 'Inter', sans-serif;
   font-size: 0.7rem;
-  color: #4b5563;
+  color: #cbd5e1;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -699,7 +697,7 @@ onUnmounted(() => {
   justify-content: center;
   gap: 8px;
   height: 48px;
-  color: #9CA3AF;
+  color: #64748b;
 }
 
 .empty-file-icon {
@@ -715,8 +713,8 @@ onUnmounted(() => {
 
 /* File area hover effect */
 .project-card:hover .card-files-wrapper {
-  border-color: #d1d5db;
-  background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+  border-color: rgba(255, 255, 255, 0.2);
+  background: rgba(12, 15, 24, 0.95);
 }
 
 /* Corner decoration */
@@ -726,8 +724,8 @@ onUnmounted(() => {
   left: 6px;
   width: 8px;
   height: 8px;
-  border-top: 1.5px solid rgba(0, 0, 0, 0.4);
-  border-left: 1.5px solid rgba(0, 0, 0, 0.4);
+  border-top: 1.5px solid rgba(255, 255, 255, 0.4);
+  border-left: 1.5px solid rgba(255, 255, 255, 0.4);
   pointer-events: none;
   z-index: 10;
 }
@@ -735,9 +733,9 @@ onUnmounted(() => {
 /* Card title */
 .card-title {
   font-family: 'Inter', -apple-system, sans-serif;
-  font-size: 0.9rem;
+  font-size: 0.95rem;
   font-weight: 700;
-  color: #111827;
+  color: #ffffff;
   margin: 0 0 6px 0;
   line-height: 1.4;
   white-space: nowrap;
@@ -747,14 +745,15 @@ onUnmounted(() => {
 }
 
 .project-card:hover .card-title {
-  color: #2563EB;
+  color: #ffffff;
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.4);
 }
 
 /* Card description */
 .card-desc {
   font-family: 'Inter', sans-serif;
   font-size: 0.75rem;
-  color: #6B7280;
+  color: #94a3b8;
   margin: 0 0 16px 0;
   line-height: 1.5;
   height: 34px;
@@ -771,10 +770,10 @@ onUnmounted(() => {
   justify-content: space-between;
   align-items: center;
   padding-top: 12px;
-  border-top: 1px solid #F3F4F6;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
   font-family: 'JetBrains Mono', monospace;
   font-size: 0.65rem;
-  color: #9CA3AF;
+  color: #64748b;
   font-weight: 500;
 }
 
@@ -800,9 +799,9 @@ onUnmounted(() => {
 }
 
 /* Progress status colors - footer */
-.card-footer .card-progress.completed { color: #10B981; }
-.card-footer .card-progress.in-progress { color: #F59E0B; }
-.card-footer .card-progress.not-started { color: #9CA3AF; }
+.card-footer .card-progress.completed { color: #ffffff; }
+.card-footer .card-progress.in-progress { color: #cbd5e1; }
+.card-footer .card-progress.not-started { color: #64748b; }
 
 /* Bottom decorative line */
 .card-bottom-line {
@@ -811,7 +810,8 @@ onUnmounted(() => {
   left: 0;
   height: 2px;
   width: 0;
-  background-color: #000;
+  background-color: #ffffff;
+  box-shadow: 0 0 10px #ffffff;
   transition: width 0.5s cubic-bezier(0.23, 1, 0.32, 1);
   z-index: 20;
 }
@@ -827,7 +827,7 @@ onUnmounted(() => {
   align-items: center;
   gap: 14px;
   padding: 48px;
-  color: #9CA3AF;
+  color: #64748b;
 }
 
 .empty-icon {
@@ -838,8 +838,8 @@ onUnmounted(() => {
 .loading-spinner {
   width: 24px;
   height: 24px;
-  border: 2px solid #E5E7EB;
-  border-top-color: #6B7280;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-top-color: #ffffff;
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
@@ -871,23 +871,24 @@ onUnmounted(() => {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.4);
+  background: rgba(0, 0, 0, 0.85);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 9999;
-  backdrop-filter: blur(4px);
+  backdrop-filter: blur(10px);
 }
 
 .modal-content {
-  background: #FFFFFF;
+  background: linear-gradient(180deg, #121212 0%, #000000 100%);
   width: 560px;
   max-width: 90vw;
   max-height: 85vh;
   overflow-y: auto;
-  border: 1px solid #E5E7EB;
-  border-radius: 8px;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 18px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 1), 0 0 40px rgba(0, 0, 0, 0.95);
+  color: #f5f5f5;
 }
 
 /* Animation transitions */
@@ -925,8 +926,8 @@ onUnmounted(() => {
   justify-content: space-between;
   align-items: center;
   padding: 20px 32px;
-  border-bottom: 1px solid #F3F4F6;
-  background: #FFFFFF;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.02);
 }
 
 .modal-title-section {
@@ -939,7 +940,7 @@ onUnmounted(() => {
   font-family: 'JetBrains Mono', monospace;
   font-size: 1rem;
   font-weight: 600;
-  color: #111827;
+  color: #ffffff;
   letter-spacing: 0.5px;
 }
 
@@ -952,38 +953,39 @@ onUnmounted(() => {
   font-weight: 600;
   padding: 4px 8px;
   border-radius: 4px;
-  background: #F9FAFB;
+  background: rgba(255, 255, 255, 0.06);
 }
 
-.modal-progress.completed { color: #10B981; background: rgba(16, 185, 129, 0.1); }
-.modal-progress.in-progress { color: #F59E0B; background: rgba(245, 158, 11, 0.1); }
-.modal-progress.not-started { color: #9CA3AF; background: #F3F4F6; }
+.modal-progress.completed { color: #ffffff; background: rgba(255, 255, 255, 0.15); }
+.modal-progress.in-progress { color: #cbd5e1; background: rgba(255, 255, 255, 0.08); }
+.modal-progress.not-started { color: #64748b; background: rgba(255, 255, 255, 0.04); }
 
 .modal-create-time {
   font-family: 'JetBrains Mono', monospace;
   font-size: 0.75rem;
-  color: #9CA3AF;
+  color: #64748b;
   letter-spacing: 0.3px;
 }
 
 .modal-close {
   width: 32px;
   height: 32px;
-  border: none;
-  background: transparent;
-  font-size: 1.5rem;
-  color: #9CA3AF;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.06);
+  font-size: 1.25rem;
+  color: #cbd5e1;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: all 0.2s ease;
-  border-radius: 6px;
+  border-radius: 50%;
 }
 
 .modal-close:hover {
-  background: #F3F4F6;
-  color: #111827;
+  background: #ffffff;
+  color: #000000;
+  border-color: #ffffff;
 }
 
 /* Modal content */
@@ -1002,7 +1004,7 @@ onUnmounted(() => {
 .modal-label {
   font-family: 'JetBrains Mono', monospace;
   font-size: 0.75rem;
-  color: #6B7280;
+  color: #a3a3a3;
   text-transform: uppercase;
   letter-spacing: 1px;
   margin-bottom: 10px;
@@ -1011,12 +1013,12 @@ onUnmounted(() => {
 
 .modal-requirement {
   font-size: 0.95rem;
-  color: #374151;
+  color: #f5f5f5;
   line-height: 1.6;
   padding: 16px;
-  background: #F9FAFB;
-  border: 1px solid #F3F4F6;
-  border-radius: 8px;
+  background: rgba(8, 8, 8, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
 }
 
 .modal-files {
@@ -1034,17 +1036,17 @@ onUnmounted(() => {
 }
 
 .modal-files::-webkit-scrollbar-track {
-  background: #F3F4F6;
+  background: rgba(255, 255, 255, 0.04);
   border-radius: 2px;
 }
 
 .modal-files::-webkit-scrollbar-thumb {
-  background: #D1D5DB;
+  background: rgba(255, 255, 255, 0.2);
   border-radius: 2px;
 }
 
 .modal-files::-webkit-scrollbar-thumb:hover {
-  background: #9CA3AF;
+  background: rgba(255, 255, 255, 0.4);
 }
 
 .modal-file-item {
@@ -1052,20 +1054,20 @@ onUnmounted(() => {
   align-items: center;
   gap: 12px;
   padding: 10px 14px;
-  background: #FFFFFF;
-  border: 1px solid #E5E7EB;
+  background: rgba(14, 14, 14, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 6px;
   transition: all 0.2s ease;
 }
 
 .modal-file-item:hover {
-  border-color: #D1D5DB;
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  border-color: rgba(255, 255, 255, 0.3);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.7);
 }
 
 .modal-file-name {
   font-size: 0.85rem;
-  color: #4B5563;
+  color: #e5e5e5;
   flex: 1;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1074,10 +1076,10 @@ onUnmounted(() => {
 
 .modal-empty {
   font-size: 0.85rem;
-  color: #9CA3AF;
+  color: #737373;
   padding: 16px;
-  background: #F9FAFB;
-  border: 1px dashed #E5E7EB;
+  background: rgba(8, 8, 8, 0.6);
+  border: 1px dashed rgba(255, 255, 255, 0.12);
   border-radius: 6px;
   text-align: center;
 }
@@ -1088,19 +1090,19 @@ onUnmounted(() => {
   align-items: center;
   gap: 16px;
   padding: 10px 32px 0;
-  background: #FFFFFF;
+  background: transparent;
 }
 
 .divider-line {
   flex: 1;
   height: 1px;
-  background: linear-gradient(90deg, transparent, #E5E7EB, transparent);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.12), transparent);
 }
 
 .divider-text {
   font-family: 'JetBrains Mono', monospace;
   font-size: 0.7rem;
-  color: #9CA3AF;
+  color: #737373;
   letter-spacing: 2px;
   text-transform: uppercase;
   white-space: nowrap;
@@ -1111,7 +1113,7 @@ onUnmounted(() => {
   display: flex;
   gap: 16px;
   padding: 20px 32px;
-  background: #FFFFFF;
+  background: transparent;
 }
 
 .modal-btn {
@@ -1121,9 +1123,9 @@ onUnmounted(() => {
   align-items: center;
   gap: 8px;
   padding: 16px;
-  border: 1px solid #E5E7EB;
+  border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 8px;
-  background: #FFFFFF;
+  background: rgba(14, 14, 14, 0.85);
   cursor: pointer;
   transition: all 0.2s ease;
   position: relative;
@@ -1131,22 +1133,23 @@ onUnmounted(() => {
 }
 
 .modal-btn:hover:not(:disabled) {
-  border-color: #000000;
+  border-color: rgba(255, 255, 255, 0.38);
+  background: rgba(24, 24, 24, 0.95);
   transform: translateY(-2px);
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.8);
 }
 
 .modal-btn:disabled {
-  opacity: 0.5;
+  opacity: 0.35;
   cursor: not-allowed;
-  background: #F9FAFB;
+  background: rgba(8, 8, 8, 0.4);
 }
 
 .btn-step {
   font-family: 'JetBrains Mono', monospace;
   font-size: 0.6rem;
   font-weight: 500;
-  color: #9CA3AF;
+  color: #737373;
   letter-spacing: 0.5px;
   text-transform: uppercase;
 }
@@ -1162,15 +1165,15 @@ onUnmounted(() => {
   font-size: 0.75rem;
   font-weight: 600;
   letter-spacing: 0.5px;
-  color: #4B5563;
+  color: #a3a3a3;
 }
 
-.modal-btn.btn-project .btn-icon { color: #3B82F6; }
-.modal-btn.btn-simulation .btn-icon { color: #F59E0B; }
-.modal-btn.btn-report .btn-icon { color: #10B981; }
+.modal-btn.btn-project .btn-icon { color: #ffffff; }
+.modal-btn.btn-simulation .btn-icon { color: #d4d4d4; }
+.modal-btn.btn-report .btn-icon { color: #a3a3a3; }
 
 .modal-btn:hover:not(:disabled) .btn-text {
-  color: #111827;
+  color: #ffffff;
 }
 
 /* Non-replayable hint */
@@ -1179,7 +1182,7 @@ onUnmounted(() => {
   align-items: center;
   justify-content: center;
   padding: 0 32px 20px;
-  background: #FFFFFF;
+  background: transparent;
 }
 
 .hint-text {

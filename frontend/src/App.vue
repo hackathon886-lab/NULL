@@ -18,26 +18,28 @@
   font-family: 'JetBrains Mono', 'Space Grotesk', monospace;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  color: #000000;
-  background-color: #ffffff;
+  color: #f5f5f5;
+  background-color: #000000;
+  min-height: 100vh;
 }
 
 /* Scrollbar styles */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #f1f1f1;
+  background: #090a10;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #000000;
+  background: #252836;
+  border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #333333;
+  background: #3e445b;
 }
 
 /* Global button styles */

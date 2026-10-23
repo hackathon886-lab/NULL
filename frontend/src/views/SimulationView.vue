@@ -3,7 +3,7 @@
     <!-- Header -->
     <header class="app-header">
       <div class="header-left">
-        <div class="brand" @click="router.push('/')"><img src="../assets/logo/lokantra_wordmark.png" alt="LOKĀNTRA" class="brand-wordmark" /></div>
+        <div class="brand" @click="router.push('/home')"><img src="../assets/logo/lokantra_wordmark.png" alt="LOKĀNTRA" class="brand-wordmark" /></div>
       </div>
       
       <div class="header-center">
@@ -144,7 +144,7 @@ const handleGoBack = () => {
   if (projectData.value?.project_id) {
     router.push({ name: 'Process', params: { projectId: projectData.value.project_id } })
   } else {
-    router.push('/')
+    router.push('/home')
   }
 }
 
