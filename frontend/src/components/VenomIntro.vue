@@ -3,36 +3,65 @@
     class="venom-opening-screen"
     :class="{ 'venom-opening-exiting': isExiting }"
   >
-    <!-- Top Wordmark of Lokantra: Big and Clear -->
-    <header class="venom-top-wordmark" aria-label="Lokantra">
+    <!-- Spiderweb Organic Network Background -->
+    <div class="venom-bg-layer" aria-hidden="true">
       <img
-        :src="lokantraWordmark"
-        alt="LOKĀNTRA"
-        class="lokantra-brand-wordmark-large"
+        :src="homescreenBg"
+        alt="Homescreen Background"
+        class="venom-bg-img"
+        fetchpriority="high"
+        loading="eager"
+        decoding="async"
       />
-    </header>
+    </div>
 
-    <!-- Center 3D Venom Symbiote Button -->
-    <div
-      class="btn-wrapper"
-      ref="wrapperRef"
-      id="btnWrapper"
-      @click="onBtnClick"
-      @pointerdown="onBtnPointerDown"
-      @pointerup="onBtnPointerUp"
-    >
-      <button
-        class="venom-btn"
-        ref="btnRef"
-        id="venomBtn"
+    <!-- Center Hero Stack: Lokantra Logo + Action Pill aligned in the web hollow -->
+    <div class="venom-center-container">
+      <!-- Wordmark Logo -->
+      <header class="venom-logo-wrap" aria-label="Lokantra">
+        <img
+          :src="lokantraWordmark"
+          alt="LOKĀNTRA"
+          class="lokantra-brand-wordmark"
+        />
+      </header>
+
+      <!-- Center 3D Venom Symbiote Pill Button -->
+      <div
+        class="btn-wrapper"
+        ref="wrapperRef"
+        id="btnWrapper"
         @click="onBtnClick"
         @pointerdown="onBtnPointerDown"
         @pointerup="onBtnPointerUp"
-        title="PREDICT the UNPREDICTABLE"
-        aria-label="PREDICT the UNPREDICTABLE"
       >
-        <span>PREDICT the UNPREDICTABLE</span>
-      </button>
+        <button
+          class="venom-btn"
+          ref="btnRef"
+          id="venomBtn"
+          @click="onBtnClick"
+          @pointerdown="onBtnPointerDown"
+          @pointerup="onBtnPointerUp"
+          title="PREDICT the UNPREDICTABLE"
+          aria-label="PREDICT the UNPREDICTABLE"
+        >
+          <span class="venom-btn-inner">
+            <span class="venom-btn-text">PREDICT the UNPREDICTABLE</span>
+            <svg
+              class="venom-btn-arrow"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+              <polyline points="12 5 19 12 12 19"></polyline>
+            </svg>
+          </span>
+        </button>
+      </div>
     </div>
 
     <!-- Symbiote Canvas Simulation -->
@@ -43,6 +72,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted, nextTick } from 'vue'
 import lokantraWordmark from '@/assets/logo/lokantra_wordmark.png'
+import homescreenBg from '@/assets/homescreen_backgorund.png'
 
 const emit = defineEmits(['enter'])
 
@@ -50,6 +80,7 @@ const canvasRef = ref(null)
 const btnRef = ref(null)
 const wrapperRef = ref(null)
 const isExiting = ref(false)
+const buttonOffsetX = ref(68)
 
 let ctx = null
 let animId = null
@@ -87,6 +118,15 @@ function updateMetrics() {
   baseBtnRect = {
     width: btnRef.value.offsetWidth || 340,
     height: btnRef.value.offsetHeight || 72
+  }
+
+  // Optical rightward shift to balance within the asymmetric spiderweb clearing
+  if (width < 640) {
+    buttonOffsetX.value = Math.round(width * 0.03)
+  } else if (width < 1024) {
+    buttonOffsetX.value = Math.round(width * 0.04)
+  } else {
+    buttonOffsetX.value = Math.min(85, Math.max(55, Math.round(width * 0.042)))
   }
 }
 
@@ -718,8 +758,15 @@ function animate() {
   frameCount++
   ctx.clearRect(0, 0, width, height)
 
-  const screenCenterX = width / 2
-  const screenCenterY = height / 2
+    let btnBaseX = width / 2
+  let btnBaseY = height * 0.54
+  if (btnRef.value) {
+    const rect = btnRef.value.getBoundingClientRect()
+    btnBaseX = rect.left + rect.width / 2 - shiftX
+    btnBaseY = rect.top + rect.height / 2 - shiftY
+  }
+  const screenCenterX = btnBaseX
+  const screenCenterY = btnBaseY
 
   if (!mouse.userMoved) {
     demoTime += 0.022
@@ -940,34 +987,65 @@ onUnmounted(() => {
   pointer-events: none;
 }
 
-/* Top Wordmark - Big, Clear & High Resolution */
-.venom-top-wordmark {
+/* Spiderweb Background Layer */
+.venom-bg-layer {
   position: absolute;
-  top: clamp(28px, 6vh, 56px);
-  left: 0;
-  right: 0;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
+  overflow: hidden;
+}
+
+.venom-bg-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center center;
+  display: block;
+  user-select: none;
+  filter: contrast(1.04) brightness(1.0);
+  transform: translateZ(0);
+}
+
+/* Central Content Container matching reference composition */
+.venom-center-container {
+  position: absolute;
+  top: 39%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(28px, 4.4vh, 48px);
+  z-index: 10;
+  pointer-events: auto;
+  width: 100%;
+  max-width: 90vw;
+}
+
+.venom-logo-wrap {
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 10;
-  pointer-events: auto;
-  padding: 0 20px;
 }
 
-.lokantra-brand-wordmark-large {
-  height: clamp(60px, 9vw, 96px);
-  max-width: min(85vw, 480px);
+.lokantra-brand-wordmark {
+  height: clamp(80px, 12vw, 135px);
+  max-width: min(90vw, 620px);
   width: auto;
   object-fit: contain;
   display: block;
   user-select: none;
-  filter: drop-shadow(0 4px 18px rgba(0, 0, 0, 0.12));
+  filter: drop-shadow(0 4px 18px rgba(0, 0, 0, 0.14));
   transition: transform 0.3s ease, filter 0.3s ease;
 }
 
-.lokantra-brand-wordmark-large:hover {
+.lokantra-brand-wordmark:hover {
   transform: scale(1.02);
-  filter: drop-shadow(0 6px 24px rgba(0, 0, 0, 0.18));
+  filter: drop-shadow(0 6px 24px rgba(0, 0, 0, 0.22));
 }
 
 #symbiote-canvas {
@@ -982,91 +1060,74 @@ onUnmounted(() => {
 
 .btn-wrapper {
   position: relative;
-  z-index: 5;
+  z-index: 10;
   transform-style: preserve-3d;
   will-change: transform;
   cursor: pointer;
+  display: flex;
+  justify-content: center;
 }
 
 .venom-btn {
   position: relative;
-  padding: clamp(18px, 2.5vw, 22px) clamp(34px, 4.5vw, 54px);
-  border-radius: 999px;
+  padding: clamp(12px, 1.6vh, 16px) clamp(28px, 3.2vw, 42px);
+  border-radius: 9999px;
   border: none;
   outline: none;
   cursor: pointer;
   touch-action: manipulation;
   user-select: none;
-  background:
-    radial-gradient(120% 95% at 50% 12%, rgba(255, 255, 255, 0.36) 0%, rgba(255, 255, 255, 0.07) 34%, rgba(0, 0, 0, 0) 60%),
-    linear-gradient(180deg, #1c1c1c 0%, #080808 54%, #000000 100%);
-  color: #f5f7fa;
-  font-size: clamp(17px, 2.2vw, 22px);
+  background: #000000;
+  color: #ffffff;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", "Segoe UI", Roboto, sans-serif;
+  font-size: clamp(13px, 1.25vw, 16px);
   font-weight: 500;
-  letter-spacing: -0.02em;
+  letter-spacing: 0.04em;
   white-space: nowrap;
   box-shadow:
-    0 26px 42px -10px rgba(0, 0, 0, 0.52),
-    0 12px 20px -6px rgba(0, 0, 0, 0.38),
-    inset 0 2px 3px rgba(255, 255, 255, 0.44),
-    inset 0 -3px 6px rgba(255, 255, 255, 0.16),
-    inset 0 0 16px rgba(0, 0, 0, 0.9);
+    0 18px 36px -6px rgba(0, 0, 0, 0.45),
+    0 8px 16px -4px rgba(0, 0, 0, 0.3);
   transform-style: preserve-3d;
-  transition: transform 0.15s ease, box-shadow 0.2s ease;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
 }
 
-.venom-btn::before {
-  content: "";
-  position: absolute;
-  top: 5px;
-  left: 13%;
-  right: 13%;
-  height: 36%;
-  border-radius: 999px;
-  background: linear-gradient(
-    180deg,
-    rgba(255, 255, 255, 0.4) 0%,
-    rgba(255, 255, 255, 0.08) 65%,
-    rgba(255, 255, 255, 0) 100%
-  );
-  pointer-events: none;
-  filter: blur(0.6px);
+.venom-btn:hover {
+  background: #0a0a0a;
+  transform: scale(1.015);
+  box-shadow:
+    0 22px 42px -6px rgba(0, 0, 0, 0.55),
+    0 10px 20px -4px rgba(0, 0, 0, 0.35);
 }
 
-.venom-btn::after {
-  content: "";
-  position: absolute;
-  bottom: 4px;
-  left: 18%;
-  right: 18%;
-  height: 18%;
-  border-radius: 999px;
-  background: linear-gradient(
-    0deg,
-    rgba(255, 255, 255, 0.22) 0%,
-    rgba(255, 255, 255, 0) 100%
-  );
-  pointer-events: none;
-  filter: blur(1px);
-}
-
-.venom-btn span {
+.venom-btn-inner {
   position: relative;
   z-index: 2;
-  display: inline-block;
-  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.7);
-  transform: translateZ(12px);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
   pointer-events: none;
+}
+
+.venom-btn-text {
+  letter-spacing: 0.04em;
+}
+
+.venom-btn-arrow {
+  width: clamp(16px, 1.4vw, 19px);
+  height: clamp(16px, 1.4vw, 19px);
+  transition: transform 0.25s ease;
+}
+
+.venom-btn:hover .venom-btn-arrow {
+  transform: translateX(4px);
 }
 
 .venom-btn:active {
   cursor: pointer;
   transform: scale(0.98);
   box-shadow:
-    0 16px 28px -8px rgba(0, 0, 0, 0.6),
-    0 8px 12px -4px rgba(0, 0, 0, 0.4),
-    inset 0 2px 3px rgba(255, 255, 255, 0.35),
-    inset 0 -2px 4px rgba(255, 255, 255, 0.12),
-    inset 0 0 20px rgba(0, 0, 0, 0.95);
+    0 10px 20px -6px rgba(0, 0, 0, 0.5),
+    0 4px 8px -2px rgba(0, 0, 0, 0.3);
 }
 </style>

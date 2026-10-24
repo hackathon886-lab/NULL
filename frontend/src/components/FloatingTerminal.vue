@@ -44,7 +44,7 @@
               <div class="win-tab active">
                 <span class="win-tab-icon">&gt;_</span>
                 <span class="win-tab-label">{{ title || 'SIMULATION MONITOR' }}</span>
-                <span v-if="subId && subId !== 'NO_PROJECT' && subId !== 'NO_SIMULATION'" class="win-tab-badge">{{ subId }}</span>
+                <span v-if="subId && !subId.startsWith('NO_')" class="win-tab-badge">{{ subId }}</span>
               </div>
             </div>
 
@@ -76,11 +76,11 @@
             <!-- Logs Output -->
             <div class="terminal-log-stream">
               <div 
-                v-for="(log, idx) in logs" 
+                v-for="(log, idx) in formattedLogs" 
                 :key="idx" 
                 class="terminal-log-row"
               >
-                <span class="log-time">{{ log.time }}</span>
+                <span v-if="log.time" class="log-time">{{ log.time }}</span>
                 <span class="log-msg" :class="getMsgClass(log.msg)">{{ log.msg }}</span>
               </div>
             </div>
@@ -188,14 +188,46 @@ watch(() => props.logs?.length, () => {
   }
 })
 
+const formattedLogs = computed(() => {
+  if (!props.logs || !Array.isArray(props.logs)) return []
+  return props.logs.map(log => {
+    if (typeof log === 'string') {
+      const match = log.match(/^\[?(\d{2}:\d{2}:\d{2}(?:\.\d+)?)\]?\s*(.*)$/)
+      if (match) {
+        return {
+          time: match[1],
+          msg: match[2]
+        }
+      }
+      return {
+        time: '',
+        msg: log
+      }
+    }
+    if (log && typeof log === 'object') {
+      return {
+        time: log.time || '',
+        msg: log.msg !== undefined ? log.msg : (log.message || JSON.stringify(log))
+      }
+    }
+    return {
+      time: '',
+      msg: String(log)
+    }
+  })
+})
+
 const getMsgClass = (msg) => {
   if (!msg) return ''
   const str = String(msg)
   if (str.includes('✓') || str.includes('success') || str.includes('Successfully')) {
     return 'msg-success'
   }
-  if (str.includes('Error') || str.includes('failed') || str.includes('Exception')) {
+  if (str.includes('Error') || str.includes('ERROR') || str.includes('failed') || str.includes('Exception')) {
     return 'msg-error'
+  }
+  if (str.includes('Warning') || str.includes('WARNING') || str.includes('warn')) {
+    return 'msg-warning'
   }
   if (str.includes('PID:') || str.includes('Loading') || str.includes('Time config:')) {
     return 'msg-highlight'
@@ -765,6 +797,11 @@ onUnmounted(() => {
 
 .msg-highlight {
   color: #E5C07B !important;
+}
+
+.msg-warning {
+  color: #FFA726 !important;
+  font-weight: 500;
 }
 
 .terminal-prompt-row {

@@ -490,49 +490,13 @@
       </div>
     </div>
 
-    <!-- Bottom Console Logs -->
-    <Transition name="console-slide">
-      <div class="console-logs" v-if="!isConsoleMinimized">
-        <div class="log-header">
-          <div class="log-header-left">
-            <span class="log-title">CONSOLE OUTPUT</span>
-            <span class="log-id">{{ reportId || 'NO_REPORT' }}</span>
-          </div>
-          <div class="log-header-right">
-            <button class="log-close-btn" @click="closeConsole" title="Minimize console output" aria-label="Minimize console output">
-              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
-                <line x1="18" y1="6" x2="6" y2="18"></line>
-                <line x1="6" y1="6" x2="18" y2="18"></line>
-              </svg>
-            </button>
-          </div>
-        </div>
-        <div class="log-content" ref="logContent">
-          <div class="log-line" v-for="(log, idx) in consoleLogs" :key="idx">
-            <span class="log-msg" :class="getLogLevelClass(log)">{{ log }}</span>
-          </div>
-        </div>
-      </div>
-    </Transition>
-
-    <!-- Floating Bubble at bottom right when minimized -->
-    <Transition name="bubble-pop">
-      <button 
-        v-if="isConsoleMinimized" 
-        class="console-bubble"
-        @click="openConsole"
-        title="Open Console Output"
-        aria-label="Open Console Output"
-      >
-        <span class="bubble-pulse"></span>
-        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-          <polyline points="4 17 10 11 4 5"></polyline>
-          <line x1="12" y1="19" x2="20" y2="19"></line>
-        </svg>
-        <span class="bubble-label">Console</span>
-        <span v-if="consoleLogs.length" class="bubble-badge">{{ consoleLogs.length }}</span>
-      </button>
-    </Transition>
+    <!-- Floating Windows Terminal Component (Console Output) -->
+    <FloatingTerminal
+      title="CONSOLE OUTPUT"
+      :sub-id="reportId || 'NO_REPORT'"
+      :logs="consoleLogs"
+      :is-active="consoleLogs.length > 0"
+    />
   </div>
 </template>
 
@@ -540,6 +504,7 @@
 import { ref, computed, watch, onMounted, onUnmounted, nextTick, h, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
+import FloatingTerminal from './FloatingTerminal.vue'
 import { getAgentLog, getConsoleLog } from '../api/report'
 import { downloadPredictionReportPdf } from '../utils/downloadPdf'
 
@@ -596,21 +561,6 @@ const isComplete = ref(false)
 const startTime = ref(null)
 const leftPanel = ref(null)
 const rightPanel = ref(null)
-const logContent = ref(null)
-const isConsoleMinimized = ref(false)
-
-const openConsole = () => {
-  isConsoleMinimized.value = false
-  nextTick(() => {
-    if (logContent.value) {
-      logContent.value.scrollTop = logContent.value.scrollHeight
-    }
-  })
-}
-
-const closeConsole = () => {
-  isConsoleMinimized.value = true
-}
 const showRawResult = reactive({})
 
 // Toggle functions
@@ -2192,12 +2142,7 @@ const getActionLabel = (action) => {
   return labels[action] || action
 }
 
-const getLogLevelClass = (log) => {
-  if (log.includes('ERROR')) return 'error'
-  if (log.includes('WARNING')) return 'warning'
-  // INFO uses default color, not marked as success
-  return ''
-}
+
 
 // Polling
 let agentLogTimer = null
@@ -2317,12 +2262,6 @@ const fetchConsoleLog = async () => {
       if (newLogs.length > 0) {
         consoleLogs.value.push(...newLogs)
         consoleLogLine.value = res.data.from_line + newLogs.length
-        
-        nextTick(() => {
-          if (logContent.value) {
-            logContent.value.scrollTop = logContent.value.scrollHeight
-          }
-        })
       }
     }
   } catch (err) {
@@ -5118,185 +5057,6 @@ watch(() => props.reportId, (newId) => {
   font-weight: 700;
 }
 
-/* Console Logs */
-.console-logs {
-  background: #040406;
-  color: #d4d4d8;
-  padding: 16px;
-  font-family: 'JetBrains Mono', monospace;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-  flex-shrink: 0;
-}
-
-.log-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  padding-bottom: 8px;
-  margin-bottom: 8px;
-  font-size: 10px;
-  color: #94A3B8;
-}
-
-.log-header-left {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.log-header-right {
-  display: flex;
-  align-items: center;
-}
-
-.log-close-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 20px;
-  height: 20px;
-  background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 4px;
-  color: #94A3B8;
-  cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-  padding: 0;
-}
-
-.log-close-btn:hover {
-  background: rgba(255, 255, 255, 0.15);
-  border-color: rgba(255, 255, 255, 0.35);
-  color: #ffffff;
-  transform: scale(1.08);
-}
-
-.log-title {
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: #ffffff;
-  font-weight: 700;
-}
-
-.log-id {
-  color: #94A3B8;
-}
-
-.log-content {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  height: 100px;
-  overflow-y: auto;
-  padding-right: 4px;
-}
-
-.log-content::-webkit-scrollbar { width: 4px; }
-.log-content::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.15); border-radius: 2px; }
-
-.log-line {
-  font-size: 11px;
-  line-height: 1.5;
-}
-
-.log-msg {
-  color: #d4d4d8;
-  word-break: break-all;
-}
-
-.log-msg.error { color: #EF5350; }
-.log-msg.warning { color: #FFA726; }
-.log-msg.success { color: #ffffff; font-weight: 700; }
-
-/* Slide Transition for Console Drawer */
-.console-slide-enter-active,
-.console-slide-leave-active {
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.console-slide-enter-from,
-.console-slide-leave-to {
-  opacity: 0;
-  transform: translateY(100%);
-  max-height: 0 !important;
-  padding-top: 0 !important;
-  padding-bottom: 0 !important;
-  overflow: hidden;
-}
-
-/* Floating Console Bubble */
-.console-bubble {
-  position: absolute;
-  bottom: 20px;
-  right: 24px;
-  z-index: 50;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 14px;
-  background: rgba(14, 14, 20, 0.92);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 9999px;
-  color: #ffffff;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 11px;
-  font-weight: 700;
-  cursor: pointer;
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.08);
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.console-bubble:hover {
-  background: #ffffff;
-  color: #000000;
-  border-color: #ffffff;
-  transform: translateY(-2px) scale(1.04);
-  box-shadow: 0 6px 24px rgba(255, 255, 255, 0.25);
-}
-
-.console-bubble:hover .bubble-pulse {
-  background: #000000;
-}
-
-.console-bubble:hover .bubble-badge {
-  background: #000000;
-  color: #ffffff;
-}
-
-.bubble-pulse {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: #ffffff;
-  animation: pulse-dot 1.5s ease-in-out infinite;
-}
-
-.bubble-label {
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-}
-
-.bubble-badge {
-  font-size: 9px;
-  background: rgba(255, 255, 255, 0.15);
-  padding: 1px 6px;
-  border-radius: 999px;
-  color: #ffffff;
-}
-
-.bubble-pop-enter-active,
-.bubble-pop-leave-active {
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.bubble-pop-enter-from,
-.bubble-pop-leave-to {
-  opacity: 0;
-  transform: translateY(12px) scale(0.9);
-}
 </style>
 
 <style>
