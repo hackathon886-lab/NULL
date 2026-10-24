@@ -3884,16 +3884,14 @@ watch(() => props.reportId, (newId) => {
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   overflow-x: auto;
   overflow-y: hidden;
-  scrollbar-width: thin;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
 :deep(.interview-display .agent-tabs::-webkit-scrollbar) {
-  height: 4px;
-}
-
-:deep(.interview-display .agent-tabs::-webkit-scrollbar-thumb) {
-  background: rgba(255, 255, 255, 0.15);
-  border-radius: 2px;
+  display: none;
+  width: 0;
+  height: 0;
 }
 
 :deep(.interview-display .agent-tab) {
@@ -5063,5 +5061,17 @@ watch(() => props.reportId, (newId) => {
 /* English locale: smaller report title */
 html[lang="en"] .report-header-block .main-title {
   font-size: 28px;
+}
+
+/* Hide scroller on agent interview tabs in tool results */
+.interview-display .agent-tabs {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+.interview-display .agent-tabs::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
 }
 </style>
