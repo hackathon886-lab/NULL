@@ -99,6 +99,8 @@
 
 <script setup>
 import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue'
+import { useSound } from '@/hooks/use-sound'
+import { error005Sound } from '@/sounds/error-005'
 
 const props = defineProps({
   title: {
@@ -181,12 +183,113 @@ const scrollToBottom = () => {
   })
 }
 
-// Auto-scroll as new logs stream in
+const [playErrorSound] = useSound(error005Sound)
+
+const isInitialMount = ref(true)
+let lastCheckedCount = Array.isArray(props.logs) ? props.logs.length : 0
+let lastErrorSoundTime = 0
+
+onMounted(() => {
+  // Sync count on initial mount and suppress sounds during initial history/setup loading
+  lastCheckedCount = Array.isArray(props.logs) ? props.logs.length : 0
+  setTimeout(() => {
+    isInitialMount.value = false
+    lastCheckedCount = Array.isArray(props.logs) ? props.logs.length : 0
+  }, 3500)
+})
+
+const isExplicitErrorString = (str) => {
+  if (!str) return false
+  const trimmed = str.trim()
+  const lower = trimmed.toLowerCase()
+
+  // Match genuine runtime error prefixes or patterns (not benign status messages)
+  return (
+    trimmed.startsWith('[ERROR]') ||
+    trimmed.startsWith('ERROR:') ||
+    trimmed.startsWith('Error:') ||
+    trimmed.startsWith('[FATAL]') ||
+    trimmed.startsWith('FATAL:') ||
+    trimmed.startsWith('Traceback (most recent call last):') ||
+    trimmed.startsWith('Uncaught ') ||
+    trimmed.startsWith('Unhandled ') ||
+    lower.includes('critical error') ||
+    lower.includes('fatal error') ||
+    lower.includes('runtimeerror:') ||
+    lower.includes('typeerror:') ||
+    lower.includes('referenceerror:') ||
+    lower.includes('syntaxerror:') ||
+    trimmed.includes('❌') ||
+    trimmed.includes('✖')
+  )
+}
+
+const isErrorLog = (log) => {
+  if (!log) return false
+  if (typeof log === 'object') {
+    if (log.level === 'error' || log.type === 'error' || log.status === 'error' || log.severity === 'error') {
+      return true
+    }
+    const msg = String(log.msg || log.message || log.text || '')
+    return isExplicitErrorString(msg)
+  }
+  return isExplicitErrorString(String(log))
+}
+
+const checkNewLogsForErrors = () => {
+  const currentLogs = props.logs
+  if (!Array.isArray(currentLogs)) return
+
+  // During initial mount or navigation, sync count and NEVER play sound
+  if (isInitialMount.value) {
+    lastCheckedCount = currentLogs.length
+    return
+  }
+
+  // Only check if active process is running
+  if (!props.isActive) {
+    lastCheckedCount = currentLogs.length
+    return
+  }
+
+  // If logs were reset or cleared, synchronize count
+  if (currentLogs.length <= lastCheckedCount) {
+    lastCheckedCount = currentLogs.length
+    return
+  }
+
+  const newSlice = currentLogs.slice(lastCheckedCount)
+  lastCheckedCount = currentLogs.length
+
+  const hasError = newSlice.some(isErrorLog)
+  if (hasError) {
+    const now = performance.now()
+    if (now - lastErrorSoundTime > 800) {
+      lastErrorSoundTime = now
+      try {
+        playErrorSound()
+      } catch (e) {
+        console.warn('Failed to play error sound:', e)
+      }
+    }
+  }
+}
+
+// Auto-scroll and check for incoming errors as new logs stream in
 watch(() => props.logs?.length, () => {
   if (isOpen.value) {
     scrollToBottom()
   }
+  checkNewLogsForErrors()
 })
+
+watch(
+  () => props.logs,
+  () => {
+    checkNewLogsForErrors()
+  },
+  { deep: true }
+)
 
 const formattedLogs = computed(() => {
   if (!props.logs || !Array.isArray(props.logs)) return []

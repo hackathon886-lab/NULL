@@ -24,7 +24,7 @@
         :key="project.simulation_id"
         class="project-card"
         :class="{ hovering: hoveringCard === index }"
-        @mouseenter="hoveringCard = index"
+        @mouseenter="handleCardHover(index)"
         @mouseleave="hoveringCard = null"
         @click="navigateToProject(project)"
       >
@@ -154,6 +154,7 @@
               <button 
                 class="modal-btn btn-project" 
                 @click="goToProject"
+                @mouseenter="selectedProject.project_id && playHoverSound()"
                 :disabled="!selectedProject.project_id"
               >
                 <span class="btn-step">Step1</span>
@@ -163,6 +164,7 @@
               <button 
                 class="modal-btn btn-simulation" 
                 @click="goToSimulation"
+                @mouseenter="playHoverSound"
               >
                 <span class="btn-step">Step2</span>
                 <span class="btn-icon">&#9672;</span>
@@ -171,6 +173,7 @@
               <button 
                 class="modal-btn btn-report" 
                 @click="goToReport"
+                @mouseenter="selectedProject.report_id && playHoverSound()"
                 :disabled="!selectedProject.report_id"
               >
                 <span class="btn-step">Step4</span>
@@ -194,6 +197,7 @@ import { ref, computed, onMounted, onUnmounted, onActivated, watch, nextTick } f
 import { useRouter, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { getSimulationHistory } from '../api/simulation'
+import hoverSoundSrc from '../assets/audio/hover.mp3'
 
 const router = useRouter()
 const route = useRoute()
@@ -319,8 +323,44 @@ const truncateFilename = (filename, maxLength) => {
   return truncatedName + ext
 }
 
+// Audio pool for hover/open sound effects
+let audioPool = []
+const POOL_SIZE = 4
+
+const getAudioElement = () => {
+  if (typeof window === 'undefined') return null
+  for (const a of audioPool) {
+    if (a.paused || a.ended) {
+      return a
+    }
+  }
+  if (audioPool.length < POOL_SIZE) {
+    const a = new Audio(hoverSoundSrc)
+    a.volume = 0.5
+    audioPool.push(a)
+    return a
+  }
+  return audioPool[0]
+}
+
+const playHoverSound = () => {
+  try {
+    const sound = getAudioElement()
+    if (sound) {
+      sound.currentTime = 0
+      sound.play().catch(() => {})
+    }
+  } catch (e) {}
+}
+
+const handleCardHover = (index) => {
+  hoveringCard.value = index
+  playHoverSound()
+}
+
 // Open project details modal
 const navigateToProject = (simulation) => {
+  playHoverSound()
   selectedProject.value = simulation
 }
 

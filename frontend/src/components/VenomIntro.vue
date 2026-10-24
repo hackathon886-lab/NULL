@@ -73,8 +73,11 @@
 import { ref, onMounted, onUnmounted, nextTick } from 'vue'
 import lokantraWordmark from '@/assets/logo/lokantra_wordmark.png'
 import homescreenBg from '@/assets/homescreen_backgorund.png'
+import { useSound } from '@/hooks/use-sound'
+import { uiBlizzardStoreConfirmPurchaseSound } from '@/sounds/ui-blizzard-store-confirm-purchase'
 
 const emit = defineEmits(['enter'])
+const [play] = useSound(uiBlizzardStoreConfirmPurchaseSound)
 
 const canvasRef = ref(null)
 const btnRef = ref(null)
@@ -895,6 +898,12 @@ function triggerEnter(e) {
   if (hasEntered || isExiting.value) return
   hasEntered = true
   isExiting.value = true
+
+  try {
+    play()
+  } catch (err) {
+    console.warn('Audio play error:', err)
+  }
 
   // Dramatic symbiote snap upon click
   for (const t of tendrils) {
