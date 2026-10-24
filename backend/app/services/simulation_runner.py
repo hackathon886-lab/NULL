@@ -194,10 +194,20 @@ class SimulationRunState:
         }
     
     def to_detail_dict(self) -> Dict[str, Any]:
-        """Detailed info including recent actions"""
+        """Detailed info including recent actions and cognitive telemetry"""
         result = self.to_dict()
         result["recent_actions"] = [a.to_dict() for a in self.recent_actions]
         result["rounds_count"] = len(self.rounds)
+        
+        # Attach cognitive swarm router telemetry if available
+        telemetry_file = os.path.join(os.path.dirname(__file__), '../../uploads/simulations', self.simulation_id, 'telemetry.json')
+        if os.path.exists(telemetry_file):
+            try:
+                with open(telemetry_file, 'r', encoding='utf-8') as tf:
+                    result["cognitive_telemetry"] = json.load(tf)
+            except Exception:
+                pass
+                
         return result
 
 

@@ -62,6 +62,12 @@ class Config:
     REPORT_AGENT_MAX_TOOL_CALLS = int(os.environ.get('REPORT_AGENT_MAX_TOOL_CALLS', '5'))
     REPORT_AGENT_MAX_REFLECTION_ROUNDS = int(os.environ.get('REPORT_AGENT_MAX_REFLECTION_ROUNDS', '2'))
     REPORT_AGENT_TEMPERATURE = float(os.environ.get('REPORT_AGENT_TEMPERATURE', '0.5'))
+    # Cognitive Swarm Router Configuration (Laya System 1 + Akida Reflex Gate)
+    SWARM_ROUTER_MODE = os.environ.get('SWARM_ROUTER_MODE', 'hybrid').lower()
+    REFLEX_GATE_BACKEND = os.environ.get('REFLEX_GATE_BACKEND', 'heuristic').lower()
+    AROUSAL_THRESHOLD = float(os.environ.get('AROUSAL_THRESHOLD', '0.35'))
+    LAYA_MODEL = os.environ.get('LAYA_MODEL', 'convaiinnovations/laya')
+    LAYA_DEVICE = os.environ.get('LAYA_DEVICE', 'cpu')
     
     @classmethod
     def validate(cls) -> list[str]:

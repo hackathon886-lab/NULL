@@ -418,6 +418,14 @@ class RedditSimulationRunner:
         self.agent_graph = None
         self.ipc_handler = None
         
+        # Initialize Cognitive Swarm Router (Tier 0 Reflex + Tier 1 Laya + Tier 2 LLM)
+        sys.path.insert(0, os.path.join(_backend_dir, 'app', 'services'))
+        from cognitive_router import CognitiveSwarmRouter
+        self.cognitive_router = CognitiveSwarmRouter(
+            simulation_dir=self.simulation_dir,
+            platform='reddit'
+        )
+        
     def _load_config(self) -> Dict[str, Any]:
         """Load configuration file"""
         with open(self.config_path, 'r', encoding='utf-8') as f:
@@ -638,10 +646,13 @@ class RedditSimulationRunner:
             if not active_agents:
                 continue
             
-            actions = {
-                agent: LLMAction()
-                for _, agent in active_agents
-            }
+            actions = await self.cognitive_router.decide_round_actions(
+                round_num=round_num + 1,
+                simulated_hour=simulated_hour,
+                active_agents=active_agents,
+                db_path=db_path,
+                available_actions=self.AVAILABLE_ACTIONS
+            )
             
             await self.env.step(actions)
             
@@ -657,6 +668,9 @@ class RedditSimulationRunner:
         print(f"\nSimulation loop completed!")
         print(f"  - Total Elapsed: {total_elapsed:.1f}s")
         print(f"  - Database: {db_path}")
+        
+        # Display Cognitive Swarm Telemetry & Token Savings
+        self.cognitive_router.print_telemetry_report()
         
         # Whether to enter command-waiting mode
         if self.wait_for_commands:

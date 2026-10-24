@@ -1248,6 +1248,13 @@ async def run_twitter_simulation(
         if total_rounds < original_rounds:
             log_info(f"Rounds truncated: {original_rounds} -> {total_rounds} (max_rounds={max_rounds})")
     
+    # Initialize Cognitive Swarm Router (Twitter)
+    sys.path.insert(0, os.path.join(_backend_dir, 'app', 'services'))
+    from cognitive_router import CognitiveSwarmRouter
+    twitter_cognitive_router = CognitiveSwarmRouter(
+        simulation_dir=simulation_dir,
+        platform='twitter'
+    )
     start_time = datetime.now()
     
     for round_num in range(total_rounds):
@@ -1275,7 +1282,13 @@ async def run_twitter_simulation(
                 action_logger.log_round_end(round_num + 1, 0)
             continue
         
-        actions = {agent: LLMAction() for _, agent in active_agents}
+        actions = await twitter_cognitive_router.decide_round_actions(
+            round_num=round_num + 1,
+            simulated_hour=simulated_hour,
+            active_agents=active_agents,
+            db_path=db_path,
+            available_actions=TWITTER_ACTIONS
+        )
         await result.env.step(actions)
         
         # Fetch actually executed actions from database and log
@@ -1448,6 +1461,13 @@ async def run_reddit_simulation(
             log_info(f"Rounds truncated: {original_rounds} -> {total_rounds} (max_rounds={max_rounds})")
     
     start_time = datetime.now()
+    # Initialize Cognitive Swarm Router (Reddit)
+    sys.path.insert(0, os.path.join(_backend_dir, 'app', 'services'))
+    from cognitive_router import CognitiveSwarmRouter
+    reddit_cognitive_router = CognitiveSwarmRouter(
+        simulation_dir=simulation_dir,
+        platform='reddit'
+    )
     
     for round_num in range(total_rounds):
         # Check if exit signal received
@@ -1474,7 +1494,13 @@ async def run_reddit_simulation(
                 action_logger.log_round_end(round_num + 1, 0)
             continue
         
-        actions = {agent: LLMAction() for _, agent in active_agents}
+        actions = await reddit_cognitive_router.decide_round_actions(
+            round_num=round_num + 1,
+            simulated_hour=simulated_hour,
+            active_agents=active_agents,
+            db_path=db_path,
+            available_actions=REDDIT_ACTIONS
+        )
         await result.env.step(actions)
         
         # Fetch actually executed actions from database and log
